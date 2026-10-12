@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Smartschool Planner</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --bg:         #0d0d0f;
+    --bg-2:       #121214;
+    --bg-3:       #1a1a1d;
+    --card:       #141416;
+    --card-hover: #1c1c1f;
+    --border:     #262629;
+    --border-soft:#1d1d20;
+    --text:       #e4e4e6;
+    --text-dim:   #8a8a8e;
+    --text-faint: #5a5a5e;
+    --accent:     #2e2e33;
+    --accent-hover:#3a3a40;
+    --accent-soft: rgba(255,255,255,0.05);
+    --green:      #4ade80;
+    --red:        #f87171;
+    --blue:       #60a5fa;
+    --yellow:     #fbbf24;
+    --purple:     #c084fc;
+    --red-soft:   rgba(248,113,113,0.12);
+    --blue-soft:  rgba(96,165,250,0.14);
+    --green-soft: rgba(74,222,128,0.14);
+    --radius:     14px;
+    --radius-sm:  9px;
+    --shadow:     0 4px 24px rgba(0,0,0,0.55);
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+    --hour-h: 84px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  body.overlay-open { overflow: hidden; }
+
+  ::-webkit-scrollbar { width: 0; height: 0; background: transparent; }
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+
+  svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
+
+  #login-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
+    padding: 20px;
+  }
+  .login-card {
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .login-logo {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: #2a2a2e;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
+  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input {
+    width: 100%; padding: 11px 14px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  .field input::placeholder { color: var(--text-faint); }
+  .btn {
+    width: 100%; padding: 12px;
+    background: #2a2a2e; color: var(--text);
+    border: 1px solid #34343a;
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; font-family: var(--font);
+    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  }
+  .btn:hover { background: #35353a; border-color: #3f3f45; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+  .login-error.show { display: block; }
+
+  #app { display: none; height: 100vh; flex-direction: column; }
+  #app.ready { display: flex; }
+
+  .main { flex: 1; display: flex; overflow: hidden; }
+
+  .content {
+    flex: 1; overflow: hidden;
+    padding: 24px 28px;
+    display: flex; flex-direction: column;
+    min-height: 0;
+  }
+
+  .page-head {
+    margin-bottom: 20px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    flex-shrink: 0;
+  }
+  .page-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-head p { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+
+  .page-head-actions {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .week-nav {
+    display: flex; align-items: center; gap: 4px;
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: 9px; padding: 3px;
+  }
+  .week-nav button {
+    width: 30px; height: 30px; border-radius: 6px;
+    background: transparent; border: none; color: var(--text-dim);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, color 0.15s;
+  }
+  .week-nav button:hover { background: var(--card-hover); color: var(--text); }
+  .week-nav button svg.lucide { width: 15px; height: 15px; }
+  .week-nav .week-label {
+    padding: 0 10px; font-size: 12.5px; color: var(--text);
+    font-weight: 600; white-space: nowrap;
+  }
+
+  .btn-refresh-head {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: #2a2a2e; color: var(--text-dim);
+    border: 1px solid #34343a;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-refresh-head:hover { background: #35353a; border-color: #3f3f45; color: var(--text); }
+  .btn-refresh-head svg.lucide { width: 16px; height: 16px; }
+  .btn-refresh-head.spinning svg.lucide { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============================================================
+     PLANNER
+     ============================================================ */
+  .planner-wrap {
+    flex: 1; min-height: 0;
+    background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+
+  .planner-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Desktop: grid van 7 kolommen */
+  .planner-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+    min-width: 0;
+  }
+
+  .day-col {
+    display: flex; flex-direction: column;
+    min-width: 0;
+  }
+
+  .day-head {
+    flex-shrink: 0;
+    padding: 8px 6px 10px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-soft);
+    margin-bottom: 8px;
+    height: 54px;
+  }
+  .day-head .dh-name {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text-dim);
+    line-height: 1.3;
+  }
+  .day-head .dh-date {
+    font-size: 14px; font-weight: 700; color: var(--text);
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+  .day-head.today .dh-name { color: var(--text); }
+  .day-head.today .dh-date {
+    color: var(--bg);
+    background: var(--text);
+    border-radius: 8px;
+    display: inline-block;
+    padding: 0 8px;
+  }
+
+  .day-body {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  /* ============================================================
+     UUR-KAARTJE
+     ============================================================ */
+  .hour-card {
+    background: var(--bg-3);
+    border: 1px solid var(--border-soft);
+    border-radius: 10px;
+    padding: 8px 9px;
+
+    height: var(--hour-h);
+    min-height: var(--hour-h);
+    max-height: var(--hour-h);
+    flex: 0 0 var(--hour-h);
+    flex-shrink: 0;
+    overflow: hidden;
+
+    display: flex; flex-direction: column;
+    gap: 4px;
+
+    transition: border-color 0.15s, background 0.15s;
+    cursor: pointer;
+    position: relative;
+  }
+  .hour-card:hover { border-color: var(--border); background: var(--card-hover); }
+  .hour-card.empty {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--border-soft);
+    cursor: default;
+    opacity: 0.5;
+  }
+  .hour-card.empty:hover { border-color: var(--border-soft); background: transparent; }
+  .hour-card.filled {
+    background: rgba(96,165,250,0.06);
+    border-color: rgba(96,165,250,0.18);
+  }
+  .hour-card.filled:hover { background: rgba(96,165,250,0.10); border-color: rgba(96,165,250,0.30); }
+
+  .hour-top {
+    display: flex; align-items: center; gap: 6px;
+    min-width: 0;
+    flex-shrink: 0;
+    height: 18px;
+  }
+  .hour-num {
+    font-size: 10px; font-weight: 700;
+    color: var(--text-faint);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0 5px;
+    line-height: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  .hour-course {
+    font-size: 12px; font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex: 1; min-width: 0;
+    line-height: 16px;
+  }
+  .hour-room {
+    font-size: 10.5px; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    flex-shrink: 0; max-width: 45%;
+    line-height: 16px;
+  }
+
+  .hour-meta {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 10.5px; color: var(--text-faint);
+    white-space: nowrap; overflow: hidden;
+    height: 14px;
+    flex-shrink: 0;
+  }
+  .hour-meta svg.lucide { width: 10px; height: 10px; }
+  .hour-meta span { overflow: hidden; text-overflow: ellipsis; }
+
+  .tasks-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 3px;
+    margin-top: auto;
+    height: 16px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .task-square {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    background: var(--yellow);
+    border: 1px solid rgba(0,0,0,0.25);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.15s;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .task-square:hover {
+    transform: scale(1.15);
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+  }
+  .task-square svg.lucide {
+    width: 10px; height: 10px; color: rgba(0,0,0,0.55);
+    stroke-width: 3;
+  }
+  .task-square.done { background: var(--green); }
+  .task-square.assignment { background: var(--purple); }
+  .task-square.assignment.done { background: var(--green); }
+  .task-square.deadline { background: var(--red); }
+  .task-square.deadline.done { background: var(--green); }
+
+  .task-more {
+    width: 16px; height: 16px;
+    border-radius: 4px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: var(--text-dim);
+    flex-shrink: 0;
+  }
+
+  /* ============================================================
+     KOLOM-NAVIGATIE
+     ============================================================ */
+  .col-nav {
+    display: none;
+    align-items: center; justify-content: center; gap: 8px;
+    padding: 8px 12px 10px;
+    border-top: 1px solid var(--border-soft);
+    background: var(--card);
+    flex-shrink: 0;
+  }
+  .col-nav.visible { display: flex; }
+  .col-nav button {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--bg-3); color: var(--text);
+    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+  }
+  .col-nav button:hover { background: var(--card-hover); border-color: #3f3f45; }
+  .col-nav button:disabled { opacity: 0.35; cursor: not-allowed; }
+  .col-nav button svg.lucide { width: 16px; height: 16px; }
+  .col-nav .col-indicator {
+    font-size: 12.5px; font-weight: 600; color: var(--text);
+    padding: 0 8px;
+    font-variant-numeric: tabular-nums;
+    min-width: 100px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .col-dots {
+    display: flex; align-items: center; gap: 4px;
+    padding: 0 4px;
+  }
+  .col-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--border);
+    transition: background 0.2s, transform 0.2s;
+  }
+  .col-dot.active { background: var(--text); transform: scale(1.25); }
+
+  /* ============================================================
+     DETAIL OVERLAY
+     ============================================================ */
+  .detail-overlay {
+    position: fixed; inset: 0;
+    z-index: 60;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .detail-overlay.open { opacity: 1; pointer-events: auto; }
+  .detail-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 100%; max-width: 520px;
+    max-height: 85vh;
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow);
+    transform: translateY(12px);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .detail-overlay.open .detail-card { transform: translateY(0); }
+
+  .detail-head {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .detail-head-inner { flex: 1; min-width: 0; }
+  .detail-type {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-dim);
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-bottom: 6px;
+  }
+  .detail-type svg.lucide { width: 12px; height: 12px; }
+  .detail-title {
+    font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.35; word-break: break-word;
+  }
+  .detail-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-3); color: var(--text-dim);
+    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .detail-close:hover { background: var(--card-hover); color: var(--text); }
+  .detail-close svg.lucide { width: 16px; height: 16px; }
+
+  .detail-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 13.5px; line-height: 1.7;
+  }
+  .detail-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row svg.lucide { width: 14px; height: 14px; color: var(--text-faint); flex-shrink: 0; }
+  .detail-row strong { color: var(--text); font-weight: 600; }
+  .detail-row .dr-label {
+    color: var(--text-faint); font-size: 11.5px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    min-width: 60px;
+  }
+
+  .detail-info {
+    margin-top: 12px; padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+    font-size: 13.5px; line-height: 1.7; color: var(--text);
+  }
+  .detail-info p { margin: 0 0 10px; }
+  .detail-info p:last-child { margin-bottom: 0; }
+  .detail-info a { color: #b8b8bc; }
+  .detail-info img { max-width: 100%; height: auto; border-radius: 6px; }
+
+  .detail-foot {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-soft);
+    display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+  }
+
+  .action-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 10px; background: var(--bg-3); color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12.5px; font-family: var(--font); font-weight: 500;
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .action-btn svg.lucide { width: 15px; height: 15px; }
+  .action-btn:hover { background: var(--card-hover); color: var(--text); }
+  .action-btn.primary { background: #2a2a2e; border-color: #34343a; color: var(--text); }
+  .action-btn.primary:hover { background: #35353a; border-color: #3f3f45; }
+  .action-btn.success:hover { background: var(--green-soft); color: var(--green); border-color: transparent; }
+  .action-btn.danger:hover { background: var(--red-soft); color: var(--red); border-color: transparent; }
+
+  /* ============================================================
+     SKELETON
+     ============================================================ */
+  .skeleton-hour {
+    height: var(--hour-h);
+    min-height: var(--hour-h);
+    flex: 0 0 var(--hour-h);
+    border-radius: 10px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.03) 0%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(255,255,255,0.03) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ============================================================
+     EMPTY
+     ============================================================ */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--text-faint); gap: 10px; padding: 40px; text-align: center;
+  }
+  .empty svg.lucide { width: 40px; height: 40px; opacity: 0.4; }
+  .empty p { font-size: 13px; }
+
+  /* ============================================================
+     TOASTS
+     ============================================================ */
+  .toast-wrap {
+    position: fixed; bottom: 20px; right: 20px; z-index: 200;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    padding: 12px 16px; background: var(--bg-3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; box-shadow: var(--shadow);
+    animation: slideUp 0.25s ease; max-width: 320px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast svg.lucide { width: 15px; height: 15px; flex-shrink: 0; }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+
+  /* Desktop: 7 kolommen naast elkaar */
+  @media (min-width: 821px) {
+    .col-nav { display: none !important; }
+  }
+
+  /* Tablet/mobiel: 1 kolom gecentreerd, buurdagen zichtbaar met ruimte */
+  @media (max-width: 820px) {
+    .content { padding: 14px; }
+    .page-head { flex-direction: column; align-items: stretch; gap: 10px; }
+    .page-head-actions { justify-content: space-between; flex-wrap: wrap; }
+
+    .planner-scroll {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .planner-grid {
+      display: flex;
+      gap: 10px;
+      min-width: max-content;
+      padding: 10px 14px;
+      align-items: stretch;
+    }
+
+    /* Kolommen: vaste breedte, gecentreerd door snap.
+       De padding op .planner-grid (14px) + gap (10px) zorgt dat
+       de kaartjes nooit tegen de viewport-rand plakken. */
+    .day-col {
+      flex: 0 0 auto;
+      width: calc(100vw - 48px);
+      max-width: 460px;
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 260px);
+      min-height: 0;
+    }
+    .day-head {
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      z-index: 2;
+    }
+    .day-head .dh-date { font-size: 13px; }
+
+    /* Eigen verticale scroll per dag */
+    .day-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .detail-overlay { padding: 0; }
+    .detail-card {
+      max-width: none; max-height: 100vh; height: 100vh;
+      border-radius: 0; border: none;
+    }
+    .detail-head { padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
+    .detail-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+
+    .page-head h2 { font-size: 19px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><i data-lucide="calendar-days"></i></div>
+    <h1>Smartschool</h1>
+    <p>Meld aan met je Smartschool account</p>
+    <form id="login-form">
+      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
+      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
+      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
+      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
+      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
+      <div class="login-error" id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <div class="main">
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h2>Planner</h2>
+          <p id="planner-subtitle">Je weekrooster en opdrachten</p>
+        </div>
+        <div class="page-head-actions">
+          <div class="week-nav">
+            <button id="btn-prev-week" title="Vorige week"><i data-lucide="chevron-left"></i></button>
+            <span class="week-label" id="week-label">—</span>
+            <button id="btn-next-week" title="Volgende week"><i data-lucide="chevron-right"></i></button>
+          </div>
+          <button class="btn-refresh-head" id="btn-refresh-planner" title="Vernieuwen"><i data-lucide="refresh-cw"></i></button>
+        </div>
+      </div>
+
+      <div class="planner-wrap">
+        <div class="planner-scroll" id="planner-scroll">
+          <div class="planner-grid" id="planner-grid"></div>
+        </div>
+        <div class="col-nav" id="col-nav">
+          <button id="btn-prev-col" title="Vorige dag"><i data-lucide="chevron-left"></i></button>
+          <span class="col-indicator" id="col-indicator">Ma</span>
+          <div class="col-dots" id="col-dots"></div>
+          <button id="btn-next-col" title="Volgende dag"><i data-lucide="chevron-right"></i></button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-card" id="detail-card">
+    <div class="detail-head">
+      <div class="detail-head-inner">
+        <div class="detail-type" id="detail-type"></div>
+        <div class="detail-title" id="detail-title"></div>
+      </div>
+      <button class="detail-close" id="detail-close" title="Sluiten"><i data-lucide="x"></i></button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+    <div class="detail-foot" id="detail-foot"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+'use strict';
+
+const API_BASE = 'https://smartschoolbridge.onrender.com';
+const PLANNER_BASE = API_BASE + '/api/planner';
+
+const $  = id => document.getElementById(id);
+const $$ = (sel, root) => (root || document).querySelectorAll(sel);
+
+const ESC_MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+const ESC_RE  = /[&<>"']/g;
+const esc = s => {
+  if (s == null) return '';
+  const str = typeof s === 'string' ? s : String(s);
+  ESC_RE.lastIndex = 0;
+  if (!ESC_RE.test(str)) return str;
+  ESC_RE.lastIndex = 0;
+  return str.replace(ESC_RE, c => ESC_MAP[c]);
+};
+
+const NL_MONTHS = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+const NL_DAYS   = ['Ma','Di','Wo','Do','Vr','Za','Zo'];
+
+function icon(name) { return `<i data-lucide="${name}"></i>`; }
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+const toastWrap = $('toasts');
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  const ic = type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info';
+  el.innerHTML = icon(ic) + '<span>' + esc(msg) + '</span>';
+  toastWrap.appendChild(el);
+  refreshIcons();
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+const auth = {
+  creds: null, user: null,
+  encodeCreds() {
+    if (!this.creds) return null;
+    return btoa(unescape(encodeURIComponent(JSON.stringify(this.creds))));
+  },
+  setCreds(c) { this.creds = c; try { localStorage.setItem('ss_creds', JSON.stringify(c)); } catch {} },
+  tryRestore() {
+    try {
+      const raw = localStorage.getItem('ss_creds');
+      if (!raw) return false;
+      this.creds = JSON.parse(raw);
+      return true;
+    } catch { return false; }
+  },
+  clear() {
+    this.creds = null; this.user = null;
+    try { localStorage.removeItem('ss_creds'); } catch {}
+    plannerCache.clear();
+  },
+};
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {});
+  const credsHeader = auth.encodeCreds();
+  if (credsHeader) headers['X-SS-Creds'] = credsHeader;
+
+  const url = path.startsWith('http') ? path : API_BASE + path;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data.error) msg = data.error;
+    } catch {}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  const ct = res.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) return res.json();
+  if (ct.includes('application/octet-stream') || opts.raw) return res.blob();
+  return res.text();
+}
+
+function withQuery(path, params) {
+  const qs = [];
+  for (const [k, v] of Object.entries(params || {})) {
+    if (v === undefined || v === null || v === false) continue;
+    if (v === true) qs.push(`${k}=1`);
+    else qs.push(`${k}=${encodeURIComponent(v)}`);
+  }
+  if (!qs.length) return path;
+  return path + (path.includes('?') ? '&' : '?') + qs.join('&');
+}
+
+const CACHE_TTL = 5 * 60 * 1000;
+const plannerCache = {
+  _map: new Map(),
+  get(key) {
+    const e = this._map.get(key);
+    if (!e) return null;
+    if (Date.now() - e.ts > CACHE_TTL) { this._map.delete(key); return null; }
+    return e.data;
+  },
+  set(key, data) { this._map.set(key, { data, ts: Date.now() }); },
+  invalidate(prefix) {
+    for (const k of Array.from(this._map.keys())) {
+      if (!prefix || k.startsWith(prefix)) this._map.delete(k);
+    }
+  },
+  clear() { this._map.clear(); },
+};
+
+const api = {
+  auth: {
+    async login({ username, password, main_url, mfa }) {
+      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+      const data = await apiFetch('/api/auth/login', { method: 'POST' });
+      auth.user = { username: data.username, main_url: data.main_url };
+      return auth.user;
+    },
+  },
+  planner: {
+    async week(offset = 0, force = false) {
+      const key = 'week:' + offset;
+      if (!force) {
+        const c = plannerCache.get(key);
+        if (c) return c;
+      }
+      const data = await apiFetch(withQuery(PLANNER_BASE + '/week', { offset }));
+      plannerCache.set(key, data);
+      return data;
+    },
+    async itemDetail(id, type) {
+      const key = 'item:' + id + ':' + type;
+      const c = plannerCache.get(key);
+      if (c) return c;
+      const data = await apiFetch(withQuery(
+        PLANNER_BASE + '/item/' + encodeURIComponent(id),
+        { type }
+      ));
+      plannerCache.set(key, data);
+      return data;
+    },
+    async action(platformId, elementId, action, type) {
+      const data = await apiFetch(withQuery(
+        PLANNER_BASE + '/' + encodeURIComponent(platformId) + '/' +
+          encodeURIComponent(elementId) + '/' + encodeURIComponent(action),
+        { type }
+      ), { method: 'POST' });
+      plannerCache.invalidate();
+      return data;
+    },
+  },
+};
+
+let currentOffset = 0;
+let currentWeekData = null;
+let currentDetail = null;
+let currentCol = 0;
+
+setupLogin();
+autoLogin();
+refreshIcons();
+
+function setupLogin() {
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('login-btn');
+    const err = $('login-error');
+    err.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Aanmelden...';
+    try {
+      await api.auth.login({
+        username: $('in-user').value.trim(),
+        password: $('in-pass').value,
+        main_url: $('in-url').value.trim(),
+        mfa: $('in-mfa').value.trim(),
+      });
+      onLoggedIn();
+    } catch (e) {
+      err.textContent = e.message || 'Aanmelden mislukt';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Aanmelden';
+    }
+  });
+}
+
+async function autoLogin() {
+  if (!auth.tryRestore()) return;
+  try {
+    await apiFetch('/api/auth/login', { method: 'POST' });
+    auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
+    onLoggedIn();
+  } catch { auth.clear(); }
+}
+
+function onLoggedIn() {
+  $('login-screen').style.display = 'none';
+  $('app').classList.add('ready');
+  setupAppEvents();
+  setupColNav();
+  loadWeek(0);
+}
+
+let _eventsBound = false;
+function setupAppEvents() {
+  if (_eventsBound) return;
+  _eventsBound = true;
+
+  $('btn-prev-week').addEventListener('click', () => { currentOffset--; loadWeek(currentOffset); });
+  $('btn-next-week').addEventListener('click', () => { currentOffset++; loadWeek(currentOffset); });
+
+  $('btn-refresh-planner').addEventListener('click', async () => {
+    const btn = $('btn-refresh-planner');
+    btn.classList.add('spinning');
+    plannerCache.clear();
+    try { await loadWeek(currentOffset, true); }
+    finally { setTimeout(() => btn.classList.remove('spinning'), 300); }
+  });
+
+  $('planner-grid').addEventListener('click', (e) => {
+    const sq = e.target.closest('.task-square');
+    if (sq) {
+      e.stopPropagation();
+      openTaskDetail(sq.dataset.id, sq.dataset.type);
+      return;
+    }
+    const card = e.target.closest('.hour-card');
+    if (card && !card.classList.contains('empty') && card.dataset.id) {
+      openTaskDetail(card.dataset.id, card.dataset.type);
+    }
+  });
+
+  $('detail-close').addEventListener('click', closeDetail);
+  $('detail-overlay').addEventListener('click', (e) => {
+    if (e.target === $('detail-overlay')) closeDetail();
+  });
+}
+
+/* ============================================================
+   KOLOM-NAVIGATIE
+   ============================================================ */
+let _colNavBound = false;
+function setupColNav() {
+  if (_colNavBound) return;
+  _colNavBound = true;
+
+  $('btn-prev-col').addEventListener('click', () => gotoCol(currentCol - 1));
+  $('btn-next-col').addEventListener('click', () => gotoCol(currentCol + 1));
+
+  const scroll = $('planner-scroll');
+  let scrollTimeout = null;
+  scroll.addEventListener('scroll', () => {
+    if (window.innerWidth > 820) return;
+    if (scrollTimeout) clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      updateColFromScroll();
+    }, 60);
+  }, { passive: true });
+
+  window.addEventListener('resize', updateColNavVisibility);
+  updateColNavVisibility();
+}
+
+function updateColNavVisibility() {
+  const nav = $('col-nav');
+  if (window.innerWidth <= 820) {
+    nav.classList.add('visible');
+    setTimeout(updateColFromScroll, 50);
+  } else {
+    nav.classList.remove('visible');
+  }
+}
+
+function gotoCol(idx) {
+  const cols = $$('.day-col');
+  if (!cols.length) return;
+  idx = Math.max(0, Math.min(cols.length - 1, idx));
+  currentCol = idx;
+  const col = cols[idx];
+  const scroll = $('planner-scroll');
+  const target = col.offsetLeft - (scroll.clientWidth - col.clientWidth) / 2;
+  scroll.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+  updateColIndicator();
+}
+
+function updateColFromScroll() {
+  const cols = $$('.day-col');
+  if (!cols.length) return;
+  const scroll = $('planner-scroll');
+  const center = scroll.scrollLeft + scroll.clientWidth / 2;
+
+  let best = 0, bestDist = Infinity;
+  for (let i = 0; i < cols.length; i++) {
+    const c = cols[i];
+    const cCenter = c.offsetLeft + c.clientWidth / 2;
+    const d = Math.abs(cCenter - center);
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  currentCol = best;
+  updateColIndicator();
+}
+
+function updateColIndicator() {
+  const label = NL_DAYS[currentCol] || '—';
+  $('col-indicator').textContent = label;
+  $('btn-prev-col').disabled = currentCol <= 0;
+  $('btn-next-col').disabled = currentCol >= 6;
+
+  const dotsWrap = $('col-dots');
+  if (dotsWrap.children.length !== 7) {
+    dotsWrap.innerHTML = '';
+    for (let i = 0; i < 7; i++) {
+      const d = document.createElement('span');
+      d.className = 'col-dot';
+      dotsWrap.appendChild(d);
+    }
+  }
+  for (let i = 0; i < dotsWrap.children.length; i++) {
+    dotsWrap.children[i].classList.toggle('active', i === currentCol);
+  }
+}
+
+async function loadWeek(offset, force = false) {
+  renderSkeleton();
+  try {
+    const data = await api.planner.week(offset, force);
+    currentWeekData = data;
+    renderWeek(data);
+    updateWeekLabel(data.week_start, data.week_end, data.meta);
+    resetColToToday();
+  } catch (e) {
+    toast('Planner: ' + e.message, 'error');
+    $('planner-grid').innerHTML =
+      '<div class="empty" style="grid-column: 1 / -1;">' +
+        icon('alert-circle') +
+        '<p>' + esc(e.message) + '</p>' +
+      '</div>';
+    refreshIcons();
+  }
+}
+
+function resetColToToday() {
+  if (window.innerWidth > 820) return;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const days = $$('.day-col');
+  let idx = 0;
+  for (let i = 0; i < days.length; i++) {
+    if (days[i].dataset.date === todayStr) { idx = i; break; }
+  }
+  requestAnimationFrame(() => gotoCol(idx));
+}
+
+function updateWeekLabel(weekStart, weekEnd, meta) {
+  const s = new Date(weekStart + 'T00:00:00Z');
+  const e = new Date(weekEnd + 'T00:00:00Z');
+  $('week-label').textContent =
+    s.getUTCDate() + ' ' + NL_MONTHS[s.getUTCMonth()] + ' – ' +
+    e.getUTCDate() + ' ' + NL_MONTHS[e.getUTCMonth()];
+
+  const sub = $('planner-subtitle');
+  if (meta) {
+    const parts = [];
+    if (meta.class) parts.push('Klas ' + meta.class);
+    if (meta.filled_count) parts.push(meta.filled_count + ' aangevuld');
+    sub.textContent = parts.length ? parts.join(' · ') : 'Je weekrooster en opdrachten';
+  }
+}
+
+function renderSkeleton() {
+  const cols = [];
+  for (let d = 0; d < 7; d++) {
+    let hours = '';
+    for (let u = 0; u < 7; u++) hours += '<div class="skeleton-hour"></div>';
+    cols.push(
+      '<div class="day-col">' +
+        '<div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>' +
+        '<div class="day-body">' + hours + '</div>' +
+      '</div>'
+    );
+  }
+  $('planner-grid').innerHTML = cols.join('');
+}
+
+function renderWeek(data) {
+  const items = data.items || [];
+  const weekStart = new Date(data.week_start + 'T00:00:00Z');
+
+  const lessons = {};
+  const tasksBySlot = {};
+  const dayOnlyTasks = {};
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  for (const it of items) {
+    if (!it.df) continue;
+    const dt = new Date(it.df);
+    const dayIdx = (dt.getUTCDay() + 6) % 7;
+    const hh = String(dt.getUTCHours()).padStart(2, '0');
+    const mm = String(dt.getUTCMinutes()).padStart(2, '0');
+    const timeStr = `${hh}:${mm}`;
+    const uur = timeToHourNum(timeStr);
+
+    if (it.t === 'planned-lessons') {
+      if (uur) lessons[dayIdx + '|' + uur] = it;
+    } else {
+      if (uur) {
+        const key = dayIdx + '|' + uur;
+        (tasksBySlot[key] = tasksBySlot[key] || []).push(it);
+      } else {
+        (dayOnlyTasks[dayIdx] = dayOnlyTasks[dayIdx] || []).push(it);
+      }
+    }
+  }
+
+  const cols = [];
+  for (let d = 0; d < 7; d++) {
+    const dayDate = new Date(weekStart);
+    dayDate.setUTCDate(dayDate.getUTCDate() + d);
+    const dateStr = dayDate.toISOString().slice(0, 10);
+    const isToday = dateStr === todayStr;
+
+    let hoursHtml = '';
+    for (let u = 1; u <= 7; u++) {
+      const key = d + '|' + u;
+      const lesson = lessons[key];
+      const slotTasks = tasksBySlot[key] || [];
+
+      if (lesson) {
+        hoursHtml += renderHourCard(u, lesson, slotTasks, false);
+      } else if (slotTasks.length) {
+        hoursHtml += renderHourCard(u, slotTasks[0], slotTasks, true);
+      } else {
+        hoursHtml += renderEmptyHour(u);
+      }
+    }
+
+    cols.push(
+      '<div class="day-col" data-date="' + dateStr + '">' +
+        '<div class="day-head' + (isToday ? ' today' : '') + '">' +
+          '<div class="dh-name">' + NL_DAYS[d] + '</div>' +
+          '<div class="dh-date">' + dayDate.getUTCDate() + ' ' + NL_MONTHS[dayDate.getUTCMonth()] + '</div>' +
+        '</div>' +
+        '<div class="day-body">' + hoursHtml + '</div>' +
+      '</div>'
+    );
+  }
+
+  $('planner-grid').innerHTML = cols.join('');
+  refreshIcons();
+}
+
+function timeToHourNum(t) {
+  const map = {
+    '08:25': 1, '09:15': 2, '10:05': 2, '10:20': 3, '11:10': 4,
+    '12:00': 4, '12:50': 5, '13:40': 6, '14:30': 6, '14:40': 7,
+    '15:30': 7,
+  };
+  return map[t] || null;
+}
+
+function renderHourCard(uur, source, tasks, taskOnly) {
+  const course = source ? esc(source.c || '') : '';
+  const room = source ? esc(source.l || '') : '';
+  const teacher = source ? esc(source.te || '') : '';
+  const isFilled = source && source._filled;
+
+  let metaHtml = '';
+  if (teacher) {
+    metaHtml = '<div class="hour-meta">' + icon('user') + '<span>' + teacher + '</span></div>';
+  } else if (isFilled) {
+    metaHtml = '<div class="hour-meta">' + icon('sparkles') + '<span>aangevuld</span></div>';
+  }
+
+  let tasksHtml = '';
+  if (tasks.length) {
+    const max = 4;
+    const shown = tasks.slice(0, max);
+    const more = tasks.length - shown.length;
+    tasksHtml = '<div class="tasks-grid">' +
+      shown.map(renderTaskSquare).join('') +
+      (more > 0 ? '<div class="task-more" title="+' + more + '">+' + more + '</div>' : '') +
+    '</div>';
+  }
+
+  const dataAttrs = source
+    ? ' data-id="' + esc(source.i) + '" data-type="' + esc(source.t) + '"'
+    : '';
+
+  const courseDisplay = course
+    ? '<span class="hour-course">' + course + '</span>'
+    : '<span class="hour-course" style="color:var(--text-faint);font-weight:400">Vrij</span>';
+
+  return (
+    '<div class="hour-card' + (isFilled ? ' filled' : '') + '"' + dataAttrs + '>' +
+      '<div class="hour-top">' +
+        '<span class="hour-num">' + uur + '</span>' +
+        courseDisplay +
+        (room ? '<span class="hour-room">' + room + '</span>' : '') +
+      '</div>' +
+      (metaHtml ? metaHtml : '') +
+      tasksHtml +
+    '</div>'
+  );
+}
+
+function renderEmptyHour(uur) {
+  return (
+    '<div class="hour-card empty">' +
+      '<div class="hour-top">' +
+        '<span class="hour-num">' + uur + '</span>' +
+        '<span class="hour-course" style="color:var(--text-faint);font-weight:400">—</span>' +
+      '</div>' +
+    '</div>'
+  );
+}
+
+function renderTaskSquare(it) {
+  const isDone = it.st === 'resolved';
+  const isAssignment = it.t === 'planned-assignments';
+  const isDeadline = it.dl === 1;
+
+  let cls = 'task-square';
+  if (isAssignment) cls += ' assignment';
+  else if (isDeadline) cls += ' deadline';
+  if (isDone) cls += ' done';
+
+  let iconName = 'circle';
+  if (isDone) iconName = 'check';
+  else if (isAssignment) iconName = 'file-text';
+  else if (isDeadline) iconName = 'flag';
+
+  const title = (it.n || '(geen naam)') + (isDone ? ' ✓' : '');
+
+  return (
+    '<div class="' + cls + '"' +
+      ' data-id="' + esc(it.i) + '"' +
+      ' data-type="' + esc(it.t) + '"' +
+      ' title="' + esc(title) + '">' +
+      icon(iconName) +
+    '</div>'
+  );
+}
+
+async function openTaskDetail(id, type) {
+  if (!id) return;
+  currentDetail = { id, type };
+
+  $('detail-type').innerHTML = icon(type === 'planned-lessons' ? 'book-open' : 'file-text') +
+    (type === 'planned-lessons' ? 'Les' :
+     type === 'planned-assignments' ? 'Opdracht' :
+     type === 'planned-to-dos' ? 'Taak' : 'Item');
+  $('detail-title').textContent = 'Laden…';
+  $('detail-body').innerHTML = '<div class="empty" style="padding:20px">' + icon('loader') + '</div>';
+  $('detail-foot').innerHTML = '';
+  $('detail-overlay').classList.add('open');
+  document.body.classList.add('overlay-open');
+  refreshIcons();
+
+  const baseItem = findItemInWeek(id);
+
+  try {
+    if (type === 'planned-to-dos' || type === 'planned-assignments') {
+      const detail = await api.planner.itemDetail(id, type);
+      renderDetail(baseItem, detail);
+    } else {
+      renderDetail(baseItem, null);
+    }
+  } catch (e) {
+    renderDetail(baseItem, null, e.message);
+  }
+}
+
+function findItemInWeek(id) {
+  if (!currentWeekData) return null;
+  return (currentWeekData.items || []).find(x => String(x.i) === String(id)) || null;
+}
+
+function renderDetail(base, detail, errorMsg) {
+  if (!base && !detail) {
+    $('detail-title').textContent = 'Niet gevonden';
+    $('detail-body').innerHTML = '<p style="color:var(--red)">' + esc(errorMsg || 'Item niet gevonden') + '</p>';
+    return;
+  }
+
+  const title = base?.n || 'Zonder naam';
+  $('detail-title').textContent = title;
+
+  const rows = [];
+  if (base?.c) rows.push(row('book-open', 'Vak', base.c));
+  if (base?.te) rows.push(row('user', 'Leerkracht', base.te));
+  if (base?.l) rows.push(row('map-pin', 'Lokaal', base.l));
+  if (base?.df) {
+    const d = new Date(base.df);
+    const end = base.dt ? new Date(base.dt) : null;
+    const dateStr = d.toLocaleDateString('nl-BE', {
+      weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'
+    });
+    const timeStr = base.wd ? 'Hele dag' :
+      (d.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) +
+        (end ? ' – ' + end.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }) : ''));
+    rows.push(row('calendar', 'Datum', dateStr));
+    rows.push(row('clock', 'Tijd', timeStr));
+  }
+  if (base?.st) {
+    rows.push(row('check-circle', 'Status', base.st === 'resolved' ? 'Afgerond' : 'Open'));
+  }
+
+  let bodyHtml = rows.length ? rows.join('') : '';
+
+  if (detail?.public_info) {
+    bodyHtml += '<div class="detail-info">' + detail.public_info + '</div>';
+  } else if (errorMsg) {
+    bodyHtml += '<div class="detail-info" style="color:var(--red)">' + esc(errorMsg) + '</div>';
+  }
+
+  if (detail?.attachments?.length) {
+    bodyHtml += '<div class="detail-info"><div class="detail-row" style="border:none;padding-top:12px;">' +
+      icon('paperclip') + '<span class="dr-label">Bijlagen</span></div>';
+    bodyHtml += detail.attachments.map(a =>
+      '<div class="detail-row">' + icon('file') + '<strong>' + esc(a.name) + '</strong></div>'
+    ).join('');
+    bodyHtml += '</div>';
+  }
+
+  if (detail?.weblinks?.length) {
+    bodyHtml += '<div class="detail-info"><div class="detail-row" style="border:none;padding-top:12px;">' +
+      icon('link') + '<span class="dr-label">Links</span></div>';
+    bodyHtml += detail.weblinks.map(u =>
+      '<div class="detail-row">' + icon('external-link') +
+      '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(u) + '</a></div>'
+    ).join('');
+    bodyHtml += '</div>';
+  }
+
+  $('detail-body').innerHTML = bodyHtml || '<p style="color:var(--text-dim)">Geen extra info</p>';
+  refreshIcons();
+
+  const foot = [];
+  if (base?.t === 'planned-to-dos' || base?.t === 'planned-assignments') {
+    if (base.st === 'resolved') {
+      foot.push('<button class="action-btn" data-act="unresolve">' + icon('rotate-ccw') + ' Heropenen</button>');
+    } else {
+      foot.push('<button class="action-btn success" data-act="resolve">' + icon('check') + ' Afronden</button>');
+    }
+    foot.push('<button class="action-btn danger" data-act="trash">' + icon('trash-2') + ' Verwijderen</button>');
+  }
+  $('detail-foot').innerHTML = foot.join('');
+  refreshIcons();
+
+  $$('#detail-foot [data-act]').forEach(btn => {
+    btn.addEventListener('click', () => handleDetailAction(btn.dataset.act));
+  });
+}
+
+function row(iconName, label, value) {
+  return (
+    '<div class="detail-row">' + icon(iconName) +
+      '<span class="dr-label">' + esc(label) + '</span>' +
+      '<strong>' + esc(value) + '</strong>' +
+    '</div>'
+  );
+}
+
+function closeDetail() {
+  $('detail-overlay').classList.remove('open');
+  document.body.classList.remove('overlay-open');
+  currentDetail = null;
+}
+
+async function handleDetailAction(action) {
+  if (!currentDetail) return;
+  const platformId = currentWeekData?.meta?.user_id || '';
+  const pid = platformId.split('_')[0];
+
+  try {
+    await api.planner.action(pid, currentDetail.id, action, currentDetail.type);
+    toast(action === 'resolve' ? 'Afgerond' :
+          action === 'unresolve' ? 'Heropend' : 'Verwijderd', 'success');
+    closeDetail();
+    loadWeek(currentOffset, true);
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if ($('detail-overlay').classList.contains('open')) closeDetail();
+    return;
+  }
+  if (window.innerWidth <= 820) {
+    if ($('detail-overlay').classList.contains('open')) return;
+    if (e.key === 'ArrowLeft') { gotoCol(currentCol - 1); }
+    if (e.key === 'ArrowRight') { gotoCol(currentCol + 1); }
+  }
+});
+</script>
+</body>
+</html>
