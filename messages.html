@@ -580,7 +580,6 @@
     .msg-layout { flex-direction: column; }
     .msg-list { width: 100%; flex: 1; max-height: none; }
 
-    /* Het bericht wordt een fullscreen overlay */
     .msg-view {
       position: fixed;
       inset: 0;
@@ -886,12 +885,12 @@ function withQuery(path, params) {
 /* ============================================================
    CACHE VOOR BERICHTEN
    ============================================================ */
-const CACHE_TTL = 5 * 60 * 1000; // 5 minuten
+const CACHE_TTL = 5 * 60 * 1000;
 
 class MessageCache {
   constructor() {
-    this._lists = new Map();   // box -> { data, ts }
-    this._items = new Map();   // box:id -> { data, ts }
+    this._lists = new Map();
+    this._items = new Map();
   }
   getList(box) {
     const e = this._lists.get(box);
@@ -953,7 +952,6 @@ const api = {
     },
     async markRead(id, box = 'inbox') {
       const res = await apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}/read`, { box }), { method: 'POST' });
-      // Update cache: markeer als gelezen in lijst + item
       const cachedList = msgCache.getList(box);
       if (cachedList) {
         const m = cachedList.find(x => String(x.id) === String(id));
@@ -1274,7 +1272,6 @@ function setupAppEvents() {
   $('btn-refresh-list').addEventListener('click', async () => {
     const btn = $('btn-refresh-list');
     btn.classList.add('spinning');
-    // Forceer verse fetch
     msgCache.invalidateList(currentBox);
     _inflight.delete('msgs:' + currentBox);
     try {
@@ -1290,7 +1287,7 @@ function setupAppEvents() {
     $$('.msg-tab', $('msg-tabs')).forEach(t => t.classList.toggle('active', t === tab));
     currentBox = tab.dataset.box;
     currentMessageId = null;
-    closeMessageView(); // sluit overlay op mobiel
+    closeMessageView();
     loadMessages(currentBox);
     renderEmptyView();
   });
@@ -1301,7 +1298,6 @@ function setupAppEvents() {
   });
 
   $('msg-view').addEventListener('click', (e) => {
-    // Sluitknop op mobiel
     if (e.target.closest('.msg-view-close')) {
       closeMessageView();
       return;
@@ -1360,7 +1356,6 @@ function renderSkeleton() {
 async function loadMessages(box, force = false) {
   currentBox = box;
 
-  // Met cache: toon meteen oude data, en update op de achtergrond
   const cached = !force && msgCache.getList(box);
   if (cached) {
     renderMessageList(cached);
@@ -1418,14 +1413,12 @@ async function openMessage(id) {
   currentMessageId = id;
   $$('.msg-row').forEach(r => r.classList.toggle('active', r.dataset.id === id));
 
-  // Op mobiel: toon overlay meteen
   const view = $('msg-view');
   if (isMobile()) {
     view.classList.add('mobile-open');
     document.body.classList.add('overlay-open');
   }
 
-  // Toon cached bericht indien beschikbaar (instant)
   const cachedMsg = msgCache.getItem(currentBox, id);
   if (cachedMsg) {
     ss_currentMessage = cachedMsg;
@@ -1690,43 +1683,107 @@ function renderRecipients(field) {
 }
 
 /* ============================================================
-   RICH TEXT EDITOR
+   RICH TEXT EDITOR — MET WERKENDE OPMAAK
    ============================================================ */
+let savedRange = null;
+
+function saveEditorRange() {
+  const editor = $('compose-body');
+  if (!editor) return;
+  const sel = window.getSelection();
+  if (sel && sel.rangeCount) {
+    const range = sel.getRangeAt(0);
+    if (editor.contains(range.commonAncestorContainer)) {
+      savedRange = range.cloneRange();
+    }
+  }
+}
+
+function restoreEditorRange() {
+  const editor = $('compose-body');
+  if (!editor || !savedRange) return false;
+  try {
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(savedRange);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function execFormat(cmd, value = null) {
+  const editor = $('compose-body');
+  if (!editor) return;
+  editor.focus();
+  // Herstel de selectie die we vóór de klik hebben opgeslagen
+  restoreEditorRange();
+  try {
+    document.execCommand(cmd, false, value);
+  } catch (e) {
+    console.warn('execCommand failed', cmd, e);
+  }
+  // Selectie opnieuw opslaan (na commando)
+  saveEditorRange();
+  updateToolbarState();
+  // Zorg dat eventuele placeholders/weergave kloppen
+  editor.dispatchEvent(new Event('input'));
+}
+
 function setupEditor() {
   const editor = $('compose-body');
 
+  // Sla selectie op bij selectie-wijziging binnen de editor
+  document.addEventListener('selectionchange', () => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const node = sel.anchorNode;
+    if (node && editor.contains(node)) {
+      saveEditorRange();
+      updateToolbarState();
+    }
+  });
+
+  // Bold / Italic / Underline / RemoveFormat
   $$('.editor-toolbar .toolbar-btn[data-cmd]').forEach(btn => {
+    // Voorkom dat de editor focus verliest vóór we het commando uitvoeren
     btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      saveEditorRange();
+    });
+    btn.addEventListener('click', (e) => {
       e.preventDefault();
       const cmd = btn.dataset.cmd;
       if (!cmd) return;
-      try { document.execCommand(cmd, false, null); } catch {}
-      editor.focus();
-      updateToolbarState();
+      execFormat(cmd);
     });
   });
 
+  // Font size
   const sizeSel = $('toolbar-size');
+  sizeSel.addEventListener('mousedown', (e) => {
+    // Bewaar selectie voordat de dropdown focus steelt
+    saveEditorRange();
+  });
   sizeSel.addEventListener('change', () => {
     const val = sizeSel.value;
     if (!val) return;
-    editor.focus();
-    try { document.execCommand('fontSize', false, val); } catch {}
+    execFormat('fontSize', val);
     sizeSel.value = '';
-    updateToolbarState();
   });
 
+  // Tekstkleur
   const colorInput = $('toolbar-color');
+  colorInput.addEventListener('mousedown', () => saveEditorRange());
   colorInput.addEventListener('input', () => {
-    editor.focus();
-    try { document.execCommand('foreColor', false, colorInput.value); } catch {}
-    updateToolbarState();
+    execFormat('foreColor', colorInput.value);
   });
 
   editor.addEventListener('keyup', updateToolbarState);
-  editor.addEventListener('mouseup', updateToolbarState);
+  editor.addEventListener('mouseup', () => { saveEditorRange(); updateToolbarState(); });
   editor.addEventListener('input', updateToolbarState);
 
+  // Paste: behoud opmaak? Nee — strip naar plain text, behalve afbeeldingen
   editor.addEventListener('paste', (e) => {
     const items = e.clipboardData?.items || [];
     for (const item of items) {
@@ -1740,6 +1797,8 @@ function setupEditor() {
     e.preventDefault();
     const text = (e.clipboardData || window.clipboardData).getData('text/plain');
     try { document.execCommand('insertText', false, text); } catch {}
+    saveEditorRange();
+    updateToolbarState();
   });
 
   editor.addEventListener('dragover', (e) => {
@@ -1760,7 +1819,12 @@ function setupEditor() {
     }
   });
 
-  $('btn-insert-image').addEventListener('click', () => {
+  $('btn-insert-image').addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    saveEditorRange();
+  });
+  $('btn-insert-image').addEventListener('click', (e) => {
+    e.preventDefault();
     $('file-input-image').click();
   });
   $('file-input-image').addEventListener('change', async (e) => {
@@ -1769,7 +1833,12 @@ function setupEditor() {
     for (const f of files) await uploadAndInsertImage(f);
   });
 
-  $('btn-attach-file').addEventListener('click', () => {
+  $('btn-attach-file').addEventListener('mousedown', (e) => {
+    e.preventDefault();
+    saveEditorRange();
+  });
+  $('btn-attach-file').addEventListener('click', (e) => {
+    e.preventDefault();
     $('file-input-attach').click();
   });
   $('file-input-attach').addEventListener('change', async (e) => {
@@ -1820,6 +1889,8 @@ async function uploadAndInsertImage(file) {
     }
     const editor = $('compose-body');
     editor.focus();
+    // Herstel de opgeslagen selectie vóór het invoegen
+    restoreEditorRange();
     const img = document.createElement('img');
     img.src = data.url;
     img.alt = data.filename || file.name || 'afbeelding';
@@ -1835,6 +1906,7 @@ async function uploadAndInsertImage(file) {
     } else {
       editor.appendChild(img);
     }
+    saveEditorRange();
     toast('Afbeelding toegevoegd', 'success');
   } catch (e) {
     toast('Afbeelding mislukt: ' + e.message, 'error');
@@ -1922,6 +1994,7 @@ function openCompose(to, subject) {
   renderRecipients('bcc');
   renderAttachments();
   clearUploadStatus();
+  savedRange = null;
   $('compose-modal').classList.add('show');
   refreshIcons();
   requestAnimationFrame(() => $('to-input').focus());
@@ -1937,6 +2010,7 @@ function closeCompose() {
   $('cc-suggestions').style.display = 'none';
   $('bcc-suggestions').style.display = 'none';
   clearUploadStatus();
+  savedRange = null;
 }
 
 async function sendCompose() {
