@@ -1,0 +1,1847 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Smartschool Berichten</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --bg:         #0d0d0f;
+    --bg-2:       #121214;
+    --bg-3:       #1a1a1d;
+    --card:       #141416;
+    --card-hover: #1c1c1f;
+    --border:     #262629;
+    --border-soft:#1d1d20;
+    --text:       #e4e4e6;
+    --text-dim:   #8a8a8e;
+    --text-faint: #5a5a5e;
+    --accent:     #2e2e33;
+    --accent-hover:#3a3a40;
+    --accent-soft: rgba(255,255,255,0.05);
+    --green:      #4ade80;
+    --red:        #f87171;
+    --red-soft:   rgba(248,113,113,0.12);
+    --radius:     14px;
+    --radius-sm:  9px;
+    --shadow:     0 4px 24px rgba(0,0,0,0.55);
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+    --mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333338; }
+
+  svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
+
+  #login-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
+    padding: 20px;
+  }
+  .login-card {
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .login-logo {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: #2a2a2e;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
+  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input {
+    width: 100%; padding: 11px 14px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  .field input::placeholder { color: var(--text-faint); }
+  .btn {
+    width: 100%; padding: 12px;
+    background: #2a2a2e; color: var(--text);
+    border: 1px solid #34343a;
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; font-family: var(--font);
+    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  }
+  .btn:hover { background: #35353a; border-color: #3f3f45; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+  .login-error.show { display: block; }
+
+  #app { display: none; height: 100vh; flex-direction: column; }
+  #app.ready { display: flex; }
+
+  .main { flex: 1; display: flex; overflow: hidden; }
+
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; }
+
+  .page-head {
+    margin-bottom: 20px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    flex-shrink: 0;
+  }
+  .page-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-head p { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+
+  .page-head-actions {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-new {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 14px;
+    background: #2a2a2e; color: var(--text);
+    border: 1px solid #34343a; border-radius: 9px;
+    font-size: 13px; font-weight: 500; font-family: var(--font);
+    cursor: pointer; transition: background 0.15s, border-color 0.15s;
+  }
+  .btn-new:hover { background: #35353a; border-color: #3f3f45; }
+  .btn-new svg.lucide { width: 15px; height: 15px; }
+
+  .btn-refresh-head {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: #2a2a2e; color: var(--text-dim);
+    border: 1px solid #34343a;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-refresh-head:hover { background: #35353a; border-color: #3f3f45; color: var(--text); }
+  .btn-refresh-head svg.lucide { width: 16px; height: 16px; }
+  .btn-refresh-head.spinning svg.lucide { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .msg-layout { display: flex; gap: 16px; flex: 1; min-height: 0; }
+
+  .msg-list {
+    width: 320px; flex-shrink: 0;
+    background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .msg-tabs {
+    display: flex; align-items: center; gap: 4px; padding: 10px;
+    border-bottom: 1px solid var(--border-soft);
+    flex-wrap: wrap; flex-shrink: 0;
+  }
+  .msg-tab {
+    padding: 6px 12px; border-radius: 7px; font-size: 12px;
+    background: transparent; color: var(--text-dim); border: none;
+    cursor: pointer; font-family: var(--font); font-weight: 500;
+    text-transform: capitalize; display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .msg-tab svg.lucide { width: 14px; height: 14px; }
+  .msg-tab:hover { background: var(--bg-3); color: var(--text); }
+  .msg-tab.active { background: var(--accent-soft); color: var(--text); }
+
+  .msg-rows { flex: 1; overflow-y: auto; }
+
+  .msg-row {
+    position: relative;
+    padding: 12px 14px 12px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    cursor: pointer;
+    transition: background 0.12s;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .msg-row:last-child { border-bottom: none; }
+  .msg-row:hover { background: var(--bg-3); }
+  .msg-row.active { background: var(--accent-soft); }
+  .msg-row::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.15s;
+  }
+  .msg-row.unread::before { background: var(--text); }
+
+  .msg-from {
+    font-size: 13px; font-weight: 500; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .msg-subject {
+    font-size: 12.5px; color: var(--text-dim);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .msg-date { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
+  .msg-row.unread .msg-from { font-weight: 700; color: var(--text); }
+  .msg-row.unread .msg-subject { font-weight: 600; color: var(--text); }
+
+  .skeleton-row {
+    padding: 12px 14px; border-bottom: 1px solid var(--border-soft);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .skeleton-line {
+    height: 10px; border-radius: 4px;
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.03) 0%,
+      rgba(255,255,255,0.08) 50%,
+      rgba(255,255,255,0.03) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .skeleton-line.w60 { width: 60%; }
+  .skeleton-line.w85 { width: 85%; }
+  .skeleton-line.w40 { width: 40%; height: 8px; }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .msg-view {
+    flex: 1; background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    display: flex; flex-direction: column;
+    min-width: 0; overflow: hidden;
+  }
+  .msg-view-head {
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .msg-view-head h3 {
+    font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
+    margin-bottom: 10px; line-height: 1.35;
+  }
+  .msg-view-meta {
+    font-size: 12.5px; color: var(--text-dim);
+    display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+  }
+  .msg-view-meta svg.lucide { width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; }
+  .msg-view-meta strong { color: var(--text); font-weight: 600; }
+
+  .msg-view-body {
+    flex: 1; overflow-y: auto; padding: 24px;
+    font-size: 13.5px; line-height: 1.7; color: var(--text);
+  }
+  .msg-view-body a { color: #b8b8bc; cursor: pointer; }
+  .msg-view-body p { margin: 0 0 12px; }
+  .msg-view-body p:last-child { margin-bottom: 0; }
+  .msg-view-body img { max-width: 100%; height: auto; }
+
+  .msg-view-body ul,
+  .msg-view-body ol {
+    margin: 8px 0 12px;
+    padding-left: 28px;
+  }
+  .msg-view-body ul ul,
+  .msg-view-body ol ol,
+  .msg-view-body ul ol,
+  .msg-view-body ol ul {
+    margin: 4px 0 6px;
+    padding-left: 24px;
+  }
+  .msg-view-body li {
+    margin: 4px 0;
+    padding-left: 2px;
+  }
+  .msg-view-body li > p {
+    margin: 0 0 4px;
+  }
+  .msg-view-body li > p:last-child {
+    margin-bottom: 0;
+  }
+
+  .msg-view-body hr {
+    border: none;
+    border-top: 1px solid var(--border-soft);
+    margin: 16px 0;
+  }
+
+  .msg-view-actions {
+    padding: 12px 20px;
+    border-top: 1px solid var(--border-soft);
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 10px; background: var(--bg-3); color: var(--text-dim);
+    border: 1px solid var(--border); border-radius: 8px;
+    font-size: 12.5px; font-family: var(--font); font-weight: 500;
+    cursor: pointer; transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  .action-btn svg.lucide { width: 15px; height: 15px; }
+  .action-btn:hover { background: var(--card-hover); color: var(--text); }
+  .action-btn.primary { background: #2a2a2e; border-color: #34343a; color: var(--text); }
+  .action-btn.primary:hover { background: #35353a; border-color: #3f3f45; }
+  .action-btn.danger:hover { background: var(--red-soft); color: var(--red); border-color: transparent; }
+
+  .attach-wrap { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+  .attach-title {
+    font-size: 11px; color: var(--text-dim); margin-bottom: 10px;
+    font-weight: 600; display: flex; align-items: center; gap: 6px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .attach-title svg.lucide { width: 12px; height: 12px; }
+  .attach-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 12px; background: var(--bg-3); border-radius: 8px;
+    font-size: 12.5px; cursor: pointer; margin: 0 6px 6px 0;
+    border: 1px solid var(--border); color: var(--text);
+    transition: background 0.15s, border-color 0.15s;
+    text-decoration: none; font-family: var(--font);
+  }
+  .attach-chip:hover { background: var(--card-hover); border-color: #3a3a40; }
+  .attach-chip svg.lucide { width: 14px; height: 14px; color: var(--text-dim); flex-shrink: 0; }
+  .attach-chip .attach-size { color: var(--text-faint); font-size: 11px; }
+
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--text-faint); gap: 10px; padding: 40px; text-align: center;
+  }
+  .empty svg.lucide { width: 40px; height: 40px; opacity: 0.4; }
+  .empty p { font-size: 13px; }
+
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    z-index: 50; display: none; align-items: center; justify-content: center;
+    padding: 20px; backdrop-filter: blur(4px);
+  }
+  .modal-bg.show { display: flex; }
+  .modal {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 18px; width: 100%; max-width: 640px;
+    max-height: 90vh; display: flex; flex-direction: column;
+    box-shadow: var(--shadow); animation: slideUp 0.25s ease;
+  }
+  .modal-head {
+    padding: 16px 20px; border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-head h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .modal-head h3 svg.lucide { width: 16px; height: 16px; color: var(--text-dim); }
+  .modal-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+  .modal-foot {
+    padding: 14px 22px; border-top: 1px solid var(--border-soft);
+    display: flex; gap: 8px; justify-content: flex-end;
+  }
+
+  .field-label-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .field-label-row label { margin-bottom: 0; }
+  .cc-bcc-toggle {
+    background: transparent; border: none; cursor: pointer;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-dim);
+    padding: 2px 8px; border-radius: 5px;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    transition: background 0.15s, color 0.15s;
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--font);
+  }
+  .cc-bcc-toggle:hover { background: var(--bg-3); color: var(--text); }
+  .cc-bcc-toggle svg.lucide { width: 12px; height: 12px; }
+  .cc-bcc-toggle.open svg.lucide { transform: rotate(180deg); }
+
+  .recipient-box {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    padding: 7px; background: var(--bg-2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    min-height: 40px; align-items: center;
+    transition: border-color 0.15s;
+  }
+  .recipient-box:focus-within { border-color: #444; }
+  .recipient-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 8px; background: #2a2a2e;
+    border: 1px solid #34343a;
+    border-radius: 6px; font-size: 12px; color: var(--text);
+  }
+  .recipient-chip.cc { background: #2a2e33; border-color: #343a40; }
+  .recipient-chip.bcc { background: #2e2a33; border-color: #3a3440; }
+  .recipient-chip button {
+    background: transparent; border: none; color: var(--text-dim);
+    cursor: pointer; font-size: 13px; line-height: 1; padding: 0;
+  }
+  .recipient-chip button:hover { color: var(--text); }
+  .recipient-input {
+    flex: 1; min-width: 100px; background: transparent;
+    border: none; color: var(--text); font-size: 13px;
+    font-family: var(--font); outline: none; padding: 3px;
+  }
+
+  .cc-bcc-fields {
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed var(--border);
+    animation: slideDown 0.2s ease;
+  }
+  .cc-bcc-fields.open { display: flex; }
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .suggestions {
+    position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--bg-3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); margin-top: 4px;
+    max-height: 220px; overflow-y: auto; z-index: 10;
+    box-shadow: var(--shadow);
+  }
+  .suggestion {
+    padding: 8px 12px; font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .suggestion:hover, .suggestion.active { background: var(--card-hover); }
+  .suggestion .sugg-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .suggestion .sugg-badge {
+    font-size: 10px; padding: 2px 6px; border-radius: 4px;
+    background: var(--bg-3); color: var(--text-faint);
+    border: 1px solid var(--border); flex-shrink: 0;
+  }
+
+  .editor-toolbar {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    padding: 6px; background: var(--bg-2);
+    border: 1px solid var(--border); border-bottom: none;
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    align-items: center;
+  }
+  .toolbar-btn {
+    width: 30px; height: 30px; border-radius: 6px;
+    background: transparent; border: none; color: var(--text-dim);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.12s, color 0.12s;
+  }
+  .toolbar-btn:hover { background: var(--bg-3); color: var(--text); }
+  .toolbar-btn.active { background: var(--accent-soft); color: var(--text); }
+  .toolbar-btn svg.lucide { width: 15px; height: 15px; }
+  .toolbar-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .toolbar-sep {
+    width: 1px; background: var(--border); margin: 0 4px;
+    align-self: stretch;
+  }
+  .toolbar-select {
+    height: 30px; padding: 0 8px;
+    background: transparent; border: none; color: var(--text-dim);
+    font-size: 12px; font-family: var(--font);
+    border-radius: 6px; cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .toolbar-select:hover { background: var(--bg-3); color: var(--text); }
+  .toolbar-select:focus { outline: none; color: var(--text); }
+  .toolbar-color {
+    width: 30px; height: 30px; padding: 0;
+    background: transparent; border: none; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 6px; color: var(--text-dim);
+    position: relative;
+  }
+  .toolbar-color:hover { background: var(--bg-3); color: var(--text); }
+  .toolbar-color svg.lucide { width: 15px; height: 15px; }
+  .toolbar-color input[type="color"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+
+  .editor-area {
+    width: 100%; min-height: 180px; max-height: 400px;
+    padding: 14px 16px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+    color: var(--text);
+    font-size: 14px; font-family: var(--font);
+    line-height: 1.6;
+    overflow-y: auto;
+    outline: none;
+  }
+  .editor-area:focus { border-color: #444; }
+  .editor-area:empty::before {
+    content: attr(data-placeholder);
+    color: var(--text-faint);
+    pointer-events: none;
+  }
+  .editor-area.dragover {
+    border-color: var(--accent-hover);
+    background: rgba(255,255,255,0.03);
+  }
+  .editor-area img {
+    max-width: 100%; height: auto;
+    border-radius: 6px; margin: 4px 0;
+  }
+
+  .attach-list {
+    margin-top: 8px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .attach-list:empty { display: none; }
+  .attach-list-item {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 10px; background: var(--bg-3);
+    border: 1px solid var(--border); border-radius: 7px;
+    font-size: 12px; color: var(--text);
+    max-width: 100%;
+  }
+  .attach-list-item .ali-name {
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .attach-list-item .ali-size {
+    color: var(--text-faint); font-size: 11px; flex-shrink: 0;
+  }
+  .attach-list-item .ali-remove {
+    background: transparent; border: none; color: var(--text-dim);
+    cursor: pointer; padding: 0; display: inline-flex;
+    border-radius: 4px; flex-shrink: 0;
+  }
+  .attach-list-item .ali-remove:hover { color: var(--red); }
+  .attach-list-item .ali-remove svg.lucide { width: 13px; height: 13px; }
+  .attach-list-item a { color: var(--text); text-decoration: none; }
+  .attach-list-item a:hover { text-decoration: underline; }
+
+  .upload-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 3px 8px; border-radius: 6px;
+    font-size: 11px; color: var(--text-dim);
+    background: var(--bg-3);
+  }
+  .upload-status svg.lucide { width: 12px; height: 12px; }
+  .upload-status.uploading svg.lucide { animation: spin 1s linear infinite; }
+
+  .toast-wrap {
+    position: fixed; bottom: 20px; right: 20px; z-index: 200;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    padding: 12px 16px; background: var(--bg-3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; box-shadow: var(--shadow);
+    animation: slideUp 0.25s ease; max-width: 320px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast svg.lucide { width: 15px; height: 15px; flex-shrink: 0; }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+
+  @media (max-width: 820px) {
+    .content { padding: 16px; }
+    .msg-layout { flex-direction: column; }
+    .msg-list { width: 100%; max-height: 40vh; }
+    .msg-view { min-height: 300px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><i data-lucide="graduation-cap"></i></div>
+    <h1>Smartschool</h1>
+    <p>Meld aan met je Smartschool account</p>
+    <form id="login-form">
+      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
+      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
+      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
+      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
+      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
+      <div class="login-error" id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <div class="main">
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h2>Berichten</h2>
+          <p>Je inbox en verzonden berichten</p>
+        </div>
+        <div class="page-head-actions">
+          <button class="btn-refresh-head" id="btn-refresh-list" title="Vernieuwen"><i data-lucide="refresh-cw"></i></button>
+          <button class="btn-new" id="btn-new-message"><i data-lucide="pen-square"></i> Nieuw bericht</button>
+        </div>
+      </div>
+      <div class="msg-layout">
+        <div class="msg-list" id="msg-list">
+          <div class="msg-tabs" id="msg-tabs">
+            <button class="msg-tab active" data-box="inbox"><i data-lucide="inbox"></i> Inbox</button>
+            <button class="msg-tab" data-box="outbox"><i data-lucide="send-horizontal"></i> Verzonden</button>
+            <button class="msg-tab" data-box="trash"><i data-lucide="trash-2"></i> Prullenbak</button>
+          </div>
+          <div class="msg-rows" id="msg-rows"></div>
+        </div>
+        <div class="msg-view" id="msg-view">
+          <div class="empty"><i data-lucide="mail"></i><p>Selecteer een bericht</p></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-bg" id="compose-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3><i data-lucide="pen-square"></i> Nieuw bericht</h3>
+      <button class="action-btn" id="compose-close" style="padding:6px 8px"><i data-lucide="x"></i></button>
+    </div>
+    <div class="modal-body">
+      <!-- Aan -->
+      <div class="field" style="position:relative">
+        <div class="field-label-row">
+          <label>Aan</label>
+          <button type="button" class="cc-bcc-toggle" id="cc-bcc-toggle" title="CC / BCC tonen">
+            <i data-lucide="chevron-down"></i>
+            CC / BCC
+          </button>
+        </div>
+        <div class="recipient-box" id="to-box">
+          <input class="recipient-input" id="to-input" placeholder="Zoek gebruiker..." autocomplete="off">
+        </div>
+        <div class="suggestions" id="to-suggestions" style="display:none"></div>
+      </div>
+
+      <!-- CC / BCC (verborgen by default) -->
+      <div class="cc-bcc-fields" id="cc-bcc-fields">
+        <div class="field" style="position:relative;margin-bottom:0">
+          <label>CC</label>
+          <div class="recipient-box" id="cc-box">
+            <input class="recipient-input" id="cc-input" placeholder="CC..." autocomplete="off">
+          </div>
+          <div class="suggestions" id="cc-suggestions" style="display:none"></div>
+        </div>
+        <div class="field" style="position:relative;margin-bottom:0">
+          <label>BCC</label>
+          <div class="recipient-box" id="bcc-box">
+            <input class="recipient-input" id="bcc-input" placeholder="BCC..." autocomplete="off">
+          </div>
+          <div class="suggestions" id="bcc-suggestions" style="display:none"></div>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:14px"><label>Onderwerp</label><input id="compose-subject" placeholder="Onderwerp"></div>
+      <div class="field">
+        <label>Bericht</label>
+        <div class="editor-toolbar">
+          <button type="button" class="toolbar-btn" data-cmd="bold" title="Vet"><i data-lucide="bold"></i></button>
+          <button type="button" class="toolbar-btn" data-cmd="italic" title="Cursief"><i data-lucide="italic"></i></button>
+          <button type="button" class="toolbar-btn" data-cmd="underline" title="Onderstrepen"><i data-lucide="underline"></i></button>
+          <div class="toolbar-sep"></div>
+          <select class="toolbar-select" id="toolbar-size" title="Grootte">
+            <option value="">Grootte</option>
+            <option value="1">Klein</option>
+            <option value="3">Normaal</option>
+            <option value="5">Groot</option>
+            <option value="7">Extra groot</option>
+          </select>
+          <div class="toolbar-sep"></div>
+          <label class="toolbar-color" title="Tekstkleur">
+            <i data-lucide="palette"></i>
+            <input type="color" id="toolbar-color" value="#e4e4e6">
+          </label>
+          <div class="toolbar-sep"></div>
+          <button type="button" class="toolbar-btn" id="btn-insert-image" title="Afbeelding invoegen"><i data-lucide="image"></i></button>
+          <button type="button" class="toolbar-btn" id="btn-attach-file" title="Bestand toevoegen"><i data-lucide="paperclip"></i></button>
+          <div class="toolbar-sep"></div>
+          <button type="button" class="toolbar-btn" data-cmd="removeFormat" title="Opmaak wissen"><i data-lucide="eraser"></i></button>
+          <div style="flex:1"></div>
+          <div class="upload-status" id="upload-status" style="display:none"></div>
+        </div>
+        <div class="editor-area" id="compose-body" contenteditable="true" data-placeholder="Schrijf je bericht..."></div>
+        <div class="attach-list" id="attach-list"></div>
+        <input type="file" id="file-input-image" accept="image/*" style="display:none">
+        <input type="file" id="file-input-attach" style="display:none" multiple>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="action-btn" id="compose-cancel"><i data-lucide="x"></i> Annuleren</button>
+      <button class="action-btn primary" id="compose-send"><i data-lucide="send"></i> Versturen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+'use strict';
+
+const API_BASE = 'https://smartschoolbridge.onrender.com';
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+const $  = id => document.getElementById(id);
+const $$ = (sel, root) => (root || document).querySelectorAll(sel);
+
+const ESC_MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+const ESC_RE  = /[&<>"']/g;
+const esc = s => {
+  if (s == null) return '';
+  const str = typeof s === 'string' ? s : String(s);
+  ESC_RE.lastIndex = 0;
+  if (!ESC_RE.test(str)) return str;
+  ESC_RE.lastIndex = 0;
+  return str.replace(ESC_RE, c => ESC_MAP[c]);
+};
+
+const NL_MONTHS = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+const _dateCache = new Map();
+function fmtDate(d) {
+  if (!d) return '';
+  const key = typeof d === 'string' ? d : +d;
+  let cached = _dateCache.get(key);
+  if (cached !== undefined) return cached;
+  let out = '';
+  try {
+    const dt = typeof d === 'string' ? new Date(d.replace(' ', 'T')) : new Date(d);
+    if (!isNaN(dt)) out = dt.getDate() + ' ' + NL_MONTHS[dt.getMonth()];
+    else out = String(d).split(' ')[0] || '';
+  } catch { out = ''; }
+  _dateCache.set(key, out);
+  return out;
+}
+
+function fmtBytes(bytes) {
+  if (!bytes || bytes < 0) return '';
+  const units = ['B','KiB','MiB','GiB'];
+  let i = 0, n = bytes;
+  while (n >= 1024 && i < units.length - 1) { n /= 1024; i++; }
+  return n.toFixed(n >= 10 || i === 0 ? 0 : 2) + ' ' + units[i];
+}
+
+function icon(name) { return `<i data-lucide="${name}"></i>`; }
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+/* ============================================================
+   TOASTS
+   ============================================================ */
+const toastWrap = $('toasts');
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  const ic = type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info';
+  el.innerHTML = icon(ic) + '<span>' + esc(msg) + '</span>';
+  toastWrap.appendChild(el);
+  refreshIcons();
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+const auth = {
+  creds: null, user: null,
+  encodeCreds() {
+    if (!this.creds) return null;
+    return btoa(unescape(encodeURIComponent(JSON.stringify(this.creds))));
+  },
+  setCreds(c) { this.creds = c; try { localStorage.setItem('ss_creds', JSON.stringify(c)); } catch {} },
+  tryRestore() {
+    try {
+      const raw = localStorage.getItem('ss_creds');
+      if (!raw) return false;
+      this.creds = JSON.parse(raw);
+      return true;
+    } catch { return false; }
+  },
+  clear() {
+    this.creds = null; this.user = null;
+    try { localStorage.removeItem('ss_creds'); } catch {}
+  },
+};
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {});
+  const credsHeader = auth.encodeCreds();
+  if (credsHeader) headers['X-SS-Creds'] = credsHeader;
+
+  const url = path.startsWith('http') ? path : API_BASE + path;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data.error) msg = data.error;
+    } catch {}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  const ct = res.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) return res.json();
+  if (ct.includes('application/octet-stream') || opts.raw) return res.blob();
+  return res.text();
+}
+
+function withQuery(path, params) {
+  const qs = [];
+  for (const [k, v] of Object.entries(params || {})) {
+    if (v === undefined || v === null || v === false) continue;
+    if (v === true) qs.push(`${k}=1`);
+    else qs.push(`${k}=${encodeURIComponent(v)}`);
+  }
+  if (!qs.length) return path;
+  return path + (path.includes('?') ? '&' : '?') + qs.join('&');
+}
+
+/* ============================================================
+   API
+   ============================================================ */
+const api = {
+  auth: {
+    async login({ username, password, main_url, mfa }) {
+      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+      const data = await apiFetch('/api/auth/login', { method: 'POST' });
+      auth.user = { username: data.username, main_url: data.main_url };
+      return auth.user;
+    },
+    logout() { auth.clear(); },
+  },
+  messages: {
+    async loadList(box = 'inbox') {
+      const data = await apiFetch(withQuery('/api/messages', { box }));
+      return data.messages || [];
+    },
+    async openMessage(id, box = 'inbox') {
+      return apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}`, { box }));
+    },
+    async markRead(id, box = 'inbox') {
+      return apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}/read`, { box }), { method: 'POST' });
+    },
+    async action(id, action) {
+      return apiFetch(`/api/messages/${encodeURIComponent(id)}/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+    },
+    async downloadAttachment(msgId, fileId) {
+      return apiFetch(
+        `/api/messages/${encodeURIComponent(msgId)}/attachment/${encodeURIComponent(fileId)}`,
+        { raw: true }
+      );
+    },
+    async searchUsers(q, type = 'all') {
+      const data = await apiFetch(withQuery('/api/messages/search-users', { q, type }));
+      return data.users || [];
+    },
+    async send({ subject, message_html, to, cc, bcc, attachments, send_date, draft_id }) {
+      return apiFetch('/api/messages/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject, message_html,
+          to: to || [], cc: cc || [], bcc: bcc || [],
+          attachments: attachments || [],
+          send_date: send_date || '', draft_id: draft_id || '',
+        }),
+      });
+    },
+    async uploadImage(file) {
+      const fd = new FormData();
+      fd.append('file', file);
+      return apiFetch('/api/messages/upload-smartschool', { method: 'POST', body: fd });
+    },
+    async uploadFile(file) {
+      const fd = new FormData();
+      fd.append('file', file);
+      return apiFetch('/api/messages/upload', { method: 'POST', body: fd });
+    },
+  },
+};
+
+/* ============================================================
+   DEDUPE
+   ============================================================ */
+const _inflight = new Map();
+function dedupe(key, fn) {
+  const existing = _inflight.get(key);
+  if (existing) return existing;
+  const p = Promise.resolve().then(fn).finally(() => _inflight.delete(key));
+  _inflight.set(key, p);
+  return p;
+}
+
+/* ============================================================
+   KLEUREN LICHTER MAKEN
+   ============================================================ */
+const _colorCanvas = document.createElement('canvas');
+_colorCanvas.width = 1; _colorCanvas.height = 1;
+const _colorCtx = _colorCanvas.getContext('2d');
+const _colorCache = new Map();
+
+function parseColor(str) {
+  if (!str) return null;
+  const key = String(str).trim().toLowerCase();
+  if (!key) return null;
+  if (_colorCache.has(key)) return _colorCache.get(key);
+  let result = null;
+  try {
+    _colorCtx.fillStyle = '#000';
+    _colorCtx.fillStyle = key;
+    const n = _colorCtx.fillStyle;
+    let m = n.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i);
+    if (m) result = { r: parseInt(m[1],16), g: parseInt(m[2],16), b: parseInt(m[3],16) };
+    else {
+      m = n.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+      if (m) result = { r: +m[1], g: +m[2], b: +m[3] };
+    }
+  } catch {}
+  _colorCache.set(key, result);
+  return result;
+}
+
+function rgbToHsl(r, g, b) {
+  r /= 255; g /= 255; b /= 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h *= 60;
+  }
+  return { h, s, l };
+}
+
+function hslToRgb(h, s, l) {
+  h = ((h % 360) + 360) % 360 / 360;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1/6) return p + (q - p) * 6 * t;
+      if (t < 1/2) return q;
+      if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1/3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1/3);
+  }
+  return { r: Math.round(r*255), g: Math.round(g*255), b: Math.round(b*255) };
+}
+
+function lighten(input, amount = 1.35, cap = 0.72) {
+  const c = parseColor(input);
+  if (!c) return null;
+  const { h, s, l } = rgbToHsl(c.r, c.g, c.b);
+  if (l >= cap) return null;
+  const newL = Math.min(l * amount, cap);
+  const newS = Math.min(s * 0.95, 1);
+  const rgb = hslToRgb(h, newS, newL);
+  const hh = n => n.toString(16).padStart(2, '0');
+  return '#' + hh(rgb.r) + hh(rgb.g) + hh(rgb.b);
+}
+
+const LIGHTENED_FLAG = '__ssLightened';
+
+function shouldSkip(el) {
+  if (!el || !el.closest) return false;
+  if (el.closest('.attach-wrap')) return true;
+  if (el.tagName === 'SVG' || el.tagName === 'svg') return true;
+  if (el.closest('svg')) return true;
+  if (el.closest('[data-no-lighten]')) return true;
+  if (el.closest('.action-btn')) return true;
+  return false;
+}
+
+function applyLighten() {
+  const root = document.querySelector('.msg-view-body');
+  if (!root) return;
+  for (const el of root.querySelectorAll('*')) {
+    if (el[LIGHTENED_FLAG]) continue;
+    if (shouldSkip(el)) { el[LIGHTENED_FLAG] = true; continue; }
+    const attr = el.getAttribute && el.getAttribute('color');
+    if (attr) {
+      const w = lighten(attr);
+      if (w) el.style.setProperty('color', w, 'important');
+      el.removeAttribute('color');
+      el[LIGHTENED_FLAG] = true;
+      continue;
+    }
+    const sc = el.style && el.style.color;
+    if (sc && sc !== 'inherit' && sc !== 'currentColor') {
+      const w = lighten(sc);
+      if (w) el.style.setProperty('color', w, 'important');
+      el[LIGHTENED_FLAG] = true;
+      continue;
+    }
+    try {
+      const c = window.getComputedStyle(el).color;
+      if (!c || c === 'rgba(0, 0, 0, 0)') continue;
+      const w = lighten(c);
+      if (w) el.style.setProperty('color', w, 'important');
+      el[LIGHTENED_FLAG] = true;
+    } catch {}
+  }
+  for (const s of root.querySelectorAll('style')) {
+    s.textContent = (s.textContent || '').replace(
+      /(?<![-\w])color\s*:\s*([^;{}]+?)(\s*!important)?\s*(?=[;}])/gi,
+      (m, val, imp) => {
+        const w = lighten(val.trim());
+        return w ? `color:${w}${imp || ''}` : m;
+      }
+    );
+  }
+}
+setInterval(applyLighten, 400);
+
+/* ============================================================
+   POST-PROCESS BODY
+   ============================================================ */
+function cleanMessageBody(root) {
+  if (!root) return;
+
+  // 1. Verwijder losse 📎 emoji's
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
+  const toFix = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    const txt = node.nodeValue;
+    if (!txt) continue;
+    if (txt.indexOf('📎') !== -1) toFix.push(node);
+  }
+  for (const n of toFix) {
+    let v = n.nodeValue.replace(/📎\s*/g, '').replace(/\s{2,}/g, ' ');
+    if (/^\s*Bijlagen:\s*$/i.test(v)) v = 'Bijlagen';
+    n.nodeValue = v;
+  }
+
+  // 2. Alle links in de body → nieuwe tab
+  const links = root.querySelectorAll('a[href]');
+  for (let i = 0; i < links.length; i++) {
+    const a = links[i];
+    a.setAttribute('target', '_blank');
+    a.setAttribute('rel', 'noopener noreferrer');
+  }
+}
+
+/* ============================================================
+   FORCEER ALLE LINKS IN NIEUWE TAB
+   ============================================================ */
+document.addEventListener('click', (e) => {
+  const link = e.target.closest && e.target.closest('.msg-view-body a[href]');
+  if (!link) return;
+  const href = link.getAttribute('href');
+  if (!href) return;
+  if (href.startsWith('#')) return;
+  if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  try {
+    window.open(link.href, '_blank', 'noopener,noreferrer');
+  } catch {
+    const a = document.createElement('a');
+    a.href = link.href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+}, true);
+
+/* ============================================================
+   INIT
+   ============================================================ */
+setupLogin();
+autoLogin();
+refreshIcons();
+
+function setupLogin() {
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('login-btn');
+    const err = $('login-error');
+    err.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Aanmelden...';
+    try {
+      await api.auth.login({
+        username: $('in-user').value.trim(),
+        password: $('in-pass').value,
+        main_url: $('in-url').value.trim(),
+        mfa: $('in-mfa').value.trim(),
+      });
+      onLoggedIn();
+    } catch (e) {
+      err.textContent = e.message || 'Aanmelden mislukt';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Aanmelden';
+    }
+  });
+}
+
+async function autoLogin() {
+  if (!auth.tryRestore()) return;
+  try {
+    await apiFetch('/api/auth/login', { method: 'POST' });
+    auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
+    onLoggedIn();
+  } catch { auth.clear(); }
+}
+
+function onLoggedIn() {
+  const u = auth.user || auth.creds || {};
+  const name = u.username || 'Gebruiker';
+  $('login-screen').style.display = 'none';
+  $('app').classList.add('ready');
+  setupAppEvents();
+  loadMessages('inbox');
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+let _eventsBound = false;
+function setupAppEvents() {
+  if (_eventsBound) return;
+  _eventsBound = true;
+
+  $('btn-new-message').addEventListener('click', () => openCompose());
+
+  $('btn-refresh-list').addEventListener('click', async () => {
+    const btn = $('btn-refresh-list');
+    btn.classList.add('spinning');
+    _inflight.delete('msgs:' + currentBox);
+    try {
+      await loadMessages(currentBox);
+    } finally {
+      setTimeout(() => btn.classList.remove('spinning'), 300);
+    }
+  });
+
+  $('msg-tabs').addEventListener('click', (e) => {
+    const tab = e.target.closest('.msg-tab');
+    if (!tab) return;
+    $$('.msg-tab', $('msg-tabs')).forEach(t => t.classList.toggle('active', t === tab));
+    currentBox = tab.dataset.box;
+    currentMessageId = null;
+    loadMessages(currentBox);
+    $('msg-view').innerHTML = '<div class="empty">' + icon('mail') + '<p>Selecteer een bericht</p></div>';
+    refreshIcons();
+  });
+
+  $('msg-rows').addEventListener('click', (e) => {
+    const row = e.target.closest('.msg-row');
+    if (row) openMessage(row.dataset.id);
+  });
+
+  $('msg-view').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    handleMessageAction(btn.dataset.action, btn);
+  });
+
+  $('compose-close').addEventListener('click', closeCompose);
+  $('compose-cancel').addEventListener('click', closeCompose);
+  $('compose-send').addEventListener('click', sendCompose);
+
+  // CC/BCC toggle
+  $('cc-bcc-toggle').addEventListener('click', () => {
+    const btn = $('cc-bcc-toggle');
+    const fields = $('cc-bcc-fields');
+    const open = fields.classList.toggle('open');
+    btn.classList.toggle('open', open);
+  });
+
+  setupRecipientField('to');
+  setupRecipientField('cc');
+  setupRecipientField('bcc');
+  setupEditor();
+}
+
+/* ============================================================
+   MESSAGES
+   ============================================================ */
+let currentBox = 'inbox';
+let currentMessageId = null;
+let ss_currentMessage = null;
+
+function renderSkeleton() {
+  const parts = [];
+  for (let i = 0; i < 7; i++) {
+    parts.push(
+      '<div class="skeleton-row">' +
+        '<div class="skeleton-line w60"></div>' +
+        '<div class="skeleton-line w85"></div>' +
+        '<div class="skeleton-line w40"></div>' +
+      '</div>'
+    );
+  }
+  $('msg-rows').innerHTML = parts.join('');
+}
+
+async function loadMessages(box) {
+  currentBox = box;
+  renderSkeleton();
+  try {
+    const list = await dedupe('msgs:' + box, () => api.messages.loadList(box));
+    renderMessageList(list);
+  } catch (e) {
+    toast('Berichten: ' + e.message, 'error');
+  }
+}
+
+function renderMessageList(list) {
+  const container = $('msg-rows');
+  if (!list.length) {
+    container.innerHTML = '<div class="empty" style="padding:40px 20px">' + icon('mail') + '<p>Geen berichten</p></div>';
+    refreshIcons();
+    return;
+  }
+  const parts = [];
+  for (let i = 0; i < list.length; i++) {
+    const m = list[i];
+    const isUnread = m.unread || m.is_unread;
+    const active = String(m.id) === String(currentMessageId);
+    parts.push(
+      '<div class="msg-row' + (isUnread ? ' unread' : '') + (active ? ' active' : '') + '" data-id="' + esc(m.id) + '">' +
+        '<div class="msg-from">' + esc(m.from || m.sender || 'Onbekend') + '</div>' +
+        '<div class="msg-subject">' + esc(m.subject || '(geen onderwerp)') + '</div>' +
+        '<div class="msg-date">' + fmtDate(m.date || m.timestamp) + '</div>' +
+      '</div>'
+    );
+  }
+  container.innerHTML = parts.join('');
+}
+
+function setRowUnread(id, unread) {
+  const row = document.querySelector('.msg-row[data-id="' + CSS.escape(String(id)) + '"]');
+  if (!row) return;
+  if (unread) row.classList.add('unread');
+  else row.classList.remove('unread');
+}
+
+async function openMessage(id) {
+  currentMessageId = id;
+  $$('.msg-row').forEach(r => r.classList.toggle('active', r.dataset.id === id));
+  $('msg-view').innerHTML = '<div class="empty">' + icon('mail') + '<p>Laden…</p></div>';
+  refreshIcons();
+
+  if (currentBox === 'inbox') {
+    setRowUnread(id, false);
+    api.messages.markRead(id, currentBox).catch(() => {
+      setRowUnread(id, true);
+    });
+  }
+
+  try {
+    const msg = await api.messages.openMessage(id, currentBox);
+    ss_currentMessage = msg;
+    renderMessageView(msg);
+  } catch (e) {
+    $('msg-view').innerHTML = '<div class="empty"><p style="color:var(--red)">' + esc(e.message) + '</p></div>';
+  }
+}
+
+function renderMessageView(msg) {
+  const attachments = msg.attachments || [];
+  const body = msg.body_html || msg.bodyHtml || msg.body || msg.html || '<p style="color:var(--text-dim)">Geen inhoud</p>';
+
+  const canReply  = currentBox === 'inbox';
+  const canUnread = currentBox === 'inbox';
+  const canTrash  = currentBox !== 'trash';
+
+  const bodyHasAttachList = /Bijlagen/i.test(body);
+
+  // To/CC/BCC info in de meta (als aanwezig)
+  const toVal = (msg.to || '').trim();
+  const ccVal = (msg.cc || '').trim();
+  const bccVal = (msg.bcc || '').trim();
+
+  let metaParts = [];
+  metaParts.push('<span>' + icon('user') + 'Van: <strong>' + esc(msg.sender || msg.from || 'Onbekend') + '</strong></span>');
+  if (toVal) metaParts.push('<span>' + icon('users') + 'Aan: <strong>' + esc(toVal) + '</strong></span>');
+  if (ccVal) metaParts.push('<span>' + icon('users') + 'CC: <strong>' + esc(ccVal) + '</strong></span>');
+  if (bccVal) metaParts.push('<span>' + icon('users') + 'BCC: <strong>' + esc(bccVal) + '</strong></span>');
+  metaParts.push('<span>' + icon('calendar') + esc(msg.date || '') + '</span>');
+
+  let attachHtml = '';
+  if (attachments.length && !bodyHasAttachList) {
+    const chips = [];
+    for (let i = 0; i < attachments.length; i++) {
+      const a = attachments[i];
+      chips.push(
+        '<span class="attach-chip" data-file="' + esc(a.file_id || a.id || a.fileId) + '" data-name="' + esc(a.name || a.filename || 'bestand') + '">' +
+          icon('paperclip') +
+          '<span>' + esc(a.name || a.filename || 'bestand') + '</span>' +
+          (a.size ? ' <span class="attach-size">' + esc(a.size) + '</span>' : '') +
+        '</span>'
+      );
+    }
+    attachHtml =
+      '<div class="attach-wrap" data-no-lighten>' +
+        '<div class="attach-title">' + icon('paperclip') + 'Bijlagen (' + attachments.length + ')</div>' +
+        chips.join('') +
+      '</div>';
+  }
+
+  $('msg-view').innerHTML =
+    '<div class="msg-view-head">' +
+      '<h3>' + esc(msg.subject || '(geen onderwerp)') + '</h3>' +
+      '<div class="msg-view-meta">' + metaParts.join('') + '</div>' +
+    '</div>' +
+    '<div class="msg-view-body">' + body + attachHtml + '</div>' +
+    '<div class="msg-view-actions">' +
+      (canReply  ? '<button class="action-btn primary" data-action="reply" title="Antwoorden">' + icon('reply') + '</button>' : '') +
+      (canUnread ? '<button class="action-btn" data-action="unread" title="Markeer als ongelezen">' + icon('mail') + '<span>Ongelezen</span></button>' : '') +
+      (canTrash  ? '<button class="action-btn danger" data-action="trash" title="Verwijderen">' + icon('trash-2') + '</button>' : '') +
+    '</div>';
+
+  refreshIcons();
+
+  $$('#msg-view .attach-chip').forEach(chip => {
+    chip.addEventListener('click', async () => {
+      try {
+        const blob = await api.messages.downloadAttachment(currentMessageId, chip.dataset.file);
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = chip.dataset.name || 'bijlage';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast('Download gestart', 'success');
+      } catch (e) {
+        toast('Download mislukt: ' + e.message, 'error');
+      }
+    });
+  });
+
+  fixRelativeImages($('msg-view'));
+  cleanMessageBody($('.msg-view-body'));
+  applyLighten();
+  refreshIcons();
+}
+
+async function handleMessageAction(action, btn) {
+  const id = currentMessageId;
+  if (!id) return;
+  if (action === 'reply') {
+    const msg = ss_currentMessage || {};
+    openCompose(msg.sender || msg.from, 'Re: ' + (msg.subject || ''));
+    return;
+  }
+
+  if (action === 'unread') {
+    setRowUnread(id, true);
+    toast('Gemarkeerd als ongelezen', 'success');
+    api.messages.action(id, action).catch((e) => {
+      setRowUnread(id, false);
+      toast(e.message, 'error');
+    });
+    return;
+  }
+
+  if (action === 'trash') {
+    const row = document.querySelector('.msg-row[data-id="' + CSS.escape(String(id)) + '"]');
+    if (row) row.remove();
+    $('msg-view').innerHTML = '<div class="empty">' + icon('mail') + '<p>Selecteer een bericht</p></div>';
+    refreshIcons();
+    toast('Verwijderd', 'success');
+    currentMessageId = null;
+    api.messages.action(id, action).catch((e) => {
+      toast(e.message, 'error');
+      _inflight.delete('msgs:' + currentBox);
+      loadMessages(currentBox);
+    });
+    return;
+  }
+}
+
+/* ============================================================
+   COMPOSE
+   ============================================================ */
+const composeState = {
+  to: [],
+  cc: [],
+  bcc: [],
+  attachments: [],
+};
+
+/**
+ * Universele recipient field setup voor 'to', 'cc', 'bcc'.
+ */
+function setupRecipientField(field) {
+  const input = $(field + '-input');
+  const sugg = $(field + '-suggestions');
+  const box = $(field + '-box');
+  let timer = null;
+  let currentResults = [];
+  let activeIndex = -1;
+
+  function renderSuggestions(list) {
+    if (!list.length) { sugg.style.display = 'none'; sugg.innerHTML = ''; return; }
+    const parts = [];
+    for (let i = 0; i < list.length; i++) {
+      const u = list[i];
+      const badge = u.is_co_account ? 'ouder' : (u.type_label || '');
+      parts.push(
+        '<div class="suggestion' + (i === activeIndex ? ' active' : '') + '" data-index="' + i + '">' +
+          '<span class="sugg-name">' + esc(u.name || u.user_id) + '</span>' +
+          (badge ? '<span class="sugg-badge">' + esc(badge) + '</span>' : '') +
+        '</div>'
+      );
+    }
+    sugg.innerHTML = parts.join('');
+    sugg.style.display = 'block';
+  }
+
+  function pickUser(u) {
+    if (!u) return;
+    const list = composeState[field];
+    if (list.some(x => String(x.user_id) === String(u.user_id))) {
+      toast('Al toegevoegd', 'error');
+      return;
+    }
+    list.push({
+      user_id: u.user_id,
+      name: u.name,
+      is_co_account: !!u.is_co_account,
+      ss_id: u.ss_id,
+    });
+    input.value = '';
+    sugg.style.display = 'none';
+    activeIndex = -1;
+    renderRecipients(field);
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    activeIndex = -1;
+    const q = input.value.trim();
+    if (q.length < 2) { sugg.style.display = 'none'; return; }
+    timer = setTimeout(async () => {
+      try {
+        const users = await api.messages.searchUsers(q, 'all');
+        currentResults = users.slice(0, 10);
+        renderSuggestions(currentResults);
+      } catch {
+        sugg.style.display = 'none';
+      }
+    }, 200);
+  });
+
+  sugg.addEventListener('click', (e) => {
+    const el = e.target.closest('.suggestion');
+    if (!el) return;
+    const idx = parseInt(el.dataset.index, 10);
+    pickUser(currentResults[idx]);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (sugg.style.display !== 'block') return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      activeIndex = Math.min(activeIndex + 1, currentResults.length - 1);
+      renderSuggestions(currentResults);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+      renderSuggestions(currentResults);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIndex >= 0 && currentResults[activeIndex]) pickUser(currentResults[activeIndex]);
+      else if (currentResults[0]) pickUser(currentResults[0]);
+    } else if (e.key === 'Escape') {
+      sugg.style.display = 'none';
+      activeIndex = -1;
+    }
+  });
+
+  input.addEventListener('blur', () => {
+    setTimeout(() => { sugg.style.display = 'none'; }, 150);
+  });
+}
+
+function renderRecipients(field) {
+  const box = $(field + '-box');
+  const input = $(field + '-input');
+  box.querySelectorAll('.recipient-chip').forEach(c => c.remove());
+  const list = composeState[field];
+  for (let i = 0; i < list.length; i++) {
+    const r = list[i];
+    const chip = document.createElement('span');
+    chip.className = 'recipient-chip' + (field === 'cc' ? ' cc' : '') + (field === 'bcc' ? ' bcc' : '');
+    chip.innerHTML = esc(r.name || r.user_id) + ' <button data-i="' + i + '">×</button>';
+    chip.querySelector('button').addEventListener('click', () => {
+      list.splice(i, 1);
+      renderRecipients(field);
+    });
+    box.insertBefore(chip, input);
+  }
+}
+
+/* ============================================================
+   RICH TEXT EDITOR
+   ============================================================ */
+function setupEditor() {
+  const editor = $('compose-body');
+
+  $$('.editor-toolbar .toolbar-btn[data-cmd]').forEach(btn => {
+    btn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      const cmd = btn.dataset.cmd;
+      if (!cmd) return;
+      try { document.execCommand(cmd, false, null); } catch {}
+      editor.focus();
+      updateToolbarState();
+    });
+  });
+
+  const sizeSel = $('toolbar-size');
+  sizeSel.addEventListener('change', () => {
+    const val = sizeSel.value;
+    if (!val) return;
+    editor.focus();
+    try { document.execCommand('fontSize', false, val); } catch {}
+    sizeSel.value = '';
+    updateToolbarState();
+  });
+
+  const colorInput = $('toolbar-color');
+  colorInput.addEventListener('input', () => {
+    editor.focus();
+    try { document.execCommand('foreColor', false, colorInput.value); } catch {}
+    updateToolbarState();
+  });
+
+  editor.addEventListener('keyup', updateToolbarState);
+  editor.addEventListener('mouseup', updateToolbarState);
+  editor.addEventListener('input', updateToolbarState);
+
+  editor.addEventListener('paste', (e) => {
+    const items = e.clipboardData?.items || [];
+    for (const item of items) {
+      if (item.type && item.type.startsWith('image/')) {
+        e.preventDefault();
+        const file = item.getAsFile();
+        if (file) uploadAndInsertImage(file);
+        return;
+      }
+    }
+    e.preventDefault();
+    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    try { document.execCommand('insertText', false, text); } catch {}
+  });
+
+  editor.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    editor.classList.add('dragover');
+  });
+  editor.addEventListener('dragleave', () => editor.classList.remove('dragover'));
+  editor.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    editor.classList.remove('dragover');
+    const files = Array.from(e.dataTransfer.files || []);
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        await uploadAndInsertImage(file);
+      } else {
+        await uploadAndAttachFile(file);
+      }
+    }
+  });
+
+  $('btn-insert-image').addEventListener('click', () => {
+    $('file-input-image').click();
+  });
+  $('file-input-image').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const f of files) await uploadAndInsertImage(f);
+  });
+
+  $('btn-attach-file').addEventListener('click', () => {
+    $('file-input-attach').click();
+  });
+  $('file-input-attach').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const f of files) await uploadAndAttachFile(f);
+  });
+}
+
+function updateToolbarState() {
+  const cmds = ['bold','italic','underline'];
+  for (const cmd of cmds) {
+    const btn = document.querySelector('.toolbar-btn[data-cmd="' + cmd + '"]');
+    if (!btn) continue;
+    try {
+      const isActive = document.queryCommandState(cmd);
+      btn.classList.toggle('active', isActive);
+    } catch {}
+  }
+}
+
+/* ============================================================
+   UPLOADS
+   ============================================================ */
+let _uploadCount = 0;
+function setUploadStatus(text) {
+  const el = $('upload-status');
+  if (!text) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'inline-flex';
+  el.innerHTML = icon('loader') + '<span>' + esc(text) + '</span>';
+  el.classList.add('uploading');
+  refreshIcons();
+}
+function clearUploadStatus() {
+  const el = $('upload-status');
+  el.style.display = 'none';
+  el.classList.remove('uploading');
+  el.innerHTML = '';
+}
+
+async function uploadAndInsertImage(file) {
+  _uploadCount++;
+  setUploadStatus('Afbeelding uploaden…');
+  try {
+    const data = await api.messages.uploadImage(file);
+    if (!data || !data.ok || !data.url) {
+      throw new Error(data?.error || 'upload mislukt');
+    }
+    const editor = $('compose-body');
+    editor.focus();
+    const img = document.createElement('img');
+    img.src = data.url;
+    img.alt = data.filename || file.name || 'afbeelding';
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && editor.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      range.insertNode(img);
+      range.setStartAfter(img);
+      range.setEndAfter(img);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } else {
+      editor.appendChild(img);
+    }
+    toast('Afbeelding toegevoegd', 'success');
+  } catch (e) {
+    toast('Afbeelding mislukt: ' + e.message, 'error');
+  } finally {
+    _uploadCount--;
+    if (_uploadCount <= 0) clearUploadStatus();
+  }
+}
+
+async function uploadAndAttachFile(file) {
+  _uploadCount++;
+  setUploadStatus('Bestand uploaden…');
+  try {
+    const data = await api.messages.uploadFile(file);
+    if (!data || !data.ok || !data.url) {
+      throw new Error(data?.error || 'upload mislukt');
+    }
+    composeState.attachments.push({
+      url: data.url,
+      filename: data.filename || file.name || 'bestand',
+      size: data.size || file.size || 0,
+      is_image: !!data.is_image,
+    });
+    renderAttachments();
+    toast('Bestand toegevoegd', 'success');
+  } catch (e) {
+    toast('Bestand mislukt: ' + e.message, 'error');
+  } finally {
+    _uploadCount--;
+    if (_uploadCount <= 0) clearUploadStatus();
+  }
+}
+
+function renderAttachments() {
+  const wrap = $('attach-list');
+  if (!composeState.attachments.length) {
+    wrap.innerHTML = '';
+    return;
+  }
+  const parts = [];
+  for (let i = 0; i < composeState.attachments.length; i++) {
+    const a = composeState.attachments[i];
+    parts.push(
+      '<div class="attach-list-item">' +
+        icon('paperclip') +
+        '<span class="ali-name"><a href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">' + esc(a.filename) + '</a></span>' +
+        (a.size ? '<span class="ali-size">' + fmtBytes(a.size) + '</span>' : '') +
+        '<button class="ali-remove" data-i="' + i + '" title="Verwijderen">' + icon('x') + '</button>' +
+      '</div>'
+    );
+  }
+  wrap.innerHTML = parts.join('');
+  refreshIcons();
+  wrap.querySelectorAll('.ali-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = parseInt(btn.dataset.i, 10);
+      composeState.attachments.splice(i, 1);
+      renderAttachments();
+    });
+  });
+}
+
+/* ============================================================
+   COMPOSE OPEN/CLOSE/SEND
+   ============================================================ */
+function openCompose(to, subject) {
+  composeState.to = [];
+  composeState.cc = [];
+  composeState.bcc = [];
+  composeState.attachments = [];
+  if (to) composeState.to.push({ user_id: to, name: to });
+  $('compose-subject').value = subject || '';
+  const editor = $('compose-body');
+  editor.innerHTML = '';
+  $('to-input').value = '';
+  $('cc-input').value = '';
+  $('bcc-input').value = '';
+  $('to-suggestions').style.display = 'none';
+  $('cc-suggestions').style.display = 'none';
+  $('bcc-suggestions').style.display = 'none';
+  // Sluit CC/BCC standaard
+  $('cc-bcc-fields').classList.remove('open');
+  $('cc-bcc-toggle').classList.remove('open');
+  renderRecipients('to');
+  renderRecipients('cc');
+  renderRecipients('bcc');
+  renderAttachments();
+  clearUploadStatus();
+  $('compose-modal').classList.add('show');
+  refreshIcons();
+  requestAnimationFrame(() => $('to-input').focus());
+}
+
+function closeCompose() {
+  composeState.to = [];
+  composeState.cc = [];
+  composeState.bcc = [];
+  composeState.attachments = [];
+  $('compose-modal').classList.remove('show');
+  $('to-suggestions').style.display = 'none';
+  $('cc-suggestions').style.display = 'none';
+  $('bcc-suggestions').style.display = 'none';
+  clearUploadStatus();
+}
+
+async function sendCompose() {
+  const subject = $('compose-subject').value.trim();
+  const editor = $('compose-body');
+  const html = editor.innerHTML.trim();
+  const plain = editor.textContent.trim();
+
+  if (!composeState.to.length) return toast('Voeg een ontvanger toe', 'error');
+  if (!subject) return toast('Onderwerp is verplicht', 'error');
+  if (!plain) return toast('Bericht is leeg', 'error');
+
+  const btn = $('compose-send');
+  btn.disabled = true;
+  btn.innerHTML = icon('loader') + ' Versturen...';
+  refreshIcons();
+  try {
+    await api.messages.send({
+      subject,
+      message_html: html,
+      to: composeState.to,
+      cc: composeState.cc,
+      bcc: composeState.bcc,
+      attachments: composeState.attachments.map(a => ({
+        url: a.url, filename: a.filename,
+      })),
+    });
+    toast('Bericht verstuurd', 'success');
+    closeCompose();
+    if (currentBox === 'outbox') {
+      _inflight.delete('msgs:outbox');
+      loadMessages('outbox');
+    }
+  } catch (e) {
+    toast('Versturen mislukt: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = icon('send') + ' Versturen';
+    refreshIcons();
+  }
+}
+
+/* ============================================================
+   KEYBOARD
+   ============================================================ */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    $('compose-modal').classList.remove('show');
+  }
+});
+
+/* ============================================================
+   IMAGE FIX
+   ============================================================ */
+function fixRelativeImages(root) {
+  if (!root) return;
+  let host = '';
+  try {
+    host = (auth.creds?.main_url || '').replace(/^https?:\/\//, '').replace(/\/+$/, '');
+  } catch {}
+  if (!host) return;
+  const imgs = root.querySelectorAll('img[src]');
+  for (let i = 0; i < imgs.length; i++) {
+    const img = imgs[i];
+    const src = img.getAttribute('src');
+    if (!src || /^(https?:|data:|blob:|\/\/)/i.test(src)) continue;
+    img.src = 'https://' + host + (src[0] === '/' ? src : '/' + src);
+  }
+}
+</script>
+</body>
+</html>
