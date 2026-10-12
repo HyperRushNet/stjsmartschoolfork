@@ -40,6 +40,7 @@
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
   }
+  body.overlay-open { overflow: hidden; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -559,11 +560,66 @@
   .toast.error { border-color: var(--red); color: var(--red); }
   .toast.success { border-color: var(--green); color: var(--green); }
 
+  /* ============================================================
+     MOBILE OVERLAY VOOR BERICHT
+     ============================================================ */
+  .msg-view-close {
+    display: none;
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--bg-3); color: var(--text);
+    border: 1px solid var(--border);
+    align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .msg-view-close:hover { background: var(--card-hover); border-color: #3a3a40; }
+  .msg-view-close svg.lucide { width: 18px; height: 18px; }
+
   @media (max-width: 820px) {
     .content { padding: 16px; }
     .msg-layout { flex-direction: column; }
-    .msg-list { width: 100%; max-height: 40vh; }
-    .msg-view { min-height: 300px; }
+    .msg-list { width: 100%; flex: 1; max-height: none; }
+
+    /* Het bericht wordt een fullscreen overlay */
+    .msg-view {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      border-radius: 0;
+      border: none;
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+      pointer-events: none;
+      opacity: 0;
+    }
+    .msg-view.mobile-open {
+      transform: translateY(0);
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .msg-view.mobile-open .msg-view-close { display: inline-flex; }
+    .msg-view-head {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 16px 14px 16px;
+      padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    }
+    .msg-view-head-inner { flex: 1; min-width: 0; }
+    .msg-view-head h3 { font-size: 16px; margin-bottom: 8px; }
+    .msg-view-meta { font-size: 12px; gap: 10px; }
+    .msg-view-body { padding: 16px; font-size: 13.5px; }
+    .msg-view-actions {
+      padding: 10px 12px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+  }
+
+  @media (min-width: 821px) {
+    .msg-view-close { display: none !important; }
+  }
+
+  @media (max-width: 820px) {
+    .page-head h2 { font-size: 19px; }
+    .btn-new span, .btn-new { padding: 8px 10px; font-size: 12px; }
   }
 </style>
 </head>
@@ -752,6 +808,8 @@ function refreshIcons() {
   }
 }
 
+const isMobile = () => window.matchMedia('(max-width: 820px)').matches;
+
 /* ============================================================
    TOASTS
    ============================================================ */
@@ -787,6 +845,7 @@ const auth = {
   clear() {
     this.creds = null; this.user = null;
     try { localStorage.removeItem('ss_creds'); } catch {}
+    msgCache.clear();
   },
 };
 
@@ -825,6 +884,41 @@ function withQuery(path, params) {
 }
 
 /* ============================================================
+   CACHE VOOR BERICHTEN
+   ============================================================ */
+const CACHE_TTL = 5 * 60 * 1000; // 5 minuten
+
+class MessageCache {
+  constructor() {
+    this._lists = new Map();   // box -> { data, ts }
+    this._items = new Map();   // box:id -> { data, ts }
+  }
+  getList(box) {
+    const e = this._lists.get(box);
+    if (!e) return null;
+    if (Date.now() - e.ts > CACHE_TTL) { this._lists.delete(box); return null; }
+    return e.data;
+  }
+  setList(box, data) {
+    this._lists.set(box, { data, ts: Date.now() });
+  }
+  getItem(box, id) {
+    const key = box + ':' + id;
+    const e = this._items.get(key);
+    if (!e) return null;
+    if (Date.now() - e.ts > CACHE_TTL) { this._items.delete(key); return null; }
+    return e.data;
+  }
+  setItem(box, id, data) {
+    this._items.set(box + ':' + id, { data, ts: Date.now() });
+  }
+  invalidateList(box) { this._lists.delete(box); }
+  invalidateItem(box, id) { this._items.delete(box + ':' + id); }
+  clear() { this._lists.clear(); this._items.clear(); }
+}
+const msgCache = new MessageCache();
+
+/* ============================================================
    API
    ============================================================ */
 const api = {
@@ -838,22 +932,46 @@ const api = {
     logout() { auth.clear(); },
   },
   messages: {
-    async loadList(box = 'inbox') {
+    async loadList(box = 'inbox', force = false) {
+      if (!force) {
+        const cached = msgCache.getList(box);
+        if (cached) return cached;
+      }
       const data = await apiFetch(withQuery('/api/messages', { box }));
-      return data.messages || [];
+      const list = data.messages || [];
+      msgCache.setList(box, list);
+      return list;
     },
-    async openMessage(id, box = 'inbox') {
-      return apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}`, { box }));
+    async openMessage(id, box = 'inbox', force = false) {
+      if (!force) {
+        const cached = msgCache.getItem(box, id);
+        if (cached) return cached;
+      }
+      const data = await apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}`, { box }));
+      msgCache.setItem(box, id, data);
+      return data;
     },
     async markRead(id, box = 'inbox') {
-      return apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}/read`, { box }), { method: 'POST' });
+      const res = await apiFetch(withQuery(`/api/messages/${encodeURIComponent(id)}/read`, { box }), { method: 'POST' });
+      // Update cache: markeer als gelezen in lijst + item
+      const cachedList = msgCache.getList(box);
+      if (cachedList) {
+        const m = cachedList.find(x => String(x.id) === String(id));
+        if (m) { m.unread = false; m.is_unread = false; }
+      }
+      const cachedItem = msgCache.getItem(box, id);
+      if (cachedItem) cachedItem.unread = false;
+      return res;
     },
     async action(id, action) {
-      return apiFetch(`/api/messages/${encodeURIComponent(id)}/action`, {
+      const res = await apiFetch(`/api/messages/${encodeURIComponent(id)}/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
+      msgCache.invalidateList(currentBox);
+      msgCache.invalidateItem(currentBox, id);
+      return res;
     },
     async downloadAttachment(msgId, fileId) {
       return apiFetch(
@@ -866,7 +984,7 @@ const api = {
       return data.users || [];
     },
     async send({ subject, message_html, to, cc, bcc, attachments, send_date, draft_id }) {
-      return apiFetch('/api/messages/send', {
+      const res = await apiFetch('/api/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -876,6 +994,9 @@ const api = {
           send_date: send_date || '', draft_id: draft_id || '',
         }),
       });
+      msgCache.invalidateList('outbox');
+      msgCache.invalidateList('inbox');
+      return res;
     },
     async uploadImage(file) {
       const fd = new FormData();
@@ -1042,7 +1163,6 @@ setInterval(applyLighten, 400);
 function cleanMessageBody(root) {
   if (!root) return;
 
-  // 1. Verwijder losse 📎 emoji's
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
   const toFix = [];
   let node;
@@ -1057,7 +1177,6 @@ function cleanMessageBody(root) {
     n.nodeValue = v;
   }
 
-  // 2. Alle links in de body → nieuwe tab
   const links = root.querySelectorAll('a[href]');
   for (let i = 0; i < links.length; i++) {
     const a = links[i];
@@ -1136,7 +1255,6 @@ async function autoLogin() {
 
 function onLoggedIn() {
   const u = auth.user || auth.creds || {};
-  const name = u.username || 'Gebruiker';
   $('login-screen').style.display = 'none';
   $('app').classList.add('ready');
   setupAppEvents();
@@ -1156,9 +1274,11 @@ function setupAppEvents() {
   $('btn-refresh-list').addEventListener('click', async () => {
     const btn = $('btn-refresh-list');
     btn.classList.add('spinning');
+    // Forceer verse fetch
+    msgCache.invalidateList(currentBox);
     _inflight.delete('msgs:' + currentBox);
     try {
-      await loadMessages(currentBox);
+      await loadMessages(currentBox, true);
     } finally {
       setTimeout(() => btn.classList.remove('spinning'), 300);
     }
@@ -1170,9 +1290,9 @@ function setupAppEvents() {
     $$('.msg-tab', $('msg-tabs')).forEach(t => t.classList.toggle('active', t === tab));
     currentBox = tab.dataset.box;
     currentMessageId = null;
+    closeMessageView(); // sluit overlay op mobiel
     loadMessages(currentBox);
-    $('msg-view').innerHTML = '<div class="empty">' + icon('mail') + '<p>Selecteer een bericht</p></div>';
-    refreshIcons();
+    renderEmptyView();
   });
 
   $('msg-rows').addEventListener('click', (e) => {
@@ -1181,6 +1301,11 @@ function setupAppEvents() {
   });
 
   $('msg-view').addEventListener('click', (e) => {
+    // Sluitknop op mobiel
+    if (e.target.closest('.msg-view-close')) {
+      closeMessageView();
+      return;
+    }
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
     handleMessageAction(btn.dataset.action, btn);
@@ -1190,7 +1315,6 @@ function setupAppEvents() {
   $('compose-cancel').addEventListener('click', closeCompose);
   $('compose-send').addEventListener('click', sendCompose);
 
-  // CC/BCC toggle
   $('cc-bcc-toggle').addEventListener('click', () => {
     const btn = $('cc-bcc-toggle');
     const fields = $('cc-bcc-fields');
@@ -1211,6 +1335,14 @@ let currentBox = 'inbox';
 let currentMessageId = null;
 let ss_currentMessage = null;
 
+function renderEmptyView() {
+  $('msg-view').innerHTML =
+    '<div class="empty">' + icon('mail') + '<p>Selecteer een bericht</p></div>';
+  refreshIcons();
+  $('msg-view').classList.remove('mobile-open');
+  document.body.classList.remove('overlay-open');
+}
+
 function renderSkeleton() {
   const parts = [];
   for (let i = 0; i < 7; i++) {
@@ -1225,14 +1357,24 @@ function renderSkeleton() {
   $('msg-rows').innerHTML = parts.join('');
 }
 
-async function loadMessages(box) {
+async function loadMessages(box, force = false) {
   currentBox = box;
-  renderSkeleton();
+
+  // Met cache: toon meteen oude data, en update op de achtergrond
+  const cached = !force && msgCache.getList(box);
+  if (cached) {
+    renderMessageList(cached);
+  } else {
+    renderSkeleton();
+  }
+
   try {
-    const list = await dedupe('msgs:' + box, () => api.messages.loadList(box));
+    const list = await dedupe('msgs:' + box + (force ? ':force' : ''), () =>
+      api.messages.loadList(box, force)
+    );
     renderMessageList(list);
   } catch (e) {
-    toast('Berichten: ' + e.message, 'error');
+    if (!cached) toast('Berichten: ' + e.message, 'error');
   }
 }
 
@@ -1266,11 +1408,32 @@ function setRowUnread(id, unread) {
   else row.classList.remove('unread');
 }
 
+function closeMessageView() {
+  const view = $('msg-view');
+  view.classList.remove('mobile-open');
+  document.body.classList.remove('overlay-open');
+}
+
 async function openMessage(id) {
   currentMessageId = id;
   $$('.msg-row').forEach(r => r.classList.toggle('active', r.dataset.id === id));
-  $('msg-view').innerHTML = '<div class="empty">' + icon('mail') + '<p>Laden…</p></div>';
-  refreshIcons();
+
+  // Op mobiel: toon overlay meteen
+  const view = $('msg-view');
+  if (isMobile()) {
+    view.classList.add('mobile-open');
+    document.body.classList.add('overlay-open');
+  }
+
+  // Toon cached bericht indien beschikbaar (instant)
+  const cachedMsg = msgCache.getItem(currentBox, id);
+  if (cachedMsg) {
+    ss_currentMessage = cachedMsg;
+    renderMessageView(cachedMsg);
+  } else {
+    view.innerHTML = '<div class="empty">' + icon('mail') + '<p>Laden…</p></div>';
+    refreshIcons();
+  }
 
   if (currentBox === 'inbox') {
     setRowUnread(id, false);
@@ -1284,7 +1447,10 @@ async function openMessage(id) {
     ss_currentMessage = msg;
     renderMessageView(msg);
   } catch (e) {
-    $('msg-view').innerHTML = '<div class="empty"><p style="color:var(--red)">' + esc(e.message) + '</p></div>';
+    if (!cachedMsg) {
+      view.innerHTML = '<div class="empty"><p style="color:var(--red)">' + esc(e.message) + '</p></div>';
+      refreshIcons();
+    }
   }
 }
 
@@ -1298,7 +1464,6 @@ function renderMessageView(msg) {
 
   const bodyHasAttachList = /Bijlagen/i.test(body);
 
-  // To/CC/BCC info in de meta (als aanwezig)
   const toVal = (msg.to || '').trim();
   const ccVal = (msg.cc || '').trim();
   const bccVal = (msg.bcc || '').trim();
@@ -1332,8 +1497,11 @@ function renderMessageView(msg) {
 
   $('msg-view').innerHTML =
     '<div class="msg-view-head">' +
-      '<h3>' + esc(msg.subject || '(geen onderwerp)') + '</h3>' +
-      '<div class="msg-view-meta">' + metaParts.join('') + '</div>' +
+      '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
+      '<div class="msg-view-head-inner">' +
+        '<h3>' + esc(msg.subject || '(geen onderwerp)') + '</h3>' +
+        '<div class="msg-view-meta">' + metaParts.join('') + '</div>' +
+      '</div>' +
     '</div>' +
     '<div class="msg-view-body">' + body + attachHtml + '</div>' +
     '<div class="msg-view-actions">' +
@@ -1388,14 +1556,14 @@ async function handleMessageAction(action, btn) {
   if (action === 'trash') {
     const row = document.querySelector('.msg-row[data-id="' + CSS.escape(String(id)) + '"]');
     if (row) row.remove();
-    $('msg-view').innerHTML = '<div class="empty">' + icon('mail') + '<p>Selecteer een bericht</p></div>';
-    refreshIcons();
+    closeMessageView();
+    renderEmptyView();
     toast('Verwijderd', 'success');
     currentMessageId = null;
     api.messages.action(id, action).catch((e) => {
       toast(e.message, 'error');
       _inflight.delete('msgs:' + currentBox);
-      loadMessages(currentBox);
+      loadMessages(currentBox, true);
     });
     return;
   }
@@ -1411,9 +1579,6 @@ const composeState = {
   attachments: [],
 };
 
-/**
- * Universele recipient field setup voor 'to', 'cc', 'bcc'.
- */
 function setupRecipientField(field) {
   const input = $(field + '-input');
   const sugg = $(field + '-suggestions');
@@ -1750,7 +1915,6 @@ function openCompose(to, subject) {
   $('to-suggestions').style.display = 'none';
   $('cc-suggestions').style.display = 'none';
   $('bcc-suggestions').style.display = 'none';
-  // Sluit CC/BCC standaard
   $('cc-bcc-fields').classList.remove('open');
   $('cc-bcc-toggle').classList.remove('open');
   renderRecipients('to');
@@ -1804,7 +1968,7 @@ async function sendCompose() {
     closeCompose();
     if (currentBox === 'outbox') {
       _inflight.delete('msgs:outbox');
-      loadMessages('outbox');
+      loadMessages('outbox', true);
     }
   } catch (e) {
     toast('Versturen mislukt: ' + e.message, 'error');
@@ -1821,6 +1985,9 @@ async function sendCompose() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     $('compose-modal').classList.remove('show');
+    if (isMobile() && $('msg-view').classList.contains('mobile-open')) {
+      closeMessageView();
+    }
   }
 });
 
@@ -1842,6 +2009,15 @@ function fixRelativeImages(root) {
     img.src = 'https://' + host + (src[0] === '/' ? src : '/' + src);
   }
 }
+
+/* ============================================================
+   RESIZE: sluit overlay als we naar desktop gaan
+   ============================================================ */
+window.addEventListener('resize', () => {
+  if (!isMobile()) {
+    closeMessageView();
+  }
+});
 </script>
 </body>
 </html>
