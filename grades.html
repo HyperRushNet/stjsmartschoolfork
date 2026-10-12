@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Smartschool Cijfers</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --bg:         #0d0d0f;
+    --bg-2:       #121214;
+    --bg-3:       #1a1a1d;
+    --card:       #141416;
+    --card-hover: #1c1c1f;
+    --border:     #262629;
+    --border-soft:#1d1d20;
+    --text:       #e4e4e6;
+    --text-dim:   #8a8a8e;
+    --text-faint: #5a5a5e;
+    --accent:     #2e2e33;
+    --accent-hover:#3a3a40;
+    --accent-soft: rgba(255,255,255,0.05);
+    --green:      #4ade80;
+    --red:        #f87171;
+    --yellow:     #fbbf24;
+    --orange:     #fb923c;
+    --blue:       #60a5fa;
+    --red-soft:   rgba(248,113,113,0.12);
+    --green-soft: rgba(74,222,128,0.14);
+    --radius:     14px;
+    --radius-sm:  9px;
+    --shadow:     0 4px 24px rgba(0,0,0,0.55);
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+
+    --badge: 44px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+  }
+  body.overlay-open { overflow: hidden; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333338; }
+
+  svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
+
+  #login-screen {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
+    padding: 20px;
+  }
+  .login-card {
+    width: 100%; max-width: 400px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px 32px;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.4s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .login-logo {
+    width: 52px; height: 52px; border-radius: 14px;
+    background: #2a2a2e;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text); margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
+  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input {
+    width: 100%; padding: 11px 14px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  .field input::placeholder { color: var(--text-faint); }
+  .btn {
+    width: 100%; padding: 12px;
+    background: #2a2a2e; color: var(--text);
+    border: 1px solid #34343a;
+    border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; font-family: var(--font);
+    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
+  }
+  .btn:hover { background: #35353a; border-color: #3f3f45; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
+  .login-error.show { display: block; }
+
+  #app { display: none; height: 100vh; flex-direction: column; }
+  #app.ready { display: flex; }
+
+  .main { flex: 1; display: flex; overflow: hidden; }
+  .content { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; }
+
+  .page-head {
+    margin-bottom: 20px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    flex-shrink: 0;
+  }
+  .page-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .page-head p { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
+
+  .page-head-actions {
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .btn-refresh-head {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: #2a2a2e; color: var(--text-dim);
+    border: 1px solid #34343a;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s;
+    flex-shrink: 0;
+  }
+  .btn-refresh-head:hover { background: #35353a; border-color: #3f3f45; color: var(--text); }
+  .btn-refresh-head svg.lucide { width: 16px; height: 16px; }
+  .btn-refresh-head.spinning svg.lucide { animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ============================================================
+     MODE INDICATOR — geen knoppen, enkel visueel
+     ============================================================ */
+  .mode-tabs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    padding: 4px;
+    width: fit-content;
+    flex-shrink: 0;
+  }
+  .mode-tab {
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font);
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 0.18s, color 0.18s;
+    white-space: nowrap;
+  }
+  .mode-tab svg.lucide { width: 14px; height: 14px; }
+  .mode-tab:hover { color: var(--text); }
+  .mode-tab.active {
+    background: var(--accent);
+    color: var(--text);
+  }
+
+  /* ============================================================
+     SWIPE WRAP
+     ============================================================ */
+  .swipe-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .swipe-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+  .swipe-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    padding-left: 1px;
+  }
+
+  /* ============================================================
+     GRADES
+     ============================================================ */
+  .grades-list {
+    display: flex; flex-direction: column; gap: 8px;
+  }
+
+  /* Modus "recent": platte lijst van evaluaties */
+  .flat-eval {
+    background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.12s;
+  }
+  .flat-eval:hover { border-color: var(--border); background: var(--bg-3); }
+
+  .flat-info { flex: 1; min-width: 0; }
+  .flat-name {
+    font-size: 13.5px; font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .flat-course {
+    font-size: 12px; color: var(--text-dim);
+    margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .flat-meta {
+    font-size: 11.5px; color: var(--text-faint);
+    margin-top: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .flat-chevron { color: var(--text-faint); flex-shrink: 0; }
+  .flat-chevron svg.lucide { width: 14px; height: 14px; }
+
+  /* Modus "per vak": kaarten (alles ingeklapt by default) */
+  .course-card {
+    background: var(--card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .course-card:hover { border-color: var(--border); }
+
+  .course-head {
+    padding: 14px 18px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .course-head:hover { background: var(--bg-3); }
+
+  .course-info { flex: 1; min-width: 0; }
+  .course-name {
+    font-size: 14.5px; font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .course-meta {
+    font-size: 12px; color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .course-toggle {
+    width: 28px; height: 28px; border-radius: 7px;
+    background: transparent; border: none; color: var(--text-faint);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .course-toggle:hover { background: var(--bg-3); color: var(--text); }
+  .course-toggle svg.lucide { width: 16px; height: 16px; transition: transform 0.2s; }
+  .course-card.collapsed .course-toggle svg.lucide { transform: rotate(-90deg); }
+
+  .course-body {
+    border-top: 1px solid var(--border-soft);
+  }
+  .course-card.collapsed .course-body { display: none; }
+
+  .eval-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 18px;
+    border-bottom: 1px solid var(--border-soft);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .eval-row:last-child { border-bottom: none; }
+  .eval-row:hover { background: var(--bg-3); }
+
+  .eval-info { flex: 1; min-width: 0; }
+  .eval-name {
+    font-size: 13px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .eval-meta {
+    font-size: 11.5px; color: var(--text-faint);
+    margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .eval-chevron { color: var(--text-faint); flex-shrink: 0; }
+  .eval-chevron svg.lucide { width: 14px; height: 14px; }
+
+  /* ============================================================
+     RONDE BADGE — overal dezelfde grootte
+     ============================================================ */
+  .round-badge {
+    width: var(--badge);
+    height: var(--badge);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    border: 2px solid;
+    flex-shrink: 0;
+    line-height: 1;
+    text-align: center;
+    padding: 0 2px;
+  }
+
+  .score-red    { color: var(--red);    border-color: rgba(248,113,113,0.40); background: rgba(248,113,113,0.10); }
+  .score-orange { color: var(--orange); border-color: rgba(251,146,60,0.40);  background: rgba(251,146,60,0.10); }
+  .score-yellow { color: var(--yellow); border-color: rgba(251,191,36,0.40);  background: rgba(251,191,36,0.10); }
+  .score-green  { color: var(--green);  border-color: rgba(74,222,128,0.40);  background: rgba(74,222,128,0.10); }
+  .score-blue   { color: var(--blue);   border-color: rgba(96,165,250,0.40);  background: rgba(96,165,250,0.10); }
+  .score-neutral{ color: var(--text-dim); border-color: var(--border);       background: var(--bg-3); }
+
+  /* ============================================================
+     DETAIL OVERLAY
+     ============================================================ */
+  .detail-overlay {
+    position: fixed; inset: 0;
+    z-index: 60;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .detail-overlay.open { opacity: 1; pointer-events: auto; }
+  .detail-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 100%; max-width: 480px;
+    max-height: 85vh;
+    display: flex; flex-direction: column;
+    box-shadow: var(--shadow);
+    transform: translateY(12px);
+    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .detail-overlay.open .detail-card { transform: translateY(0); }
+
+  .detail-head {
+    padding: 18px 20px 16px;
+    border-bottom: 1px solid var(--border-soft);
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .detail-head-inner { flex: 1; min-width: 0; }
+  .detail-type {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-dim);
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-bottom: 6px;
+  }
+  .detail-type svg.lucide { width: 12px; height: 12px; }
+  .detail-title {
+    font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
+    line-height: 1.35; word-break: break-word;
+  }
+  .detail-close {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--bg-3); color: var(--text-dim);
+    border: 1px solid var(--border);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+    transition: background 0.15s, color 0.15s;
+  }
+  .detail-close:hover { background: var(--card-hover); color: var(--text); }
+  .detail-close svg.lucide { width: 16px; height: 16px; }
+
+  .detail-body {
+    padding: 18px 20px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 13.5px; line-height: 1.7;
+  }
+
+  .detail-score-big {
+    display: flex; align-items: center; gap: 16px;
+    padding: 16px;
+    background: var(--bg-3);
+    border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+  }
+  .detail-score-big .dsb-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 800;
+    border: 3px solid;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-align: center;
+    padding: 0 4px;
+  }
+  .detail-score-big .dsb-info { flex: 1; min-width: 0; }
+  .detail-score-big .dsb-label {
+    font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-faint);
+    font-weight: 700;
+  }
+  .detail-score-big .dsb-pct {
+    font-size: 15px; font-weight: 700;
+    color: var(--text); margin-top: 2px;
+  }
+
+  .detail-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 0;
+    font-size: 13px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row svg.lucide { width: 14px; height: 14px; color: var(--text-faint); flex-shrink: 0; }
+  .detail-row strong { color: var(--text); font-weight: 600; }
+  .detail-row .dr-label {
+    color: var(--text-faint); font-size: 11.5px;
+    text-transform: uppercase; letter-spacing: 0.05em;
+    min-width: 85px;
+  }
+
+  .detail-section {
+    margin-top: 16px; padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .detail-section-title {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .detail-section-title svg.lucide { width: 12px; height: 12px; }
+
+  .comment-box {
+    background: var(--bg-3);
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--yellow);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 13px; line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .comment-box:last-child { margin-bottom: 0; }
+
+  .ct-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 10px;
+    background: var(--bg-3);
+    border-radius: 8px;
+    margin-bottom: 6px;
+    font-size: 12.5px;
+  }
+  .ct-row:last-child { margin-bottom: 0; }
+  .ct-info { flex: 1; min-width: 0; }
+  .ct-label {
+    color: var(--text);
+    text-transform: capitalize;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .ct-raw {
+    color: var(--text-faint);
+    font-size: 11.5px;
+    margin-top: 1px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ct-value {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+  }
+
+  /* ============================================================
+     EMPTY / SKELETON
+     ============================================================ */
+  .empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; color: var(--text-faint); gap: 10px; padding: 60px 20px; text-align: center;
+  }
+  .empty svg.lucide { width: 40px; height: 40px; opacity: 0.4; }
+  .empty p { font-size: 13px; }
+
+  .skeleton-card {
+    height: 76px;
+    border-radius: var(--radius);
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.03) 0%,
+      rgba(255,255,255,0.07) 50%,
+      rgba(255,255,255,0.03) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ============================================================
+     TOASTS
+     ============================================================ */
+  .toast-wrap {
+    position: fixed; bottom: 20px; right: 20px; z-index: 200;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    padding: 12px 16px; background: var(--bg-3);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 13px; box-shadow: var(--shadow);
+    animation: slideUp 0.25s ease; max-width: 320px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast svg.lucide { width: 15px; height: 15px; flex-shrink: 0; }
+  .toast.error { border-color: var(--red); color: var(--red); }
+  .toast.success { border-color: var(--green); color: var(--green); }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 820px) {
+    :root { --badge: 40px; }
+    .content { padding: 16px; }
+    .page-head h2 { font-size: 19px; }
+    .detail-overlay { padding: 0; }
+    .detail-card {
+      max-width: none; max-height: 100vh; height: 100vh;
+      border-radius: 0; border: none;
+    }
+    .detail-head { padding-top: calc(18px + env(safe-area-inset-top, 0px)); }
+    .detail-body { padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo"><i data-lucide="graduation-cap"></i></div>
+    <h1>Smartschool</h1>
+    <p>Meld aan met je Smartschool account</p>
+    <form id="login-form">
+      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
+      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
+      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
+      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
+      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
+      <div class="login-error" id="login-error"></div>
+    </form>
+  </div>
+</div>
+
+<div id="app">
+  <div class="main">
+    <main class="content">
+      <div class="page-head">
+        <div>
+          <h2>Cijfers</h2>
+          <p id="grades-subtitle">Je resultaten</p>
+        </div>
+        <div class="page-head-actions">
+          <button class="btn-refresh-head" id="btn-refresh-grades" title="Vernieuwen"><i data-lucide="refresh-cw"></i></button>
+        </div>
+      </div>
+
+      <div class="mode-tabs">
+        <button class="mode-tab active" data-mode="recent">
+          <i data-lucide="clock"></i>
+          <span>Recent</span>
+        </button>
+        <button class="mode-tab" data-mode="courses">
+          <i data-lucide="layers"></i>
+          <span>Per vak</span>
+        </button>
+      </div>
+
+      <div class="swipe-viewport" id="swipe-viewport">
+        <div class="swipe-track" id="swipe-track">
+          <div class="swipe-slide" id="slide-recent"></div>
+          <div class="swipe-slide" id="slide-courses"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<div class="detail-overlay" id="detail-overlay">
+  <div class="detail-card">
+    <div class="detail-head">
+      <div class="detail-head-inner">
+        <div class="detail-type" id="detail-type"></div>
+        <div class="detail-title" id="detail-title"></div>
+      </div>
+      <button class="detail-close" id="detail-close" title="Sluiten"><i data-lucide="x"></i></button>
+    </div>
+    <div class="detail-body" id="detail-body"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+'use strict';
+
+const API_BASE = 'https://smartschoolbridge.onrender.com';
+
+const $  = id => document.getElementById(id);
+const $$ = (sel, root) => (root || document).querySelectorAll(sel);
+
+const ESC_MAP = { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' };
+const ESC_RE  = /[&<>"']/g;
+const esc = s => {
+  if (s == null) return '';
+  const str = typeof s === 'string' ? s : String(s);
+  ESC_RE.lastIndex = 0;
+  if (!ESC_RE.test(str)) return str;
+  ESC_RE.lastIndex = 0;
+  return str.replace(ESC_RE, c => ESC_MAP[c]);
+};
+
+const NL_MONTHS = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+
+function icon(name) { return `<i data-lucide="${name}"></i>`; }
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+const toastWrap = $('toasts');
+function toast(msg, type = '') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  const ic = type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info';
+  el.innerHTML = icon(ic) + '<span>' + esc(msg) + '</span>';
+  toastWrap.appendChild(el);
+  refreshIcons();
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+/* AUTH */
+const auth = {
+  creds: null, user: null,
+  encodeCreds() {
+    if (!this.creds) return null;
+    return btoa(unescape(encodeURIComponent(JSON.stringify(this.creds))));
+  },
+  setCreds(c) { this.creds = c; try { localStorage.setItem('ss_creds', JSON.stringify(c)); } catch {} },
+  tryRestore() {
+    try {
+      const raw = localStorage.getItem('ss_creds');
+      if (!raw) return false;
+      this.creds = JSON.parse(raw);
+      return true;
+    } catch { return false; }
+  },
+  clear() {
+    this.creds = null; this.user = null;
+    try { localStorage.removeItem('ss_creds'); } catch {}
+  },
+};
+
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {});
+  const credsHeader = auth.encodeCreds();
+  if (credsHeader) headers['X-SS-Creds'] = credsHeader;
+
+  const url = path.startsWith('http') ? path : API_BASE + path;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data.error) msg = data.error;
+    } catch {}
+    throw new Error(msg);
+  }
+  if (res.status === 204) return null;
+  const ct = res.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) return res.json();
+  return res.text();
+}
+
+function withQuery(path, params) {
+  const qs = [];
+  for (const [k, v] of Object.entries(params || {})) {
+    if (v === undefined || v === null || v === false) continue;
+    if (v === true) qs.push(`${k}=1`);
+    else qs.push(`${k}=${encodeURIComponent(v)}`);
+  }
+  if (!qs.length) return path;
+  return path + (path.includes('?') ? '&' : '?') + qs.join('&');
+}
+
+const api = {
+  auth: {
+    async login({ username, password, main_url, mfa }) {
+      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+      const data = await apiFetch('/api/auth/login', { method: 'POST' });
+      auth.user = { username: data.username, main_url: data.main_url };
+      return auth.user;
+    },
+  },
+  grades: {
+    async load(refresh = false) {
+      return apiFetch(withQuery('/api/grades', { refresh: refresh ? 1 : 0 }));
+    },
+    async evalDetail(id) {
+      return apiFetch('/api/grades/evaluation/' + encodeURIComponent(id));
+    },
+  },
+};
+
+/* ============================================================
+   SCORE → PERCENTAGE + KLEUR
+   ============================================================ */
+function pctFromScore(score, percentage) {
+  if (score !== undefined && score !== null && score !== '?') {
+    const s = String(score).replace(',', '.').trim();
+    const slash = s.match(/^([\d.]+)\s*\/\s*([\d.]+)$/);
+    if (slash) {
+      const a = parseFloat(slash[1]);
+      const b = parseFloat(slash[2]);
+      if (!isNaN(a) && !isNaN(b) && b !== 0) return (a / b) * 100;
+    }
+    const n = parseFloat(s);
+    if (!isNaN(n)) {
+      if (n <= 10) return n * 10;
+      if (n <= 20) return n * 5;
+      if (n <= 100) return n;
+    }
+  }
+  if (typeof percentage === 'number') {
+    let pct = percentage;
+    if (pct <= 1) pct *= 100;
+    if (pct <= 10) pct *= 10;
+    if (pct <= 20) pct *= 5;
+    return pct;
+  }
+  return null;
+}
+
+function pctClass(pct) {
+  if (pct === null) return 'score-neutral';
+  if (pct >= 80) return 'score-green';
+  if (pct >= 65) return 'score-blue';
+  if (pct >= 50) return 'score-yellow';
+  if (pct >= 35) return 'score-orange';
+  return 'score-red';
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let gradesData = null;
+const collapsed = new Set();   // per vak: standaard ingeklapt → we vullen bij met alle ids
+let allCourses = [];
+
+// Actieve modus: 'recent' of 'courses'
+let currentMode = 'recent';   // standaard = 'recent'
+const MODES = ['recent', 'courses'];
+
+/* ============================================================
+   MODE / SWIPE
+   ============================================================ */
+function setMode(mode, animate = true) {
+  if (!MODES.includes(mode)) return;
+  currentMode = mode;
+
+  // Update tab UI
+  $$('.mode-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.mode === mode);
+  });
+
+  // Schuif de track
+  const idx = MODES.indexOf(mode);
+  const track = $('swipe-track');
+  track.style.transition = animate ? 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
+  track.style.transform = `translateX(${-idx * 100}%)`;
+}
+
+function setupModeSwitcher() {
+  // Klik op tabs
+  $$('.mode-tab').forEach(t => {
+    t.addEventListener('click', () => setMode(t.dataset.mode));
+  });
+
+  // Toetsenbord ← →
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') return;
+    if ($('detail-overlay').classList.contains('open')) return;
+    // Niet ingrijpen in inputs
+    const tag = (e.target && e.target.tagName) || '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+
+    if (e.key === 'ArrowRight') {
+      const idx = MODES.indexOf(currentMode);
+      if (idx < MODES.length - 1) setMode(MODES[idx + 1]);
+    } else if (e.key === 'ArrowLeft') {
+      const idx = MODES.indexOf(currentMode);
+      if (idx > 0) setMode(MODES[idx - 1]);
+    }
+  });
+
+  // Touch-swipe op de viewport
+  const viewport = $('swipe-viewport');
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchActive = false;
+  let touchDelta = 0;
+  let locked = false;   // of we horizontaal swipen
+
+  viewport.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) return;
+    touchActive = true;
+    locked = false;
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDelta = 0;
+    const track = $('swipe-track');
+    track.style.transition = 'none';
+  }, { passive: true });
+
+  viewport.addEventListener('touchmove', (e) => {
+    if (!touchActive) return;
+    const dx = e.touches[0].clientX - touchStartX;
+    const dy = e.touches[0].clientY - touchStartY;
+
+    if (!locked) {
+      // Bepaal richting: horizontaal als |dx| > |dy| + 6px
+      if (Math.abs(dx) > Math.abs(dy) + 6) {
+        locked = true;
+      } else if (Math.abs(dy) > 6) {
+        touchActive = false;
+        setMode(currentMode, false);
+        return;
+      } else {
+        return;
+      }
+    }
+
+    touchDelta = dx;
+    const idx = MODES.indexOf(currentMode);
+    const basePx = -idx * viewport.clientWidth;
+    // Weerstand aan de uiteinden
+    let effective = dx;
+    if ((idx === 0 && dx > 0) || (idx === MODES.length - 1 && dx < 0)) {
+      effective = dx * 0.25;
+    }
+    const track = $('swipe-track');
+    track.style.transform = `translateX(${basePx + effective}px)`;
+  }, { passive: true });
+
+  viewport.addEventListener('touchend', (e) => {
+    if (!touchActive) return;
+    touchActive = false;
+    const dx = touchDelta;
+    const threshold = Math.min(80, viewport.clientWidth * 0.2);
+
+    if (locked && Math.abs(dx) > threshold) {
+      const idx = MODES.indexOf(currentMode);
+      if (dx < 0 && idx < MODES.length - 1) {
+        setMode(MODES[idx + 1]);
+      } else if (dx > 0 && idx > 0) {
+        setMode(MODES[idx - 1]);
+      } else {
+        setMode(currentMode);
+      }
+    } else {
+      setMode(currentMode);
+    }
+    locked = false;
+    touchDelta = 0;
+  }, { passive: true });
+
+  viewport.addEventListener('touchcancel', () => {
+    touchActive = false;
+    locked = false;
+    touchDelta = 0;
+    setMode(currentMode);
+  }, { passive: true });
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function renderAll() {
+  if (!gradesData) return;
+  allCourses = gradesData.courses || [];
+
+  // Standaard: alle vakken ingeklapt
+  // (collapsed-vulling: als de set leeg is, vul met alle course-ids)
+  if (collapsed.size === 0) {
+    for (const c of allCourses) collapsed.add(c.course_id);
+  }
+
+  renderRecent();
+  renderCourses();
+  updateSubtitle(gradesData);
+}
+
+/* ---------- Modus: Recent (platte lijst) ---------- */
+function renderRecent() {
+  const slide = $('slide-recent');
+
+  // Verzamel alle evaluaties, sorteer op datum (nieuwste eerst)
+  const all = [];
+  for (const c of allCourses) {
+    for (const e of (c.evaluations || [])) {
+      all.push({ ...e, _course: c.course_name, _course_id: c.course_id });
+    }
+  }
+  all.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  if (!all.length) {
+    slide.innerHTML = '<div class="empty">' + icon('graduation-cap') + '<p>Geen cijfers</p></div>';
+    refreshIcons();
+    return;
+  }
+
+  const parts = [];
+  for (const e of all) {
+    const pct = pctFromScore(e.score, e.percentage);
+    const cls = pctClass(pct);
+    const badgeLabel = pct !== null ? Math.round(pct) : '—';
+    const metaParts = [];
+    if (e.date) metaParts.push(fmtDate(e.date));
+    if (e.component) metaParts.push(e.component);
+
+    parts.push(
+      '<div class="flat-eval" data-id="' + esc(e.id) + '">' +
+        '<div class="round-badge ' + cls + '">' + esc(badgeLabel) + '</div>' +
+        '<div class="flat-info">' +
+          '<div class="flat-name">' + esc(e.name || 'Zonder naam') + '</div>' +
+          '<div class="flat-course">' + esc(e._course || '') + '</div>' +
+          (metaParts.length ? '<div class="flat-meta">' + esc(metaParts.join(' · ')) + '</div>' : '') +
+        '</div>' +
+        '<div class="flat-chevron">' + icon('chevron-right') + '</div>' +
+      '</div>'
+    );
+  }
+  slide.innerHTML = '<div class="grades-list">' + parts.join('') + '</div>';
+  refreshIcons();
+
+  slide.querySelectorAll('.flat-eval').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.dataset.id;
+      if (id) openEvalDetail(id);
+    });
+  });
+}
+
+/* ---------- Modus: Per vak (kaarten, alles ingeklapt) ---------- */
+function renderCourses() {
+  const slide = $('slide-courses');
+
+  if (!allCourses.length) {
+    slide.innerHTML = '<div class="empty">' + icon('layers') + '<p>Geen cijfers</p></div>';
+    refreshIcons();
+    return;
+  }
+
+  const parts = [];
+  for (const c of allCourses) {
+    const evals = c.evaluations || [];
+
+    // Gemiddelde van dit vak → percentage
+    let sum = 0, cnt = 0;
+    for (const e of evals) {
+      const p = pctFromScore(e.score, e.percentage);
+      if (p !== null) { sum += p; cnt++; }
+    }
+    const avgPct = cnt ? sum / cnt : null;
+    const avgCls = pctClass(avgPct);
+    const avgLabel = avgPct !== null ? Math.round(avgPct) : '—';
+
+    const isCollapsed = collapsed.has(c.course_id);
+
+    // Eval rows — gesorteerd nieuwste eerst
+    const sorted = evals.slice().sort((a, b) =>
+      (b.date || '').localeCompare(a.date || ''));
+
+    let evalsHtml = '';
+    for (const e of sorted) {
+      const pct = pctFromScore(e.score, e.percentage);
+      const cls = pctClass(pct);
+      const badgeLabel = pct !== null ? Math.round(pct) : '—';
+      const metaParts = [];
+      if (e.date) metaParts.push(fmtDate(e.date));
+      if (e.component) metaParts.push(e.component);
+      evalsHtml +=
+        '<div class="eval-row" data-id="' + esc(e.id) + '">' +
+          '<div class="round-badge ' + cls + '">' + esc(badgeLabel) + '</div>' +
+          '<div class="eval-info">' +
+            '<div class="eval-name">' + esc(e.name || 'Zonder naam') + '</div>' +
+            (metaParts.length ? '<div class="eval-meta">' + esc(metaParts.join(' · ')) + '</div>' : '') +
+          '</div>' +
+          '<div class="eval-chevron">' + icon('chevron-right') + '</div>' +
+        '</div>';
+    }
+
+    parts.push(
+      '<div class="course-card' + (isCollapsed ? ' collapsed' : '') + '" data-course="' + esc(c.course_id) + '">' +
+        '<div class="course-head">' +
+          '<div class="round-badge ' + avgCls + '">' + avgLabel + '</div>' +
+          '<div class="course-info">' +
+            '<div class="course-name">' + esc(c.course_name) + '</div>' +
+            '<div class="course-meta">' + evals.length + ' evaluatie' + (evals.length === 1 ? '' : 's') + '</div>' +
+          '</div>' +
+          '<button class="course-toggle" title="In-/uitklappen">' + icon('chevron-down') + '</button>' +
+        '</div>' +
+        '<div class="course-body">' + evalsHtml + '</div>' +
+      '</div>'
+    );
+  }
+  slide.innerHTML = '<div class="grades-list">' + parts.join('') + '</div>';
+  refreshIcons();
+
+  slide.querySelectorAll('.course-head').forEach(head => {
+    head.addEventListener('click', (e) => {
+      if (e.target.closest('.course-toggle')) return;
+      toggleCourse(head.closest('.course-card'));
+    });
+  });
+  slide.querySelectorAll('.course-toggle').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleCourse(btn.closest('.course-card'));
+    });
+  });
+  slide.querySelectorAll('.eval-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const id = row.dataset.id;
+      if (id) openEvalDetail(id);
+    });
+  });
+}
+
+function toggleCourse(card) {
+  if (!card) return;
+  card.classList.toggle('collapsed');
+  const cid = card.dataset.course;
+  if (card.classList.contains('collapsed')) collapsed.add(cid);
+  else collapsed.delete(cid);
+}
+
+function fmtDate(s) {
+  if (!s) return '';
+  const parts = s.split('-');
+  if (parts.length !== 3) return s;
+  const m = parseInt(parts[1], 10) - 1;
+  if (m < 0 || m > 11) return s;
+  return parseInt(parts[2], 10) + ' ' + NL_MONTHS[m];
+}
+
+/* ============================================================
+   EVAL DETAIL
+   ============================================================ */
+async function openEvalDetail(id) {
+  $('detail-type').innerHTML = icon('file-text') + 'Evaluatie';
+  $('detail-title').textContent = 'Laden…';
+  $('detail-body').innerHTML = '<div class="empty" style="padding:20px">' + icon('loader') + '</div>';
+  $('detail-overlay').classList.add('open');
+  document.body.classList.add('overlay-open');
+  refreshIcons();
+
+  let base = null;
+  for (const c of allCourses) {
+    const e = (c.evaluations || []).find(x => String(x.id) === String(id));
+    if (e) { base = e; break; }
+  }
+
+  try {
+    const detail = await api.grades.evalDetail(id);
+    renderEvalDetail(base, detail);
+  } catch (e) {
+    renderEvalDetail(base, null, e.message);
+  }
+}
+
+function renderEvalDetail(base, detail, errorMsg) {
+  if (!base && !detail) {
+    $('detail-title').textContent = 'Niet gevonden';
+    $('detail-body').innerHTML = '<p style="color:var(--red)">' +
+      esc(errorMsg || 'Evaluatie niet gevonden') + '</p>';
+    return;
+  }
+
+  const name = base?.name || detail?.name || 'Evaluatie';
+  $('detail-title').textContent = name;
+
+  const rawScore = base?.score ?? detail?.score ?? '?';
+  const pct = pctFromScore(rawScore, base?.percentage ?? detail?.percentage);
+  const cls = pct !== null ? pctClass(pct) : 'score-neutral';
+
+  let bodyHtml =
+    '<div class="detail-score-big">' +
+      '<div class="dsb-circle ' + cls + '">' + esc(rawScore) + '</div>' +
+      '<div class="dsb-info">' +
+        '<div class="dsb-label">Resultaat</div>' +
+        '<div class="dsb-pct">' +
+          (pct !== null ? Math.round(pct) + '%' : '—') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+  const rows = [];
+  if (base?.course) rows.push(row('book-open', 'Vak', base.course));
+  if (base?.teacher && base.teacher !== '?') rows.push(row('user', 'Leerkracht', base.teacher));
+  if (base?.date) rows.push(row('calendar', 'Datum', base.date));
+  if (base?.period) rows.push(row('clock', 'Periode', base.period));
+  if (base?.component) rows.push(row('tag', 'Component', base.component));
+  if (base?.does_count === false) rows.push(row('info', 'Telt mee', 'Nee'));
+  if (rows.length) bodyHtml += rows.join('');
+
+  const cts = (detail?.central_tendencies) || (base?.central_tendencies) || [];
+  if (cts.length) {
+    bodyHtml += '<div class="detail-section">' +
+      '<div class="detail-section-title">' + icon('bar-chart-3') + 'Vergelijking</div>';
+    for (const t of cts) {
+      const g = t.graphic || {};
+      const ctRaw = t.score ?? g.description ?? '?';
+      const ctPctRaw = (t.percentage !== undefined && t.percentage !== null)
+        ? t.percentage
+        : (g.value !== undefined && g.value !== null ? g.value : null);
+      const tp = pctFromScore(ctRaw, ctPctRaw);
+      const tcls = tp !== null ? pctClass(tp) : 'score-neutral';
+      const badgeLabel = tp !== null ? Math.round(tp) : '—';
+      bodyHtml +=
+        '<div class="ct-row">' +
+          '<div class="round-badge ' + tcls + '">' + esc(badgeLabel) + '</div>' +
+          '<div class="ct-info">' +
+            '<div class="ct-label">' + esc(t.type || '') + '</div>' +
+            (ctRaw !== '?' ? '<div class="ct-raw">' + esc(ctRaw) + '</div>' : '') +
+          '</div>' +
+          '<div class="ct-value">' + (tp !== null ? Math.round(tp) + '%' : '') + '</div>' +
+        '</div>';
+    }
+    bodyHtml += '</div>';
+  }
+
+  const comments = (detail?.comments || base?.comments || []);
+  if (comments.length) {
+    bodyHtml += '<div class="detail-section">' +
+      '<div class="detail-section-title">' + icon('message-square') + 'Commentaar</div>';
+    for (const c of comments) {
+      bodyHtml += '<div class="comment-box">' + esc(c) + '</div>';
+    }
+    bodyHtml += '</div>';
+  }
+
+  if (errorMsg) {
+    bodyHtml += '<div class="detail-section" style="color:var(--red)">' + esc(errorMsg) + '</div>';
+  }
+
+  $('detail-body').innerHTML = bodyHtml;
+  refreshIcons();
+}
+
+function row(iconName, label, value) {
+  return '<div class="detail-row">' + icon(iconName) +
+    '<span class="dr-label">' + esc(label) + '</span>' +
+    '<strong>' + esc(value) + '</strong></div>';
+}
+
+function closeDetail() {
+  $('detail-overlay').classList.remove('open');
+  document.body.classList.remove('overlay-open');
+}
+
+/* ============================================================
+   LOAD
+   ============================================================ */
+async function loadGrades(refresh = false) {
+  renderSkeleton();
+  try {
+    const data = await api.grades.load(refresh);
+    gradesData = data;
+    // Reset collapsed-state bij nieuwe data
+    if (!refresh) {
+      // Enkel als het écht nieuwe data is
+    }
+    renderAll();
+  } catch (e) {
+    toast('Cijfers: ' + e.message, 'error');
+    $('slide-recent').innerHTML =
+      '<div class="empty">' + icon('alert-circle') +
+      '<p>' + esc(e.message) + '</p></div>';
+    $('slide-courses').innerHTML = '';
+    refreshIcons();
+  }
+}
+
+function renderSkeleton() {
+  const parts = [];
+  for (let i = 0; i < 6; i++) parts.push('<div class="skeleton-card"></div>');
+  const html = '<div class="grades-list">' + parts.join('') + '</div>';
+  $('slide-recent').innerHTML = html;
+  $('slide-courses').innerHTML = html;
+}
+
+function updateSubtitle(data) {
+  const n = data.total_evaluations ?? 0;
+  const c = data.total_courses ?? 0;
+  const sub = $('grades-subtitle');
+  if (n || c) {
+    sub.textContent = c + ' vakken · ' + n + ' evaluaties';
+  } else {
+    sub.textContent = 'Je resultaten';
+  }
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+function setupLogin() {
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = $('login-btn');
+    const err = $('login-error');
+    err.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Aanmelden...';
+    try {
+      await api.auth.login({
+        username: $('in-user').value.trim(),
+        password: $('in-pass').value,
+        main_url: $('in-url').value.trim(),
+        mfa: $('in-mfa').value.trim(),
+      });
+      onLoggedIn();
+    } catch (e) {
+      err.textContent = e.message || 'Aanmelden mislukt';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Aanmelden';
+    }
+  });
+}
+
+async function autoLogin() {
+  if (!auth.tryRestore()) return;
+  try {
+    await apiFetch('/api/auth/login', { method: 'POST' });
+    auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
+    onLoggedIn();
+  } catch { auth.clear(); }
+}
+
+function onLoggedIn() {
+  $('login-screen').style.display = 'none';
+  $('app').classList.add('ready');
+  setupAppEvents();
+  setupModeSwitcher();
+  setMode('recent', false);   // standaard
+  loadGrades(false);
+}
+
+let _eventsBound = false;
+function setupAppEvents() {
+  if (_eventsBound) return;
+  _eventsBound = true;
+
+  $('btn-refresh-grades').addEventListener('click', async () => {
+    const btn = $('btn-refresh-grades');
+    btn.classList.add('spinning');
+    try { await loadGrades(true); }
+    finally { setTimeout(() => btn.classList.remove('spinning'), 300); }
+  });
+
+  $('detail-close').addEventListener('click', closeDetail);
+  $('detail-overlay').addEventListener('click', (e) => {
+    if (e.target === $('detail-overlay')) closeDetail();
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDetail();
+});
+
+/* Resize: herbereken de track-offset */
+window.addEventListener('resize', () => {
+  setMode(currentMode, false);
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+setupLogin();
+autoLogin();
+refreshIcons();
+</script>
+</body>
+</html>
