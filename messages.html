@@ -720,10 +720,10 @@
           <div class="toolbar-sep"></div>
           <select class="toolbar-select" id="toolbar-size" title="Grootte">
             <option value="">Grootte</option>
-            <option value="1">Klein</option>
-            <option value="3">Normaal</option>
-            <option value="5">Groot</option>
-            <option value="7">Extra groot</option>
+            <option value="12">Klein (12px)</option>
+            <option value="14">Normaal (14px)</option>
+            <option value="18">Groot (18px)</option>
+            <option value="24">Extra groot (24px)</option>
           </select>
           <div class="toolbar-sep"></div>
           <label class="toolbar-color" title="Tekstkleur">
@@ -1683,8 +1683,10 @@ function renderRecipients(field) {
 }
 
 /* ============================================================
-   RICH TEXT EDITOR — MET WERKENDE OPMAAK
+   RICH TEXT EDITOR — ALLES MET <span>
    ============================================================ */
+
+// Bewaar de laatst geselecteerde range in de editor
 let savedRange = null;
 
 function saveEditorRange() {
@@ -1712,28 +1714,326 @@ function restoreEditorRange() {
   }
 }
 
-function execFormat(cmd, value = null) {
+/**
+ * Verzamel alle tekstknopen binnen een range.
+ */
+function getTextNodesInRange(range) {
+  const root = range.commonAncestorContainer;
+  const nodes = [];
+  if (root.nodeType === Node.TEXT_NODE) {
+    nodes.push(root);
+    return nodes;
+  }
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      if (!node.nodeValue || !node.nodeValue.length) return NodeFilter.FILTER_REJECT;
+      if (!range.intersectsNode(node)) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  let n;
+  while ((n = walker.nextNode())) nodes.push(n);
+  return nodes;
+}
+
+/**
+ * Splits een tekstknoop op zodat [start, end] exact overeenkomt met de
+ * geselecteerde tekens. Retourneert de nieuwe tekstknoop met de selectie.
+ */
+function splitTextNode(node, start, end) {
+  if (start > 0) node = node.splitText(start);
+  if (end - start < node.nodeValue.length) node.splitText(end - start);
+  return node;
+}
+
+/**
+   Voeg een <span> toe rond de selectie. Als de hele selectie al binnen
+   een span met exact dezelfde stijl zit, wordt die stijl verwijderd (toggle).
+ */
+function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
+  const editor = $('compose-body');
+  if (!editor) return;
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  const textNodes = getTextNodesInRange(range);
+  if (!textNodes.length) return;
+
+  // Check of alle nodes al dezelfde stijl hebben → toggle uit
+  if (toggleOff !== null) {
+    let allMatch = true;
+    for (const tn of textNodes) {
+      let el = tn.parentElement;
+      let found = false;
+      while (el && el !== editor) {
+        if (el.tagName === 'SPAN' && el.style[toggleOff.styleProp] === toggleOff.styleValue) {
+          found = true;
+          break;
+        }
+        el = el.parentElement;
+      }
+      if (!found) { allMatch = false; break; }
+    }
+    if (allMatch) {
+      removeStyleFromSelection(toggleOff.styleProp, toggleOff.styleValue);
+      return;
+    }
+  }
+
+  // Splits de eerste en laatste tekstknoop zodat de selectie exact klopt
+  const firstNode = textNodes[0];
+  const lastNode = textNodes[textNodes.length - 1];
+  let startOffset = (firstNode === range.startContainer) ? range.startOffset : 0;
+  let endOffset = (lastNode === range.endContainer) ? range.endOffset : lastNode.nodeValue.length;
+
+  const startNode = splitTextNode(firstNode, startOffset, endOffset === firstNode.nodeValue.length ? firstNode.nodeValue.length : endOffset);
+  // Na split: de daadwerkelijke nodes opnieuw verzamelen
+  const rangeNodes = getTextNodesInRange((() => {
+    const r = document.createRange();
+    r.setStart(startNode, 0);
+    r.setEnd(lastNode === firstNode ? startNode : lastNode, endOffset);
+    return r;
+  })());
+
+  // Voor elke tekstknoop: wrap in een span
+  const spans = [];
+  for (const tn of rangeNodes) {
+    if (!tn.parentNode) continue;
+    // Als de parent al een span is met dezelfde stijl, sla over
+    const parent = tn.parentElement;
+    if (parent && parent !== editor && parent.tagName === 'SPAN' &&
+        parent.style[styleProp] === styleValue &&
+        parent.childNodes.length === 1) {
+      spans.push(parent);
+      continue;
+    }
+    const span = document.createElement('span');
+    span.style[styleProp] = styleValue;
+    tn.parentNode.insertBefore(span, tn);
+    span.appendChild(tn);
+    spans.push(span);
+  }
+
+  // Selectie herstellen over alle nieuwe spans
+  if (spans.length) {
+    const newRange = document.createRange();
+    newRange.setStartBefore(spans[0]);
+    newRange.setEndAfter(spans[spans.length - 1]);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    savedRange = newRange.cloneRange();
+  }
+
+  // Normaliseer: voeg spans samen als ze dezelfde stijl hebben
+  normalizeSpans(editor);
+  editor.dispatchEvent(new Event('input'));
+}
+
+/**
+ * Verwijder een specifieke stijl (prop + waarde) uit de selectie.
+ * Spans die daardoor leeg worden, worden opgeruimd.
+ */
+function removeStyleFromSelection(styleProp, styleValue) {
+  const editor = $('compose-body');
+  if (!editor) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+
+  const textNodes = getTextNodesInRange(range);
+  const toUnwrap = new Set();
+
+  for (const tn of textNodes) {
+    let el = tn.parentElement;
+    while (el && el !== editor) {
+      if (el.tagName === 'SPAN' && el.style[styleProp] === styleValue) {
+        toUnwrap.add(el);
+        break;
+      }
+      el = el.parentElement;
+    }
+  }
+
+  for (const span of toUnwrap) {
+    if (!span.parentNode) continue;
+    const parent = span.parentNode;
+    while (span.firstChild) parent.insertBefore(span.firstChild, span);
+    parent.removeChild(span);
+  }
+
+  normalizeSpans(editor);
+  editor.dispatchEvent(new Event('input'));
+}
+
+/**
+ * Verwijder ALLE opmaak-spans uit de selectie (removeFormat).
+ */
+function removeAllFormatting() {
+  const editor = $('compose-body');
+  if (!editor) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+
+  const textNodes = getTextNodesInRange(range);
+  const toUnwrap = new Set();
+
+  for (const tn of textNodes) {
+    let el = tn.parentElement;
+    while (el && el !== editor) {
+      if (el.tagName === 'SPAN' && el.style && el.style.cssText) {
+        toUnwrap.add(el);
+      }
+      el = el.parentElement;
+    }
+  }
+
+  for (const span of toUnwrap) {
+    if (!span.parentNode) continue;
+    const parent = span.parentNode;
+    while (span.firstChild) parent.insertBefore(span.firstChild, span);
+    parent.removeChild(span);
+  }
+
+  normalizeSpans(editor);
+  editor.dispatchEvent(new Event('input'));
+}
+
+/**
+ * Voegt naburige spans met dezelfde stijl samen, en verwijdert lege spans.
+ */
+function normalizeSpans(root) {
+  if (!root) return;
+  // Eerst lege spans weg
+  root.querySelectorAll('span').forEach(span => {
+    if (!span.textContent && !span.querySelector('img')) span.remove();
+  });
+  // Dan samenvoegen
+  const spans = Array.from(root.querySelectorAll('span'));
+  for (const span of spans) {
+    if (!span.parentNode) continue;
+    // Kinderen die span zijn met dezelfde stijl als parent → unwrap
+    const children = Array.from(span.children);
+    for (const child of children) {
+      if (child.tagName === 'SPAN' && child.style.cssText === span.style.cssText) {
+        while (child.firstChild) span.insertBefore(child.firstChild, child);
+        child.remove();
+      }
+    }
+    // Zelfde-stijl buurman direct erna → samenvoegen
+    let next = span.nextSibling;
+    while (next && next.nodeType === Node.TEXT_NODE && !next.nodeValue) {
+      const nn = next.nextSibling;
+      next.remove();
+      next = nn;
+    }
+    if (next && next.tagName === 'SPAN' && next.style.cssText === span.style.cssText) {
+      while (next.firstChild) span.appendChild(next.firstChild);
+      next.remove();
+    }
+  }
+}
+
+/**
+ * Past een stijl toe op de selectie. Dit is de centrale functie.
+ */
+function applyStyle(styleProp, styleValue, toggleOff = null) {
   const editor = $('compose-body');
   if (!editor) return;
   editor.focus();
-  // Herstel de selectie die we vóór de klik hebben opgeslagen
   restoreEditorRange();
-  try {
-    document.execCommand(cmd, false, value);
-  } catch (e) {
-    console.warn('execCommand failed', cmd, e);
-  }
-  // Selectie opnieuw opslaan (na commando)
-  saveEditorRange();
+
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) return;
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  wrapSelectionWithStyle(styleProp, styleValue, toggleOff);
   updateToolbarState();
-  // Zorg dat eventuele placeholders/weergave kloppen
-  editor.dispatchEvent(new Event('input'));
 }
+
+/* ---------- Toolbar acties ---------- */
+
+function toggleBold() {
+  const editor = $('compose-body');
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  // Check of selectie al bold is
+  const range = sel.getRangeAt(0);
+  const isBold = selectionHasStyle(range, 'fontWeight', '700');
+  if (isBold) {
+    removeStyleFromSelection('fontWeight', '700');
+  } else {
+    applyStyle('fontWeight', '700', { styleProp: 'fontWeight', styleValue: '700' });
+  }
+  updateToolbarState();
+}
+
+function toggleItalic() {
+  const range = window.getSelection()?.getRangeAt(0);
+  const isItalic = range && selectionHasStyle(range, 'fontStyle', 'italic');
+  if (isItalic) {
+    removeStyleFromSelection('fontStyle', 'italic');
+  } else {
+    applyStyle('fontStyle', 'italic', { styleProp: 'fontStyle', styleValue: 'italic' });
+  }
+  updateToolbarState();
+}
+
+function toggleUnderline() {
+  const range = window.getSelection()?.getRangeAt(0);
+  const isUnderline = range && selectionHasStyle(range, 'textDecoration', 'underline');
+  if (isUnderline) {
+    removeStyleFromSelection('textDecoration', 'underline');
+  } else {
+    applyStyle('textDecoration', 'underline', { styleProp: 'textDecoration', styleValue: 'underline' });
+  }
+  updateToolbarState();
+}
+
+function setTextColor(color) {
+  applyStyle('color', color, { styleProp: 'color', styleValue: color });
+}
+
+function setFontSize(px) {
+  applyStyle('fontSize', px + 'px', { styleProp: 'fontSize', styleValue: px + 'px' });
+}
+
+/**
+ * Checkt of de selectie ergens een bepaalde stijl heeft.
+ */
+function selectionHasStyle(range, styleProp, styleValue) {
+  const editor = $('compose-body');
+  if (!editor) return false;
+  const textNodes = getTextNodesInRange(range);
+  if (!textNodes.length) return false;
+  for (const tn of textNodes) {
+    let el = tn.parentElement;
+    let found = false;
+    while (el && el !== editor) {
+      if (el.tagName === 'SPAN' && el.style[styleProp] === styleValue) {
+        found = true;
+        break;
+      }
+      el = el.parentElement;
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+/* ---------- Editor setup ---------- */
 
 function setupEditor() {
   const editor = $('compose-body');
 
-  // Sla selectie op bij selectie-wijziging binnen de editor
+  // Selectie opslaan bij selectie-wijziging
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
@@ -1746,7 +2046,6 @@ function setupEditor() {
 
   // Bold / Italic / Underline / RemoveFormat
   $$('.editor-toolbar .toolbar-btn[data-cmd]').forEach(btn => {
-    // Voorkom dat de editor focus verliest vóór we het commando uitvoeren
     btn.addEventListener('mousedown', (e) => {
       e.preventDefault();
       saveEditorRange();
@@ -1754,21 +2053,22 @@ function setupEditor() {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const cmd = btn.dataset.cmd;
-      if (!cmd) return;
-      execFormat(cmd);
+      if (cmd === 'bold') toggleBold();
+      else if (cmd === 'italic') toggleItalic();
+      else if (cmd === 'underline') toggleUnderline();
+      else if (cmd === 'removeFormat') removeAllFormatting();
+      updateToolbarState();
     });
   });
 
   // Font size
   const sizeSel = $('toolbar-size');
-  sizeSel.addEventListener('mousedown', (e) => {
-    // Bewaar selectie voordat de dropdown focus steelt
-    saveEditorRange();
-  });
+  sizeSel.addEventListener('mousedown', () => saveEditorRange());
   sizeSel.addEventListener('change', () => {
     const val = sizeSel.value;
     if (!val) return;
-    execFormat('fontSize', val);
+    const px = parseInt(val, 10);
+    if (px) setFontSize(px);
     sizeSel.value = '';
   });
 
@@ -1776,14 +2076,14 @@ function setupEditor() {
   const colorInput = $('toolbar-color');
   colorInput.addEventListener('mousedown', () => saveEditorRange());
   colorInput.addEventListener('input', () => {
-    execFormat('foreColor', colorInput.value);
+    setTextColor(colorInput.value);
   });
 
   editor.addEventListener('keyup', updateToolbarState);
   editor.addEventListener('mouseup', () => { saveEditorRange(); updateToolbarState(); });
   editor.addEventListener('input', updateToolbarState);
 
-  // Paste: behoud opmaak? Nee — strip naar plain text, behalve afbeeldingen
+  // Paste: plain text (behalve afbeeldingen)
   editor.addEventListener('paste', (e) => {
     const items = e.clipboardData?.items || [];
     for (const item of items) {
@@ -1849,15 +2149,22 @@ function setupEditor() {
 }
 
 function updateToolbarState() {
-  const cmds = ['bold','italic','underline'];
-  for (const cmd of cmds) {
-    const btn = document.querySelector('.toolbar-btn[data-cmd="' + cmd + '"]');
-    if (!btn) continue;
-    try {
-      const isActive = document.queryCommandState(cmd);
-      btn.classList.toggle('active', isActive);
-    } catch {}
-  }
+  const editor = $('compose-body');
+  if (!editor) return;
+  const sel = window.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if (!editor.contains(range.commonAncestorContainer)) return;
+
+  // Bold
+  const boldBtn = document.querySelector('.toolbar-btn[data-cmd="bold"]');
+  if (boldBtn) boldBtn.classList.toggle('active', selectionHasStyle(range, 'fontWeight', '700'));
+  // Italic
+  const italicBtn = document.querySelector('.toolbar-btn[data-cmd="italic"]');
+  if (italicBtn) italicBtn.classList.toggle('active', selectionHasStyle(range, 'fontStyle', 'italic'));
+  // Underline
+  const underlineBtn = document.querySelector('.toolbar-btn[data-cmd="underline"]');
+  if (underlineBtn) underlineBtn.classList.toggle('active', selectionHasStyle(range, 'textDecoration', 'underline'));
 }
 
 /* ============================================================
@@ -1889,7 +2196,6 @@ async function uploadAndInsertImage(file) {
     }
     const editor = $('compose-body');
     editor.focus();
-    // Herstel de opgeslagen selectie vóór het invoegen
     restoreEditorRange();
     const img = document.createElement('img');
     img.src = data.url;
