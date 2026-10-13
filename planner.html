@@ -35,6 +35,7 @@
     --mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
     --hour-h: 84px;
+    --activities-h: 60px;   /* ruimte voor 2 activiteiten-balken */
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -106,7 +107,7 @@
   .login-error.show { display: block; }
 
   /* ============================================================
-     APP LAYOUT — 100dvh met vh fallback, flex-keten overal
+     APP LAYOUT
      ============================================================ */
   #app {
     display: none;
@@ -179,7 +180,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ============================================================
-     PLANNER — flex kolom: scroll (flex:1) + col-nav (auto)
+     PLANNER
      ============================================================ */
   .planner-wrap {
     flex: 1 1 auto;
@@ -246,6 +247,61 @@
   }
 
   /* ============================================================
+     SCHOOLACTIVITEITEN — altijd vaste zone, ook als leeg
+     ============================================================ */
+.day-activities {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  height: 26px;
+  min-height: 26px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+  .activity-bar {
+    display: flex; align-items: center; gap: 7px;
+    height: 26px;
+    padding: 0 8px 0 10px;
+    background: var(--bg-3);
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+    transition: background 0.15s, border-color 0.15s;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .activity-bar:hover {
+    background: var(--card-hover);
+    border-color: var(--border);
+  }
+  .activity-bar::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--blue);
+    opacity: 0.9;
+  }
+  .activity-bar svg.lucide {
+    width: 12px; height: 12px;
+    color: var(--blue);
+    flex-shrink: 0;
+  }
+  .activity-bar .ab-name {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1; min-width: 0;
+    line-height: 1;
+  }
+
+  /* ============================================================
      UUR-KAARTJE
      ============================================================ */
   .hour-card {
@@ -278,7 +334,6 @@
   }
   .hour-card.empty:hover { border-color: var(--border-soft); background: transparent; }
 
-  /* NIET-aangevuld: subtiel streepje links */
   .hour-card:not(.empty):not(.filled) {
     background: var(--bg-3);
     border-color: var(--border);
@@ -300,7 +355,6 @@
     pointer-events: none;
   }
 
-  /* WEL-aangevuld: neutraal + mini mini stipje */
   .hour-card.filled {
     background: var(--bg-3);
     border-color: var(--border-soft);
@@ -411,7 +465,7 @@
   }
 
   /* ============================================================
-     KOLOM-NAVIGATIE — altijd zichtbaar op mobiel, nooit afgekapt
+     KOLOM-NAVIGATIE
      ============================================================ */
   .col-nav {
     display: none;
@@ -493,7 +547,7 @@
   .detail-overlay.open .detail-card { transform: translateY(0); }
 
   .detail-head {
-    padding: 16px 20px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--border-soft);
     display: flex; align-items: flex-start; gap: 12px;
     flex-shrink: 0;
@@ -506,6 +560,7 @@
     margin-bottom: 6px;
   }
   .detail-type svg.lucide { width: 12px; height: 12px; }
+  .detail-type.is-activity { color: var(--blue); }
   .detail-title {
     font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
     line-height: 1.35; word-break: break-word;
@@ -521,8 +576,9 @@
   .detail-close:hover { background: var(--card-hover); color: var(--text); }
   .detail-close svg.lucide { width: 16px; height: 16px; }
 
+  /* Body: ruimere padding */
   .detail-body {
-    padding: 18px 20px;
+    padding: 20px 24px;
     overflow-y: auto;
     flex: 1 1 auto;
     min-height: 0;
@@ -530,24 +586,49 @@
     overscroll-behavior: contain;
     font-size: 13.5px; line-height: 1.7;
   }
+
+  /* Rijen: grid zodat labels en waarden netjes uitlijnen */
   .detail-row {
-    display: flex; align-items: center; gap: 8px;
-    padding: 7px 0;
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 0;
+    padding: 9px 0;
     font-size: 13px;
     color: var(--text-dim);
     border-bottom: 1px solid var(--border-soft);
   }
   .detail-row:last-child { border-bottom: none; }
-  .detail-row svg.lucide { width: 14px; height: 14px; color: var(--text-faint); flex-shrink: 0; }
-  .detail-row strong { color: var(--text); font-weight: 600; }
+
   .detail-row .dr-label {
-    color: var(--text-faint); font-size: 11.5px;
-    text-transform: uppercase; letter-spacing: 0.05em;
-    min-width: 60px;
+    grid-column: 1;
+    color: var(--text-faint);
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .detail-row .dr-label svg.lucide {
+    width: 13px; height: 13px;
+    color: var(--text-faint);
+    flex-shrink: 0;
+  }
+  .detail-row strong {
+    grid-column: 2;
+    color: var(--text);
+    font-weight: 600;
+    min-width: 0;
+    word-break: break-word;
+    line-height: 1.5;
   }
 
   .detail-info {
-    margin-top: 12px; padding-top: 14px;
+    margin-top: 14px;
+    padding-top: 16px;
     border-top: 1px solid var(--border-soft);
     font-size: 13.5px; line-height: 1.7; color: var(--text);
   }
@@ -555,13 +636,26 @@
   .detail-info p:last-child { margin-bottom: 0; }
   .detail-info a { color: #b8b8bc; }
   .detail-info img { max-width: 100%; height: auto; border-radius: 6px; }
+  .detail-info ul, .detail-info ol { margin: 6px 0 10px; padding-left: 22px; }
+  .detail-info li { margin: 3px 0; }
+
+  /* Sub-secties binnen detail-info (bijlagen / links) */
+  .detail-subsection {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-soft);
+  }
+  .detail-subsection .detail-row {
+    padding: 8px 0;
+  }
 
   .detail-foot {
-    padding: 12px 20px;
+    padding: 12px 24px;
     border-top: 1px solid var(--border-soft);
     display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
     flex-shrink: 0;
   }
+  .detail-foot:empty { display: none; }
 
   .action-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -578,7 +672,7 @@
   .action-btn.danger:hover { background: var(--red-soft); color: var(--red); border-color: transparent; }
 
   /* ============================================================
-     SKELETON
+     SKELETON / EMPTY / TOASTS
      ============================================================ */
   .skeleton-hour {
     height: var(--hour-h);
@@ -605,9 +699,6 @@
   .empty svg.lucide { width: 40px; height: 40px; opacity: 0.4; }
   .empty p { font-size: 13px; }
 
-  /* ============================================================
-     TOASTS
-     ============================================================ */
   .toast-wrap {
     position: fixed; bottom: 20px; right: 20px; z-index: 200;
     display: flex; flex-direction: column; gap: 8px;
@@ -627,7 +718,6 @@
   /* ============================================================
      RESPONSIVE
      ============================================================ */
-
   @media (min-width: 821px) {
     .col-nav { display: none !important; }
   }
@@ -653,7 +743,6 @@
       height: 100%;
     }
 
-    /* Kolommen: vaste breedte, vullen de hoogte van de scroll-container */
     .day-col {
       flex: 0 0 auto;
       width: calc(100vw - 48px);
@@ -673,7 +762,6 @@
     }
     .day-head .dh-date { font-size: 13px; }
 
-    /* Eigen verticale scroll per dag */
     .day-body {
       flex: 1 1 auto;
       min-height: 0;
@@ -1004,6 +1092,12 @@ function setupAppEvents() {
   });
 
   $('planner-grid').addEventListener('click', (e) => {
+    const ab = e.target.closest('.activity-bar');
+    if (ab) {
+      e.stopPropagation();
+      openTaskDetail(ab.dataset.id, ab.dataset.type);
+      return;
+    }
     const sq = e.target.closest('.task-square');
     if (sq) {
       e.stopPropagation();
@@ -1167,6 +1261,10 @@ function renderSkeleton() {
   $('planner-grid').innerHTML = cols.join('');
 }
 
+function isActivity(it) {
+  return it && it.t === 'planned-school-activities';
+}
+
 function renderWeek(data) {
   const items = data.items || [];
   const weekStart = new Date(data.week_start + 'T00:00:00Z');
@@ -1174,6 +1272,7 @@ function renderWeek(data) {
   const lessons = {};
   const tasksBySlot = {};
   const dayOnlyTasks = {};
+  const activitiesByDay = {};
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -1181,6 +1280,13 @@ function renderWeek(data) {
     if (!it.df) continue;
     const dt = new Date(it.df);
     const dayIdx = (dt.getUTCDay() + 6) % 7;
+
+    // Schoolactiviteiten → eigen bak, niet in uur-slots
+    if (isActivity(it)) {
+      (activitiesByDay[dayIdx] = activitiesByDay[dayIdx] || []).push(it);
+      continue;
+    }
+
     const hh = String(dt.getUTCHours()).padStart(2, '0');
     const mm = String(dt.getUTCMinutes()).padStart(2, '0');
     const timeStr = `${hh}:${mm}`;
@@ -1205,6 +1311,13 @@ function renderWeek(data) {
     const dateStr = dayDate.toISOString().slice(0, 10);
     const isToday = dateStr === todayStr;
 
+    // Altijd een .day-activities-zone (vaste hoogte via CSS)
+const acts = activitiesByDay[d] || [];
+const actsHtml =
+  '<div class="day-activities">' +
+    acts.map(renderActivityBar).join('') +
+  '</div>';
+
     let hoursHtml = '';
     for (let u = 1; u <= 7; u++) {
       const key = d + '|' + u;
@@ -1226,13 +1339,26 @@ function renderWeek(data) {
           '<div class="dh-name">' + NL_DAYS[d] + '</div>' +
           '<div class="dh-date">' + dayDate.getUTCDate() + ' ' + NL_MONTHS[dayDate.getUTCMonth()] + '</div>' +
         '</div>' +
-        '<div class="day-body">' + hoursHtml + '</div>' +
+        '<div class="day-body">' + actsHtml + hoursHtml + '</div>' +
       '</div>'
     );
   }
 
   $('planner-grid').innerHTML = cols.join('');
   refreshIcons();
+}
+
+function renderActivityBar(it) {
+  const title = it.n || 'Schoolactiviteit';
+  return (
+    '<div class="activity-bar" ' +
+        'data-id="' + esc(it.i) + '" ' +
+        'data-type="' + esc(it.t) + '" ' +
+        'title="' + esc(title) + '">' +
+      icon('sparkles') +
+      '<span class="ab-name">' + esc(title) + '</span>' +
+    '</div>'
+  );
 }
 
 function timeToHourNum(t) {
@@ -1329,10 +1455,18 @@ async function openTaskDetail(id, type) {
   if (!id) return;
   currentDetail = { id, type };
 
-  $('detail-type').innerHTML = icon(type === 'planned-lessons' ? 'book-open' : 'file-text') +
-    (type === 'planned-lessons' ? 'Les' :
-     type === 'planned-assignments' ? 'Opdracht' :
-     type === 'planned-to-dos' ? 'Taak' : 'Item');
+  const isActivity = type === 'planned-school-activities';
+
+  $('detail-type').className = 'detail-type' + (isActivity ? ' is-activity' : '');
+  $('detail-type').innerHTML =
+    icon(isActivity ? 'sparkles'
+        : type === 'planned-lessons' ? 'book-open'
+        : 'file-text') +
+    (isActivity ? 'Schoolactiviteit'
+     : type === 'planned-lessons' ? 'Les'
+     : type === 'planned-assignments' ? 'Opdracht'
+     : type === 'planned-to-dos' ? 'Taak' : 'Item');
+
   $('detail-title').textContent = 'Laden…';
   $('detail-body').innerHTML = '<div class="empty" style="padding:20px">' + icon('loader') + '</div>';
   $('detail-foot').innerHTML = '';
@@ -1343,7 +1477,9 @@ async function openTaskDetail(id, type) {
   const baseItem = findItemInWeek(id);
 
   try {
-    if (type === 'planned-to-dos' || type === 'planned-assignments') {
+    if (type === 'planned-to-dos' ||
+        type === 'planned-assignments' ||
+        type === 'planned-school-activities') {
       const detail = await api.planner.itemDetail(id, type);
       renderDetail(baseItem, detail);
     } else {
@@ -1398,22 +1534,27 @@ function renderDetail(base, detail, errorMsg) {
   }
 
   if (detail?.attachments?.length) {
-    bodyHtml += '<div class="detail-info"><div class="detail-row" style="border:none;padding-top:12px;">' +
-      icon('paperclip') + '<span class="dr-label">Bijlagen</span></div>';
-    bodyHtml += detail.attachments.map(a =>
-      '<div class="detail-row">' + icon('file') + '<strong>' + esc(a.name) + '</strong></div>'
-    ).join('');
-    bodyHtml += '</div>';
+    bodyHtml += '<div class="detail-subsection">' +
+      row('paperclip', 'Bijlagen', '') +
+      detail.attachments.map(a =>
+        '<div class="detail-row">' +
+          '<div class="dr-label">' + icon('file') + '</div>' +
+          '<strong>' + esc(a.name) + '</strong>' +
+        '</div>'
+      ).join('') +
+    '</div>';
   }
 
   if (detail?.weblinks?.length) {
-    bodyHtml += '<div class="detail-info"><div class="detail-row" style="border:none;padding-top:12px;">' +
-      icon('link') + '<span class="dr-label">Links</span></div>';
-    bodyHtml += detail.weblinks.map(u =>
-      '<div class="detail-row">' + icon('external-link') +
-      '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + esc(u) + '</a></div>'
-    ).join('');
-    bodyHtml += '</div>';
+    bodyHtml += '<div class="detail-subsection">' +
+      row('link', 'Links', '') +
+      detail.weblinks.map(u =>
+        '<div class="detail-row">' +
+          '<div class="dr-label">' + icon('external-link') + '</div>' +
+          '<strong><a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer" style="color:#b8b8bc;word-break:break-all;">' + esc(u) + '</a></strong>' +
+        '</div>'
+      ).join('') +
+    '</div>';
   }
 
   $('detail-body').innerHTML = bodyHtml || '<p style="color:var(--text-dim)">Geen extra info</p>';
@@ -1438,8 +1579,8 @@ function renderDetail(base, detail, errorMsg) {
 
 function row(iconName, label, value) {
   return (
-    '<div class="detail-row">' + icon(iconName) +
-      '<span class="dr-label">' + esc(label) + '</span>' +
+    '<div class="detail-row">' +
+      '<div class="dr-label">' + (iconName ? icon(iconName) : '') + esc(label) + '</div>' +
       '<strong>' + esc(value) + '</strong>' +
     '</div>'
   );
