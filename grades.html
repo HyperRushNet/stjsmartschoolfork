@@ -54,59 +54,16 @@
 
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
-  #login-screen {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
-    padding: 20px;
-  }
-  .login-card {
-    width: 100%; max-width: 400px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px 32px;
-    box-shadow: var(--shadow);
-    animation: slideUp 0.4s ease;
-  }
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  .login-logo {
-    width: 52px; height: 52px; border-radius: 14px;
-    background: #2a2a2e;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text); margin-bottom: 20px;
-    border: 1px solid var(--border);
-  }
-  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
-  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .field input {
-    width: 100%; padding: 11px 14px;
-    background: var(--bg-2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-size: 14px; font-family: var(--font);
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
-  .field input::placeholder { color: var(--text-faint); }
-  .btn {
-    width: 100%; padding: 12px;
-    background: #2a2a2e; color: var(--text);
-    border: 1px solid #34343a;
-    border-radius: var(--radius-sm);
-    font-size: 14px; font-weight: 600; font-family: var(--font);
-    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
-  }
-  .btn:hover { background: #35353a; border-color: #3f3f45; }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
-  .login-error.show { display: block; }
 
-  #app { display: none; height: 100vh; flex-direction: column; }
-  #app.ready { display: flex; }
+  /* ============================================================
+     APP LAYOUT — direct zichtbaar, geen login-screen
+     ============================================================ */
+  #app {
+    display: flex;
+    height: 100vh;
+    flex-direction: column;
+  }
 
   .main { flex: 1; display: flex; overflow: hidden; }
   .content { flex: 1; overflow: hidden; padding: 24px 28px; display: flex; flex-direction: column; }
@@ -364,13 +321,6 @@
     padding: 0 2px;
   }
 
-  /* ============================================================
-     KLEURKLASSEN — nieuwe schaal
-     < 50          → rood
-     50–69         → geel
-     70–90         → groen
-     90–100        → donkergroen (goed zichtbaar)
-     ============================================================ */
   .score-red      { color: var(--red);         border-color: rgba(248,113,113,0.45); background: rgba(248,113,113,0.12); }
   .score-yellow   { color: var(--yellow);      border-color: rgba(251,191,36,0.45);  background: rgba(251,191,36,0.12); }
   .score-green    { color: var(--green);       border-color: rgba(74,222,128,0.45);  background: rgba(74,222,128,0.12); }
@@ -601,22 +551,6 @@
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo"><i data-lucide="graduation-cap"></i></div>
-    <h1>Smartschool</h1>
-    <p>Meld aan met je Smartschool account</p>
-    <form id="login-form">
-      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
-      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
-      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
-      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
-      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
-      <div class="login-error" id="login-error"></div>
-    </form>
-  </div>
-</div>
-
 <div id="app">
   <div class="main">
     <main class="content">
@@ -646,8 +580,30 @@
           <div class="grades-panel-inner">
             <div class="swipe-viewport" id="swipe-viewport">
               <div class="swipe-track" id="swipe-track">
-                <div class="swipe-slide" id="slide-recent"></div>
-                <div class="swipe-slide" id="slide-courses"></div>
+                <div class="swipe-slide" id="slide-recent">
+                  <!-- Shimmer direct zichtbaar vanaf eerste paint -->
+                  <div class="grades-list">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                  </div>
+                </div>
+                <div class="swipe-slide" id="slide-courses">
+                  <!-- Shimmer direct zichtbaar vanaf eerste paint -->
+                  <div class="grades-list">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -774,8 +730,7 @@ function withQuery(path, params) {
 
 const api = {
   auth: {
-    async login({ username, password, main_url, mfa }) {
-      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+    async login() {
       const data = await apiFetch('/api/auth/login', { method: 'POST' });
       auth.user = { username: data.username, main_url: data.main_url };
       return auth.user;
@@ -817,13 +772,6 @@ function pctFromScore(score, percentage) {
   return null;
 }
 
-/* ============================================================
-   KLEURSCHAAL
-   < 50    → rood
-   50–69   → geel
-   70–90   → groen
-   90–100  → donkergroen
-   ============================================================ */
 function pctClass(pct) {
   if (pct === null) return 'score-neutral';
   if (pct >= 90) return 'score-greendark';
@@ -1229,7 +1177,7 @@ function closeDetail() {
 }
 
 async function loadGrades(refresh = false) {
-  renderSkeleton();
+  // Skeleton staat al in de HTML — geen flikkering meer
   try {
     const data = await api.grades.load(refresh);
     gradesData = data;
@@ -1245,8 +1193,10 @@ async function loadGrades(refresh = false) {
 }
 
 function renderSkeleton() {
+  // Blijft bestaan voor het geval je hem manueel wil triggeren,
+  // maar wordt niet meer opgeroepen bij init.
   const parts = [];
-  for (let i = 0; i < 6; i++) parts.push('<div class="skeleton-card"></div>');
+  for (let i = 0; i < 7; i++) parts.push('<div class="skeleton-card"></div>');
   const html = '<div class="grades-list">' + parts.join('') + '</div>';
   $('slide-recent').innerHTML = html;
   $('slide-courses').innerHTML = html;
@@ -1263,43 +1213,26 @@ function updateSubtitle(data) {
   }
 }
 
-function setupLogin() {
-  $('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = $('login-btn');
-    const err = $('login-error');
-    err.classList.remove('show');
-    btn.disabled = true;
-    btn.textContent = 'Aanmelden...';
-    try {
-      await api.auth.login({
-        username: $('in-user').value.trim(),
-        password: $('in-pass').value,
-        main_url: $('in-url').value.trim(),
-        mfa: $('in-mfa').value.trim(),
-      });
-      onLoggedIn();
-    } catch (e) {
-      err.textContent = e.message || 'Aanmelden mislukt';
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = 'Aanmelden';
-    }
-  });
-}
-
 async function autoLogin() {
-  if (!auth.tryRestore()) return;
+  if (!auth.tryRestore()) {
+    // Geen creds → shimmer blijft gewoon staan (in HTML).
+    // De gebruiker ziet geen login-formulier, alleen skeleton.
+    return;
+  }
   try {
-    await apiFetch('/api/auth/login', { method: 'POST' });
-    auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
-    onLoggedIn();
-  } catch { auth.clear(); }
+    await api.auth.login();
+    onReady();
+  } catch (e) {
+    auth.clear();
+    $('slide-recent').innerHTML =
+      '<div class="empty">' + icon('alert-circle') +
+      '<p>Sessie verlopen — log opnieuw in</p></div>';
+    $('slide-courses').innerHTML = '';
+    refreshIcons();
+  }
 }
 
-function onLoggedIn() {
-  $('login-screen').style.display = 'none';
-  $('app').classList.add('ready');
+function onReady() {
   setupAppEvents();
   setupModeSwitcher();
   setMode('recent', false);
@@ -1332,7 +1265,6 @@ window.addEventListener('resize', () => {
   }
 });
 
-setupLogin();
 autoLogin();
 refreshIcons();
 </script>
