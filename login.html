@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Smartschool · Aanmelden</title>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --bg:         #0d0d0f;
+    --bg-2:       #121214;
+    --bg-3:       #1a1a1d;
+    --card:       #141416;
+    --card-hover: #1c1c1f;
+    --border:     #262629;
+    --border-soft:#1d1d20;
+    --text:       #e4e4e6;
+    --text-dim:   #8a8a8e;
+    --text-faint: #5a5a5e;
+    --accent:     #2e2e33;
+    --accent-hover:#3a3a40;
+    --accent-soft: rgba(255,255,255,0.05);
+    --green:      #4ade80;
+    --red:        #f87171;
+    --blue:       #60a5fa;
+    --red-soft:   rgba(248,113,113,0.12);
+    --green-soft: rgba(74,222,128,0.14);
+    --blue-soft:  rgba(96,165,250,0.14);
+    --radius:     14px;
+    --radius-sm:  9px;
+    --shadow:     0 4px 24px rgba(0,0,0,0.55);
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+    min-height: 100dvh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(96,165,250,0.08) 0%, transparent 45%),
+      radial-gradient(circle at 80% 100%, rgba(192,132,252,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, #1a1a1e 0%, var(--bg) 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: none; }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.85; transform: scale(1.04); }
+  }
+  @keyframes bar {
+    0%   { transform: translateX(-100%); }
+    50%  { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+  }
+
+  /* ============================================================
+     KAART
+     ============================================================ */
+  .login-card {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 40px 36px 32px;
+    box-shadow: var(--shadow);
+    animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+    margin: auto;
+  }
+
+  .login-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(96,165,250,0.4) 50%,
+      transparent 100%);
+  }
+
+  .login-card h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+  }
+  .login-card > p {
+    color: var(--text-dim);
+    font-size: 13.5px;
+    margin-bottom: 28px;
+    line-height: 1.5;
+  }
+
+  /* ============================================================
+     FORM
+     ============================================================ */
+  .field { margin-bottom: 16px; }
+
+  .field label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-dim);
+    margin-bottom: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .field label .opt {
+    color: var(--text-faint);
+    text-transform: none;
+    font-weight: 400;
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-icon {
+    position: absolute;
+    left: 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-faint);
+    pointer-events: none;
+    transition: color 0.15s;
+    z-index: 1;
+  }
+  .input-icon svg.lucide { width: 15px; height: 15px; }
+
+  .field input {
+    width: 100%;
+    padding: 12px 14px 12px 40px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    outline: none;
+  }
+  .field input:hover { border-color: #2e2e33; }
+  .field input:focus {
+    border-color: #444;
+    background: var(--bg-3);
+    box-shadow: 0 0 0 3px rgba(96,165,250,0.10);
+  }
+  .field input:focus ~ .input-icon,
+  .input-wrap:focus-within .input-icon {
+    color: var(--text);
+  }
+  .field input::placeholder { color: var(--text-faint); }
+
+  .pw-toggle {
+    position: absolute;
+    right: 8px;
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-faint);
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .pw-toggle:hover { background: var(--bg-3); color: var(--text); }
+  .pw-toggle svg.lucide { width: 15px; height: 15px; }
+
+  /* ============================================================
+     GEBOORTEDATUM
+     ============================================================ */
+  .dob-row {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr 1.4fr;
+    gap: 8px;
+  }
+  .dob-select {
+    width: 100%;
+    padding: 12px 32px 12px 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 14px;
+    font-family: var(--font);
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a8e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+  }
+  .dob-select:hover { border-color: #2e2e33; }
+  .dob-select:focus {
+    border-color: #444;
+    background-color: var(--bg-3);
+    box-shadow: 0 0 0 3px rgba(96,165,250,0.10);
+  }
+  .dob-select.placeholder { color: var(--text-faint); }
+  .dob-select option {
+    background: var(--bg-3);
+    color: var(--text);
+    padding: 6px;
+  }
+  .dob-hint {
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--text-faint);
+  }
+
+  /* ============================================================
+     KNOP
+     ============================================================ */
+  .btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(180deg, #2e2e33 0%, #262629 100%);
+    color: var(--text);
+    border: 1px solid #34343a;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, #35353a 0%, #2c2c31 100%);
+    border-color: #3f3f45;
+  }
+  .btn:active:not(:disabled) { transform: scale(0.985); }
+  .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+  .btn svg.lucide { width: 16px; height: 16px; }
+  .btn.loading svg.lucide { animation: spin 0.7s linear infinite; }
+
+  /* ============================================================
+     FOUT
+     ============================================================ */
+  .login-error {
+    display: none;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 11px 13px;
+    background: var(--red-soft);
+    border: 1px solid rgba(248,113,113,0.25);
+    border-radius: var(--radius-sm);
+    color: var(--red);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 14px;
+    animation: fadeIn 0.2s ease;
+  }
+  .login-error.show { display: flex; }
+  .login-error svg.lucide { width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px; }
+
+  /* ============================================================
+     FOOTER
+     ============================================================ */
+  .login-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border-soft);
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .remember-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-faint);
+  }
+  .remember-info svg.lucide {
+    width: 13px; height: 13px;
+    color: var(--green);
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-faint);
+    font-size: 12px;
+    font-family: var(--font);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .clear-btn:hover { background: var(--bg-3); color: var(--red); }
+  .clear-btn svg.lucide { width: 13px; height: 13px; }
+
+  /* ============================================================
+     RECENTE LOGIN
+     ============================================================ */
+  .recent-user {
+    display: none;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-3);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    margin-bottom: 18px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .recent-user:hover { border-color: var(--border); background: var(--card-hover); }
+  .recent-user.show { display: flex; }
+  .recent-user .ru-avatar {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #2e2e33 0%, #232328 100%);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--blue);
+    border: 1px solid var(--border);
+  }
+  .recent-user .ru-avatar svg.lucide { width: 17px; height: 17px; }
+  .recent-user .ru-info { flex: 1; min-width: 0; }
+  .recent-user .ru-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .recent-user .ru-url {
+    font-size: 11.5px;
+    color: var(--text-faint);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    margin-top: 1px;
+  }
+  .recent-user .ru-arrow { color: var(--text-faint); flex-shrink: 0; }
+  .recent-user .ru-arrow svg.lucide { width: 15px; height: 15px; }
+
+  /* ============================================================
+     FULL-SCREEN LOADER
+     ============================================================ */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(13,13,15,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .loading-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .loader-ring {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  .loader-ring::before,
+  .loader-ring::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: var(--blue);
+    animation: spin 1s linear infinite;
+  }
+  .loader-ring::after {
+    inset: 8px;
+    border-top-color: rgba(96,165,250,0.4);
+    animation-duration: 1.6s;
+    animation-direction: reverse;
+  }
+  .loader-center {
+    width: 54px; height: 54px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2a2a2e 0%, #1f1f23 100%);
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .loader-center svg.lucide {
+    width: 22px; height: 22px;
+    color: var(--blue);
+    stroke-width: 2.2;
+  }
+
+  .loader-text {
+    text-align: center;
+    animation: fadeIn 0.5s ease 0.1s both;
+  }
+  .loader-text h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .loader-text p {
+    font-size: 13px;
+    color: var(--text-dim);
+    max-width: 280px;
+    line-height: 1.5;
+  }
+
+  .loader-bar {
+    width: 220px;
+    height: 3px;
+    background: var(--bg-3);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .loader-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      var(--blue) 50%,
+      transparent 100%);
+    animation: bar 1.4s ease-in-out infinite;
+  }
+
+  .login-card.fade-out {
+    opacity: 0.15;
+    filter: blur(2px);
+    pointer-events: none;
+    transition: opacity 0.4s, filter 0.4s;
+  }
+
+  /* ============================================================
+     RESPONSIVE
+     ============================================================ */
+  @media (max-width: 480px) {
+    body { padding: 0; align-items: stretch; }
+    .login-card {
+      max-width: 100%;
+      border-radius: 0;
+      border: none;
+      padding: 40px 24px 32px;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      box-shadow: none;
+      margin: 0;
+    }
+    .login-card::before { display: none; }
+    .login-card h1 { font-size: 22px; }
+    .dob-row { grid-template-columns: 1fr 1.6fr 1.2fr; gap: 6px; }
+    .dob-select { font-size: 13px; padding: 11px 26px 11px 12px; background-position: right 8px center; }
+
+    .loader-ring { width: 72px; height: 72px; }
+    .loader-center { width: 46px; height: 46px; }
+    .loader-center svg.lucide { width: 20px; height: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="login-card" id="login-card">
+  <h1>Aanmelden</h1>
+  <p>Verbind met je Smartschool-account om verder te gaan.</p>
+
+  <div class="recent-user" id="recent-user">
+    <div class="ru-avatar"><i data-lucide="user"></i></div>
+    <div class="ru-info">
+      <div class="ru-name" id="ru-name">—</div>
+      <div class="ru-url" id="ru-url">—</div>
+    </div>
+    <div class="ru-arrow"><i data-lucide="chevron-right"></i></div>
+  </div>
+
+  <form id="login-form" autocomplete="on">
+    <div class="field">
+      <label for="in-user">Gebruikersnaam</label>
+      <div class="input-wrap">
+        <span class="input-icon"><i data-lucide="user"></i></span>
+        <input id="in-user" type="text" placeholder="voornaam.naam" autocomplete="username" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="in-pass">Wachtwoord</label>
+      <div class="input-wrap">
+        <span class="input-icon"><i data-lucide="lock"></i></span>
+        <input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required>
+        <button type="button" class="pw-toggle" id="pw-toggle" title="Toon/verberg">
+          <i data-lucide="eye"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="in-url">School domein</label>
+      <div class="input-wrap">
+        <span class="input-icon"><i data-lucide="globe"></i></span>
+        <input id="in-url" type="text" placeholder="school.smartschool.be" autocomplete="url" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="dob-day">Geboortedatum <span class="opt">MFA · optioneel</span></label>
+      <div class="dob-row">
+        <select class="dob-select" id="dob-day" aria-label="Dag">
+          <option value="" class="placeholder">Dag</option>
+        </select>
+        <select class="dob-select" id="dob-month" aria-label="Maand">
+          <option value="" class="placeholder">Maand</option>
+        </select>
+        <select class="dob-select" id="dob-year" aria-label="Jaar">
+          <option value="" class="placeholder">Jaar</option>
+        </select>
+      </div>
+      <div class="dob-hint">Enkel nodig als je school MFA via geboortedatum vereist.</div>
+    </div>
+
+    <button class="btn" type="submit" id="login-btn">
+      <span id="login-btn-text">Aanmelden</span>
+      <i data-lucide="arrow-right"></i>
+    </button>
+
+    <div class="login-error" id="login-error">
+      <i data-lucide="alert-circle"></i>
+      <span id="login-error-text"></span>
+    </div>
+  </form>
+
+  <div class="login-foot">
+    <span class="remember-info">
+      <i data-lucide="check-circle"></i>
+      <span>Gegevens worden altijd onthouden</span>
+    </span>
+    <button type="button" class="clear-btn" id="clear-creds">
+      <i data-lucide="trash-2"></i>
+      <span>Wissen</span>
+    </button>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loader-ring">
+    <div class="loader-center">
+      <i data-lucide="graduation-cap"></i>
+    </div>
+  </div>
+  <div class="loader-text">
+    <h2 id="loader-title">Aanmelden…</h2>
+    <p id="loader-sub">Je gegevens worden gecontroleerd.</p>
+  </div>
+  <div class="loader-bar"></div>
+</div>
+
+<script>
+'use strict';
+
+const API_BASE = 'https://smartschoolbridge.onrender.com';
+
+const $  = id => document.getElementById(id);
+
+function icon(name) { return `<i data-lucide="${name}"></i>`; }
+function refreshIcons() {
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+}
+
+const NL_MONTHS = ['januari','februari','maart','april','mei','juni',
+                   'juli','augustus','september','oktober','november','december'];
+
+/* ============================================================
+   AUTH
+   ============================================================ */
+const auth = {
+  creds: null,
+  setCreds(c) {
+    this.creds = c;
+    try { localStorage.setItem('ss_creds', JSON.stringify(c)); } catch {}
+  },
+  tryRestore() {
+    try {
+      const raw = localStorage.getItem('ss_creds');
+      if (!raw) return false;
+      this.creds = JSON.parse(raw);
+      return true;
+    } catch { return false; }
+  },
+  clear() {
+    this.creds = null;
+    try { localStorage.removeItem('ss_creds'); } catch {}
+  },
+  encodeCreds() {
+    if (!this.creds) return null;
+    return btoa(unescape(encodeURIComponent(JSON.stringify(this.creds))));
+  },
+};
+
+/* ============================================================
+   API
+   ============================================================ */
+async function apiFetch(path, opts = {}) {
+  const headers = Object.assign({}, opts.headers || {});
+  const credsHeader = auth.encodeCreds();
+  if (credsHeader) headers['X-SS-Creds'] = credsHeader;
+
+  const url = path.startsWith('http') ? path : API_BASE + path;
+  const res = await fetch(url, Object.assign({}, opts, { headers }));
+
+  if (!res.ok) {
+    let msg = '';
+    try {
+      const data = await res.json();
+      if (data.error) msg = String(data.error);
+    } catch {}
+    // Throw met alleen de HTTP-status en (indien kort) het bericht
+    const err = new Error(msg || `HTTP ${res.status}`);
+    err.status = res.status;
+    throw err;
+  }
+  if (res.status === 204) return null;
+  const ct = res.headers.get('Content-Type') || '';
+  if (ct.includes('application/json')) return res.json();
+  return res.text();
+}
+
+/* ============================================================
+   FOUT-VERTALER — geen backend-stacktrace meer
+   ============================================================ */
+function friendlyError(err) {
+  const msg = String(err?.message || '').toLowerCase();
+  const status = err?.status;
+
+  // Netwerk / DNS / offline
+  if (msg.includes('failed to fetch') ||
+      msg.includes('networkerror') ||
+      msg.includes('network request failed') ||
+      msg.includes('name resolution') ||
+      msg.includes('failed to resolve') ||
+      msg.includes('errno') ||
+      msg.includes('max retries') ||
+      msg.includes('connectionerror')) {
+    return 'Kan geen verbinding maken met de server. Probeer het later opnieuw.';
+  }
+
+  // Timeout
+  if (msg.includes('timeout') || msg.includes('timed out')) {
+    return 'De server reageert niet. Probeer het opnieuw.';
+  }
+
+  // Auth / credentials
+  if (status === 401 || status === 403) {
+    return 'Gebruikersnaam, wachtwoord of domein klopt niet.';
+  }
+  if (status === 404) {
+    return 'Domein of gebruikersnaam niet gevonden.';
+  }
+  if (status === 400) {
+    return 'Ongeldige gegevens. Controleer je invoer.';
+  }
+  if (status === 429) {
+    return 'Te veel pogingen. Wacht even en probeer opnieuw.';
+  }
+  if (status === 500 || status === 502 || status === 503 || status === 504) {
+    return 'Er ging iets mis aan de kant van de server. Probeer het later opnieuw.';
+  }
+
+  // Smartschool-specifieke veelvoorkomende meldingen
+  if (msg.includes('invalid credentials') ||
+      msg.includes('wrong password') ||
+      msg.includes('unauthorized') ||
+      msg.includes('login failed') ||
+      msg.includes('mfa') ||
+      msg.includes('verkeerd wachtwoord') ||
+      msg.includes('ongeldig')) {
+    return 'Gebruikersnaam, wachtwoord of domein klopt niet.';
+  }
+  if (msg.includes('mfa') || msg.includes('geboortedatum')) {
+    return 'MFA-verificatie mislukt. Controleer je geboortedatum.';
+  }
+
+  // Fallback
+  return 'Aanmelden mislukt. Controleer je gegevens en probeer opnieuw.';
+}
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function showError(msg) {
+  $('login-error-text').textContent = msg;
+  $('login-error').classList.add('show');
+}
+function clearError() {
+  $('login-error').classList.remove('show');
+}
+
+function showLoader(title, sub) {
+  if (title) $('loader-title').textContent = title;
+  if (sub)   $('loader-sub').textContent = sub;
+  $('loading-overlay').classList.add('show');
+  $('login-card').classList.add('fade-out');
+  document.body.style.overflow = 'hidden';
+  refreshIcons();
+}
+function hideLoader() {
+  $('loading-overlay').classList.remove('show');
+  $('login-card').classList.remove('fade-out');
+  document.body.style.overflow = '';
+}
+
+/* ============================================================
+   GEBOORTEDATUM
+   ============================================================ */
+function buildDobSelects() {
+  const daySel   = $('dob-day');
+  const monthSel = $('dob-month');
+  const yearSel  = $('dob-year');
+
+  for (let d = 1; d <= 31; d++) {
+    const opt = document.createElement('option');
+    opt.value = String(d);
+    opt.textContent = String(d);
+    daySel.appendChild(opt);
+  }
+  for (let m = 0; m < 12; m++) {
+    const opt = document.createElement('option');
+    opt.value = String(m + 1).padStart(2, '0');
+    opt.textContent = NL_MONTHS[m];
+    monthSel.appendChild(opt);
+  }
+  const now = new Date().getFullYear();
+  for (let y = now - 10; y >= now - 70; y--) {
+    const opt = document.createElement('option');
+    opt.value = String(y);
+    opt.textContent = String(y);
+    yearSel.appendChild(opt);
+  }
+
+  const updateStyle = sel => {
+    if (!sel.value) sel.classList.add('placeholder');
+    else sel.classList.remove('placeholder');
+  };
+  daySel.addEventListener('change',   () => updateStyle(daySel));
+  monthSel.addEventListener('change', () => updateStyle(monthSel));
+  yearSel.addEventListener('change',  () => updateStyle(yearSel));
+  updateStyle(daySel); updateStyle(monthSel); updateStyle(yearSel);
+}
+
+function getDobISO() {
+  const d = $('dob-day').value;
+  const m = $('dob-month').value;
+  const y = $('dob-year').value;
+  if (!d || !m || !y) return '';
+  const day = String(d).padStart(2, '0');
+  const iso = `${y}-${m}-${day}`;
+  const dt = new Date(`${iso}T00:00:00Z`);
+  if (dt.getUTCFullYear() !== parseInt(y, 10) ||
+      dt.getUTCMonth()    !== parseInt(m, 10) - 1 ||
+      dt.getUTCDate()     !== parseInt(d, 10)) {
+    return '';
+  }
+  return iso;
+}
+
+function setDobFromISO(iso) {
+  if (!iso || typeof iso !== 'string') return;
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return;
+  const [, y, mo, d] = m;
+  $('dob-day').value   = String(parseInt(d, 10));
+  $('dob-month').value = mo;
+  $('dob-year').value  = y;
+  ['dob-day','dob-month','dob-year'].forEach(id => {
+    const el = $(id);
+    if (el.value) el.classList.remove('placeholder');
+  });
+}
+
+/* ============================================================
+   VOORVULLEN
+   ============================================================ */
+function prefillFields() {
+  if (!auth.creds) return;
+  if (auth.creds.username) $('in-user').value = auth.creds.username;
+  if (auth.creds.main_url) $('in-url').value  = auth.creds.main_url;
+  if (auth.creds.mfa)      setDobFromISO(auth.creds.mfa);
+
+  const name = auth.creds.username || 'Onbekend';
+  const url  = (auth.creds.main_url || '').replace(/^https?:\/\//, '');
+  $('ru-name').textContent = name;
+  $('ru-url').textContent  = url || '—';
+  $('recent-user').classList.add('show');
+}
+
+/* ============================================================
+   TOGGLES
+   ============================================================ */
+function setupPwToggle() {
+  const input = $('in-pass');
+  const btn = $('pw-toggle');
+  let visible = false;
+  btn.addEventListener('click', () => {
+    visible = !visible;
+    input.type = visible ? 'text' : 'password';
+    btn.innerHTML = visible ? icon('eye-off') : icon('eye');
+    refreshIcons();
+  });
+}
+
+function setupClear() {
+  $('clear-creds').addEventListener('click', () => {
+    if (!confirm('Opgeslagen inloggegevens wissen?')) return;
+    auth.clear();
+    $('in-user').value = '';
+    $('in-pass').value = '';
+    $('in-url').value  = '';
+    $('dob-day').value = '';
+    $('dob-month').value = '';
+    $('dob-year').value = '';
+    ['dob-day','dob-month','dob-year'].forEach(id => $(id).classList.add('placeholder'));
+    $('recent-user').classList.remove('show');
+    clearError();
+  });
+}
+
+function setupRecentUser() {
+  $('recent-user').addEventListener('click', () => {
+    if (!auth.creds) return;
+    $('in-user').value = auth.creds.username || '';
+    $('in-url').value  = auth.creds.main_url || '';
+    if (auth.creds.mfa) setDobFromISO(auth.creds.mfa);
+    $('in-pass').focus();
+  });
+}
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+function setupForm() {
+  $('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearError();
+
+    const username = $('in-user').value.trim();
+    const password = $('in-pass').value;
+    let   main_url = $('in-url').value.trim();
+    const mfaISO   = getDobISO();
+
+    if (!username || !password || !main_url) {
+      showError('Vul alle verplichte velden in.');
+      return;
+    }
+
+    const partialDob =
+      ($('dob-day').value || $('dob-month').value || $('dob-year').value) &&
+      !mfaISO;
+    if (partialDob) {
+      showError('Kies een volledige geboortedatum (dag, maand én jaar).');
+      return;
+    }
+
+    main_url = main_url.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+
+    auth.setCreds({
+      username,
+      password,
+      main_url,
+      mfa: mfaISO || '',
+    });
+
+    showLoader('Aanmelden…', 'Je gegevens worden gecontroleerd.');
+
+    try {
+      await apiFetch('/api/auth/login', { method: 'POST' });
+      $('loader-title').textContent = 'Aangemeld';
+      $('loader-sub').textContent   = 'Andere processen starten…';
+      // Geen redirect. Loader blijft staan.
+    } catch (err) {
+      auth.clear();
+      hideLoader();
+      // BELANGRIJK: proper clean foutmelding i.p.v. backend-stacktrace
+      showError(friendlyError(err));
+    }
+  });
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function init() {
+  buildDobSelects();
+  refreshIcons();
+  setupPwToggle();
+  setupClear();
+  setupRecentUser();
+  setupForm();
+
+  if (auth.tryRestore()) {
+    prefillFields();
+  }
+
+  setTimeout(() => {
+    if (!$('in-user').value) $('in-user').focus();
+    else $('in-pass').focus();
+  }, 150);
+}
+
+init();
+</script>
+</body>
+</html>
