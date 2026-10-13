@@ -258,11 +258,52 @@
     opacity: 0.5;
   }
   .hour-card.empty:hover { border-color: var(--border-soft); background: transparent; }
-  .hour-card.filled {
-    background: rgba(96,165,250,0.06);
-    border-color: rgba(96,165,250,0.18);
+
+  /* NIET-aangevuld (handmatig / niet automatisch aangevuld): krijgt subtiele accent-aanduiding */
+  .hour-card:not(.empty):not(.filled) {
+    background: var(--bg-3);
+    border-color: var(--border);
   }
-  .hour-card.filled:hover { background: rgba(96,165,250,0.10); border-color: rgba(96,165,250,0.30); }
+  .hour-card:not(.empty):not(.filled):hover {
+    background: var(--card-hover);
+    border-color: #3a3a40;
+  }
+  /* Mini-indicator voor NIET-aangevuld: klein streepje links */
+  .hour-card:not(.empty):not(.filled)::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    bottom: 8px;
+    left: 0;
+    width: 2px;
+    border-radius: 0 2px 2px 0;
+    background: var(--text-dim);
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  /* WEL-aangevuld: neutraal, mini mini stipje */
+  .hour-card.filled {
+    background: var(--bg-3);
+    border-color: var(--border-soft);
+  }
+  .hour-card.filled:hover {
+    background: var(--card-hover);
+    border-color: var(--border);
+  }
+  /* Mini stipje voor aangevuld */
+  .hour-card.filled::before {
+    content: '';
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-faint);
+    opacity: 0.6;
+    pointer-events: none;
+  }
 
   .hour-top {
     display: flex; align-items: center; gap: 6px;
@@ -270,6 +311,9 @@
     flex-shrink: 0;
     height: 18px;
   }
+  .hour-card:not(.empty):not(.filled) .hour-top { padding-left: 4px; }
+  .hour-card.filled .hour-top { padding-left: 8px; }
+
   .hour-num {
     font-size: 10px; font-weight: 700;
     color: var(--text-faint);
@@ -399,24 +443,34 @@
   .detail-overlay {
     position: fixed; inset: 0;
     z-index: 60;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
     background: rgba(0,0,0,0.6);
     backdrop-filter: blur(4px);
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
     opacity: 0; pointer-events: none;
     transition: opacity 0.2s ease;
+    overflow: hidden;
   }
   .detail-overlay.open { opacity: 1; pointer-events: auto; }
   .detail-card {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 18px;
-    width: 100%; max-width: 520px;
-    max-height: 85vh;
+    width: 100%;
+    max-width: min(520px, 100%);
+    max-height: calc(100dvh - 40px);
     display: flex; flex-direction: column;
     box-shadow: var(--shadow);
     transform: translateY(12px);
     transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    overflow: hidden;
+  }
+  @supports not (height: 100dvh) {
+    .detail-overlay { height: 100vh; }
+    .detail-card { max-height: calc(100vh - 40px); }
   }
   .detail-overlay.open .detail-card { transform: translateY(0); }
 
@@ -424,6 +478,7 @@
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-soft);
     display: flex; align-items: flex-start; gap: 12px;
+    flex-shrink: 0;
   }
   .detail-head-inner { flex: 1; min-width: 0; }
   .detail-type {
@@ -451,7 +506,10 @@
   .detail-body {
     padding: 18px 20px;
     overflow-y: auto;
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     font-size: 13.5px; line-height: 1.7;
   }
   .detail-row {
@@ -484,6 +542,7 @@
     padding: 12px 20px;
     border-top: 1px solid var(--border-soft);
     display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
+    flex-shrink: 0;
   }
 
   .action-btn {
@@ -537,6 +596,7 @@
   .toast-wrap {
     position: fixed; bottom: 20px; right: 20px; z-index: 200;
     display: flex; flex-direction: column; gap: 8px;
+    max-width: calc(100vw - 40px);
   }
   .toast {
     padding: 12px 16px; background: var(--bg-3);
@@ -569,6 +629,7 @@
       overflow-y: hidden;
       scroll-snap-type: x mandatory;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior-x: contain;
     }
     .planner-grid {
       display: flex;
@@ -590,6 +651,7 @@
       display: flex;
       flex-direction: column;
       height: calc(100vh - 260px);
+      height: calc(100dvh - 260px);
       min-height: 0;
     }
     .day-head {
@@ -602,19 +664,37 @@
 
     /* Eigen verticale scroll per dag */
     .day-body {
-      flex: 1;
+      flex: 1 1 auto;
       min-height: 0;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
     }
 
     .detail-overlay { padding: 0; }
     .detail-card {
-      max-width: none; max-height: 100vh; height: 100vh;
+      max-width: 100vw;
+      max-height: 100dvh;
+      height: 100dvh;
       border-radius: 0; border: none;
     }
-    .detail-head { padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
-    .detail-foot { padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+    @supports not (height: 100dvh) {
+      .detail-card { max-height: 100vh; height: 100vh; }
+    }
+    .detail-head {
+      padding-top: calc(16px + env(safe-area-inset-top, 0px));
+      flex-shrink: 0;
+    }
+    .detail-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .detail-foot {
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+      flex-shrink: 0;
+    }
 
     .page-head h2 { font-size: 19px; }
   }
@@ -1162,8 +1242,6 @@ function renderHourCard(uur, source, tasks, taskOnly) {
   let metaHtml = '';
   if (teacher) {
     metaHtml = '<div class="hour-meta">' + icon('user') + '<span>' + teacher + '</span></div>';
-  } else if (isFilled) {
-    metaHtml = '<div class="hour-meta">' + icon('sparkles') + '<span>aangevuld</span></div>';
   }
 
   let tasksHtml = '';
