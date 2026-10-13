@@ -56,9 +56,6 @@
 
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 
-  /* ============================================================
-     APP LAYOUT — direct zichtbaar, geen login-screen
-     ============================================================ */
   #app {
     display: flex;
     height: 100vh;
@@ -1177,7 +1174,6 @@ function closeDetail() {
 }
 
 async function loadGrades(refresh = false) {
-  // Skeleton staat al in de HTML — geen flikkering meer
   try {
     const data = await api.grades.load(refresh);
     gradesData = data;
@@ -1192,16 +1188,6 @@ async function loadGrades(refresh = false) {
   }
 }
 
-function renderSkeleton() {
-  // Blijft bestaan voor het geval je hem manueel wil triggeren,
-  // maar wordt niet meer opgeroepen bij init.
-  const parts = [];
-  for (let i = 0; i < 7; i++) parts.push('<div class="skeleton-card"></div>');
-  const html = '<div class="grades-list">' + parts.join('') + '</div>';
-  $('slide-recent').innerHTML = html;
-  $('slide-courses').innerHTML = html;
-}
-
 function updateSubtitle(data) {
   const n = data.total_evaluations ?? 0;
   const c = data.total_courses ?? 0;
@@ -1213,10 +1199,14 @@ function updateSubtitle(data) {
   }
 }
 
+/* ============================================================
+   AUTO-LOGIN
+   - creds aanwezig → login → laden
+   - geen creds     → toon "Niet ingelogd, gelieve in te loggen"
+   ============================================================ */
 async function autoLogin() {
   if (!auth.tryRestore()) {
-    // Geen creds → shimmer blijft gewoon staan (in HTML).
-    // De gebruiker ziet geen login-formulier, alleen skeleton.
+    showNotLoggedIn();
     return;
   }
   try {
@@ -1224,12 +1214,19 @@ async function autoLogin() {
     onReady();
   } catch (e) {
     auth.clear();
-    $('slide-recent').innerHTML =
-      '<div class="empty">' + icon('alert-circle') +
-      '<p>Sessie verlopen — log opnieuw in</p></div>';
-    $('slide-courses').innerHTML = '';
-    refreshIcons();
+    showNotLoggedIn();
   }
+}
+
+function showNotLoggedIn() {
+  const msg = 'Niet ingelogd, gelieve in te loggen';
+  $('slide-recent').innerHTML =
+    '<div class="empty">' + icon('log-in') +
+    '<p>' + esc(msg) + '</p></div>';
+  $('slide-courses').innerHTML =
+    '<div class="empty">' + icon('log-in') +
+    '<p>' + esc(msg) + '</p></div>';
+  refreshIcons();
 }
 
 function onReady() {
