@@ -48,59 +48,9 @@
 
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
-  #login-screen {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
-    padding: 20px;
-  }
-  .login-card {
-    width: 100%; max-width: 400px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px 32px;
-    box-shadow: var(--shadow);
-    animation: slideUp 0.4s ease;
-  }
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  .login-logo {
-    width: 52px; height: 52px; border-radius: 14px;
-    background: #2a2a2e;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text); margin-bottom: 20px;
-    border: 1px solid var(--border);
-  }
-  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
-  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .field input {
-    width: 100%; padding: 11px 14px;
-    background: var(--bg-2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-size: 14px; font-family: var(--font);
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
-  .field input::placeholder { color: var(--text-faint); }
-  .btn {
-    width: 100%; padding: 12px;
-    background: #2a2a2e; color: var(--text);
-    border: 1px solid #34343a;
-    border-radius: var(--radius-sm);
-    font-size: 14px; font-weight: 600; font-family: var(--font);
-    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
-  }
-  .btn:hover { background: #35353a; border-color: #3f3f45; }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
-  .login-error.show { display: block; }
 
-  #app { display: none; height: 100vh; flex-direction: column; }
-  #app.ready { display: flex; }
+  #app { display: flex; height: 100vh; flex-direction: column; }
 
   .main { flex: 1; display: flex; overflow: hidden; }
 
@@ -356,6 +306,18 @@
     display: flex; gap: 8px; justify-content: flex-end;
   }
 
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input {
+    width: 100%; padding: 11px 14px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  .field input::placeholder { color: var(--text-faint); }
+
   .field-label-row {
     display: flex; align-items: center; justify-content: space-between;
     margin-bottom: 6px;
@@ -560,9 +522,6 @@
   .toast.error { border-color: var(--red); color: var(--red); }
   .toast.success { border-color: var(--green); color: var(--green); }
 
-  /* ============================================================
-     MOBILE OVERLAY VOOR BERICHT
-     ============================================================ */
   .msg-view-close {
     display: none;
     width: 36px; height: 36px; border-radius: 9px;
@@ -624,22 +583,6 @@
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo"><i data-lucide="graduation-cap"></i></div>
-    <h1>Smartschool</h1>
-    <p>Meld aan met je Smartschool account</p>
-    <form id="login-form">
-      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
-      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
-      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
-      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
-      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
-      <div class="login-error" id="login-error"></div>
-    </form>
-  </div>
-</div>
-
 <div id="app">
   <div class="main">
     <main class="content">
@@ -660,7 +603,44 @@
             <button class="msg-tab" data-box="outbox"><i data-lucide="send-horizontal"></i> Verzonden</button>
             <button class="msg-tab" data-box="trash"><i data-lucide="trash-2"></i> Prullenbak</button>
           </div>
-          <div class="msg-rows" id="msg-rows"></div>
+          <div class="msg-rows" id="msg-rows">
+            <!-- Shimmer direct zichtbaar vanaf eerste paint -->
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+            <div class="skeleton-row">
+              <div class="skeleton-line w60"></div>
+              <div class="skeleton-line w85"></div>
+              <div class="skeleton-line w40"></div>
+            </div>
+          </div>
         </div>
         <div class="msg-view" id="msg-view">
           <div class="empty"><i data-lucide="mail"></i><p>Selecteer een bericht</p></div>
@@ -677,7 +657,6 @@
       <button class="action-btn" id="compose-close" style="padding:6px 8px"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
-      <!-- Aan -->
       <div class="field" style="position:relative">
         <div class="field-label-row">
           <label>Aan</label>
@@ -692,7 +671,6 @@
         <div class="suggestions" id="to-suggestions" style="display:none"></div>
       </div>
 
-      <!-- CC / BCC (verborgen by default) -->
       <div class="cc-bcc-fields" id="cc-bcc-fields">
         <div class="field" style="position:relative;margin-bottom:0">
           <label>CC</label>
@@ -922,8 +900,7 @@ const msgCache = new MessageCache();
    ============================================================ */
 const api = {
   auth: {
-    async login({ username, password, main_url, mfa }) {
-      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+    async login() {
       const data = await apiFetch('/api/auth/login', { method: 'POST' });
       auth.user = { username: data.username, main_url: data.main_url };
       return auth.user;
@@ -1211,50 +1188,41 @@ document.addEventListener('click', (e) => {
 }, true);
 
 /* ============================================================
-   INIT
+   INIT — geen login-formulier, geen delay
    ============================================================ */
-setupLogin();
 autoLogin();
 refreshIcons();
 
-function setupLogin() {
-  $('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = $('login-btn');
-    const err = $('login-error');
-    err.classList.remove('show');
-    btn.disabled = true;
-    btn.textContent = 'Aanmelden...';
-    try {
-      await api.auth.login({
-        username: $('in-user').value.trim(),
-        password: $('in-pass').value,
-        main_url: $('in-url').value.trim(),
-        mfa: $('in-mfa').value.trim(),
-      });
-      onLoggedIn();
-    } catch (e) {
-      err.textContent = e.message || 'Aanmelden mislukt';
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = 'Aanmelden';
-    }
-  });
-}
-
 async function autoLogin() {
-  if (!auth.tryRestore()) return;
+  if (!auth.tryRestore()) {
+    showNotLoggedIn();
+    return;
+  }
   try {
-    await apiFetch('/api/auth/login', { method: 'POST' });
-    auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
-    onLoggedIn();
-  } catch { auth.clear(); }
+    await api.auth.login();
+    onReady();
+  } catch (e) {
+    auth.clear();
+    showNotLoggedIn();
+  }
 }
 
-function onLoggedIn() {
-  const u = auth.user || auth.creds || {};
-  $('login-screen').style.display = 'none';
-  $('app').classList.add('ready');
+function showNotLoggedIn() {
+  const msg = 'Niet ingelogd, gelieve in te loggen';
+  $('msg-rows').innerHTML =
+    '<div class="empty" style="height:auto;padding:40px 20px">' +
+      icon('log-in') +
+      '<p>' + esc(msg) + '</p>' +
+    '</div>';
+  $('msg-view').innerHTML =
+    '<div class="empty">' +
+      icon('log-in') +
+      '<p>' + esc(msg) + '</p>' +
+    '</div>';
+  refreshIcons();
+}
+
+function onReady() {
   setupAppEvents();
   loadMessages('inbox');
 }
@@ -1339,20 +1307,6 @@ function renderEmptyView() {
   document.body.classList.remove('overlay-open');
 }
 
-function renderSkeleton() {
-  const parts = [];
-  for (let i = 0; i < 7; i++) {
-    parts.push(
-      '<div class="skeleton-row">' +
-        '<div class="skeleton-line w60"></div>' +
-        '<div class="skeleton-line w85"></div>' +
-        '<div class="skeleton-line w40"></div>' +
-      '</div>'
-    );
-  }
-  $('msg-rows').innerHTML = parts.join('');
-}
-
 async function loadMessages(box, force = false) {
   currentBox = box;
 
@@ -1360,7 +1314,7 @@ async function loadMessages(box, force = false) {
   if (cached) {
     renderMessageList(cached);
   } else {
-    renderSkeleton();
+    // Skeleton staat al in de HTML — niks doen
   }
 
   try {
@@ -1683,10 +1637,8 @@ function renderRecipients(field) {
 }
 
 /* ============================================================
-   RICH TEXT EDITOR — ALLES MET <span>
+   RICH TEXT EDITOR
    ============================================================ */
-
-// Bewaar de laatst geselecteerde range in de editor
 let savedRange = null;
 
 function saveEditorRange() {
@@ -1714,9 +1666,6 @@ function restoreEditorRange() {
   }
 }
 
-/**
- * Verzamel alle tekstknopen binnen een range.
- */
 function getTextNodesInRange(range) {
   const root = range.commonAncestorContainer;
   const nodes = [];
@@ -1736,20 +1685,12 @@ function getTextNodesInRange(range) {
   return nodes;
 }
 
-/**
- * Splits een tekstknoop op zodat [start, end] exact overeenkomt met de
- * geselecteerde tekens. Retourneert de nieuwe tekstknoop met de selectie.
- */
 function splitTextNode(node, start, end) {
   if (start > 0) node = node.splitText(start);
   if (end - start < node.nodeValue.length) node.splitText(end - start);
   return node;
 }
 
-/**
-   Voeg een <span> toe rond de selectie. Als de hele selectie al binnen
-   een span met exact dezelfde stijl zit, wordt die stijl verwijderd (toggle).
- */
 function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
   const editor = $('compose-body');
   if (!editor) return;
@@ -1763,7 +1704,6 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
   const textNodes = getTextNodesInRange(range);
   if (!textNodes.length) return;
 
-  // Check of alle nodes al dezelfde stijl hebben → toggle uit
   if (toggleOff !== null) {
     let allMatch = true;
     for (const tn of textNodes) {
@@ -1784,14 +1724,12 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
     }
   }
 
-  // Splits de eerste en laatste tekstknoop zodat de selectie exact klopt
   const firstNode = textNodes[0];
   const lastNode = textNodes[textNodes.length - 1];
   let startOffset = (firstNode === range.startContainer) ? range.startOffset : 0;
   let endOffset = (lastNode === range.endContainer) ? range.endOffset : lastNode.nodeValue.length;
 
   const startNode = splitTextNode(firstNode, startOffset, endOffset === firstNode.nodeValue.length ? firstNode.nodeValue.length : endOffset);
-  // Na split: de daadwerkelijke nodes opnieuw verzamelen
   const rangeNodes = getTextNodesInRange((() => {
     const r = document.createRange();
     r.setStart(startNode, 0);
@@ -1799,11 +1737,9 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
     return r;
   })());
 
-  // Voor elke tekstknoop: wrap in een span
   const spans = [];
   for (const tn of rangeNodes) {
     if (!tn.parentNode) continue;
-    // Als de parent al een span is met dezelfde stijl, sla over
     const parent = tn.parentElement;
     if (parent && parent !== editor && parent.tagName === 'SPAN' &&
         parent.style[styleProp] === styleValue &&
@@ -1818,7 +1754,6 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
     spans.push(span);
   }
 
-  // Selectie herstellen over alle nieuwe spans
   if (spans.length) {
     const newRange = document.createRange();
     newRange.setStartBefore(spans[0]);
@@ -1828,15 +1763,10 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
     savedRange = newRange.cloneRange();
   }
 
-  // Normaliseer: voeg spans samen als ze dezelfde stijl hebben
   normalizeSpans(editor);
   editor.dispatchEvent(new Event('input'));
 }
 
-/**
- * Verwijder een specifieke stijl (prop + waarde) uit de selectie.
- * Spans die daardoor leeg worden, worden opgeruimd.
- */
 function removeStyleFromSelection(styleProp, styleValue) {
   const editor = $('compose-body');
   if (!editor) return;
@@ -1869,9 +1799,6 @@ function removeStyleFromSelection(styleProp, styleValue) {
   editor.dispatchEvent(new Event('input'));
 }
 
-/**
- * Verwijder ALLE opmaak-spans uit de selectie (removeFormat).
- */
 function removeAllFormatting() {
   const editor = $('compose-body');
   if (!editor) return;
@@ -1904,20 +1831,14 @@ function removeAllFormatting() {
   editor.dispatchEvent(new Event('input'));
 }
 
-/**
- * Voegt naburige spans met dezelfde stijl samen, en verwijdert lege spans.
- */
 function normalizeSpans(root) {
   if (!root) return;
-  // Eerst lege spans weg
   root.querySelectorAll('span').forEach(span => {
     if (!span.textContent && !span.querySelector('img')) span.remove();
   });
-  // Dan samenvoegen
   const spans = Array.from(root.querySelectorAll('span'));
   for (const span of spans) {
     if (!span.parentNode) continue;
-    // Kinderen die span zijn met dezelfde stijl als parent → unwrap
     const children = Array.from(span.children);
     for (const child of children) {
       if (child.tagName === 'SPAN' && child.style.cssText === span.style.cssText) {
@@ -1925,7 +1846,6 @@ function normalizeSpans(root) {
         child.remove();
       }
     }
-    // Zelfde-stijl buurman direct erna → samenvoegen
     let next = span.nextSibling;
     while (next && next.nodeType === Node.TEXT_NODE && !next.nodeValue) {
       const nn = next.nextSibling;
@@ -1939,9 +1859,6 @@ function normalizeSpans(root) {
   }
 }
 
-/**
- * Past een stijl toe op de selectie. Dit is de centrale functie.
- */
 function applyStyle(styleProp, styleValue, toggleOff = null) {
   const editor = $('compose-body');
   if (!editor) return;
@@ -1958,13 +1875,10 @@ function applyStyle(styleProp, styleValue, toggleOff = null) {
   updateToolbarState();
 }
 
-/* ---------- Toolbar acties ---------- */
-
 function toggleBold() {
   const editor = $('compose-body');
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
-  // Check of selectie al bold is
   const range = sel.getRangeAt(0);
   const isBold = selectionHasStyle(range, 'fontWeight', '700');
   if (isBold) {
@@ -2005,9 +1919,6 @@ function setFontSize(px) {
   applyStyle('fontSize', px + 'px', { styleProp: 'fontSize', styleValue: px + 'px' });
 }
 
-/**
- * Checkt of de selectie ergens een bepaalde stijl heeft.
- */
 function selectionHasStyle(range, styleProp, styleValue) {
   const editor = $('compose-body');
   if (!editor) return false;
@@ -2028,12 +1939,9 @@ function selectionHasStyle(range, styleProp, styleValue) {
   return true;
 }
 
-/* ---------- Editor setup ---------- */
-
 function setupEditor() {
   const editor = $('compose-body');
 
-  // Selectie opslaan bij selectie-wijziging
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
@@ -2044,7 +1952,6 @@ function setupEditor() {
     }
   });
 
-  // Bold / Italic / Underline / RemoveFormat
   $$('.editor-toolbar .toolbar-btn[data-cmd]').forEach(btn => {
     btn.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -2061,7 +1968,6 @@ function setupEditor() {
     });
   });
 
-  // Font size
   const sizeSel = $('toolbar-size');
   sizeSel.addEventListener('mousedown', () => saveEditorRange());
   sizeSel.addEventListener('change', () => {
@@ -2072,7 +1978,6 @@ function setupEditor() {
     sizeSel.value = '';
   });
 
-  // Tekstkleur
   const colorInput = $('toolbar-color');
   colorInput.addEventListener('mousedown', () => saveEditorRange());
   colorInput.addEventListener('input', () => {
@@ -2083,7 +1988,6 @@ function setupEditor() {
   editor.addEventListener('mouseup', () => { saveEditorRange(); updateToolbarState(); });
   editor.addEventListener('input', updateToolbarState);
 
-  // Paste: plain text (behalve afbeeldingen)
   editor.addEventListener('paste', (e) => {
     const items = e.clipboardData?.items || [];
     for (const item of items) {
@@ -2156,13 +2060,10 @@ function updateToolbarState() {
   const range = sel.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
 
-  // Bold
   const boldBtn = document.querySelector('.toolbar-btn[data-cmd="bold"]');
   if (boldBtn) boldBtn.classList.toggle('active', selectionHasStyle(range, 'fontWeight', '700'));
-  // Italic
   const italicBtn = document.querySelector('.toolbar-btn[data-cmd="italic"]');
   if (italicBtn) italicBtn.classList.toggle('active', selectionHasStyle(range, 'fontStyle', 'italic'));
-  // Underline
   const underlineBtn = document.querySelector('.toolbar-btn[data-cmd="underline"]');
   if (underlineBtn) underlineBtn.classList.toggle('active', selectionHasStyle(range, 'textDecoration', 'underline'));
 }
@@ -2391,7 +2292,7 @@ function fixRelativeImages(root) {
 }
 
 /* ============================================================
-   RESIZE: sluit overlay als we naar desktop gaan
+   RESIZE
    ============================================================ */
 window.addEventListener('resize', () => {
   if (!isMobile()) {
