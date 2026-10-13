@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
@@ -35,7 +35,7 @@
     --mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
 
     --hour-h: 84px;
-    --activities-h: 60px;   /* ruimte voor 2 activiteiten-balken */
+    --activities-h: 60px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -55,68 +55,15 @@
 
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
-  #login-screen {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
-    padding: 20px;
-  }
-  .login-card {
-    width: 100%; max-width: 400px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px 32px;
-    box-shadow: var(--shadow);
-    animation: slideUp 0.4s ease;
-  }
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  .login-logo {
-    width: 52px; height: 52px; border-radius: 14px;
-    background: #2a2a2e;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text); margin-bottom: 20px;
-    border: 1px solid var(--border);
-  }
-  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
-  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .field input {
-    width: 100%; padding: 11px 14px;
-    background: var(--bg-2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-size: 14px; font-family: var(--font);
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field input:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
-  .field input::placeholder { color: var(--text-faint); }
-  .btn {
-    width: 100%; padding: 12px;
-    background: #2a2a2e; color: var(--text);
-    border: 1px solid #34343a;
-    border-radius: var(--radius-sm);
-    font-size: 14px; font-weight: 600; font-family: var(--font);
-    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
-  }
-  .btn:hover { background: #35353a; border-color: #3f3f45; }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
-  .login-error.show { display: block; }
 
-  /* ============================================================
-     APP LAYOUT
-     ============================================================ */
   #app {
-    display: none;
+    display: flex;
     height: 100vh;
     height: 100dvh;
     flex-direction: column;
     overflow: hidden;
   }
-  #app.ready { display: flex; }
 
   .main {
     flex: 1 1 auto;
@@ -179,9 +126,6 @@
   .btn-refresh-head.spinning svg.lucide { animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ============================================================
-     PLANNER
-     ============================================================ */
   .planner-wrap {
     flex: 1 1 auto;
     min-height: 0;
@@ -246,18 +190,15 @@
     display: flex; flex-direction: column; gap: 6px;
   }
 
-  /* ============================================================
-     SCHOOLACTIVITEITEN — altijd vaste zone, ook als leeg
-     ============================================================ */
-.day-activities {
-  display: flex;
-  flex-direction: row;
-  gap: 4px;
-  height: 26px;
-  min-height: 26px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
+  .day-activities {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    height: 26px;
+    min-height: 26px;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
 
   .activity-bar {
     display: flex; align-items: center; gap: 7px;
@@ -301,9 +242,6 @@
     line-height: 1;
   }
 
-  /* ============================================================
-     UUR-KAARTJE
-     ============================================================ */
   .hour-card {
     background: var(--bg-3);
     border: 1px solid var(--border-soft);
@@ -464,9 +402,6 @@
     flex-shrink: 0;
   }
 
-  /* ============================================================
-     KOLOM-NAVIGATIE
-     ============================================================ */
   .col-nav {
     display: none;
     align-items: center; justify-content: center; gap: 8px;
@@ -509,9 +444,6 @@
   }
   .col-dot.active { background: var(--text); transform: scale(1.25); }
 
-  /* ============================================================
-     DETAIL OVERLAY
-     ============================================================ */
   .detail-overlay {
     position: fixed; inset: 0;
     z-index: 60;
@@ -576,7 +508,6 @@
   .detail-close:hover { background: var(--card-hover); color: var(--text); }
   .detail-close svg.lucide { width: 16px; height: 16px; }
 
-  /* Body: ruimere padding */
   .detail-body {
     padding: 20px 24px;
     overflow-y: auto;
@@ -587,7 +518,6 @@
     font-size: 13.5px; line-height: 1.7;
   }
 
-  /* Rijen: grid zodat labels en waarden netjes uitlijnen */
   .detail-row {
     display: grid;
     grid-template-columns: 110px 1fr;
@@ -639,7 +569,6 @@
   .detail-info ul, .detail-info ol { margin: 6px 0 10px; padding-left: 22px; }
   .detail-info li { margin: 3px 0; }
 
-  /* Sub-secties binnen detail-info (bijlagen / links) */
   .detail-subsection {
     margin-top: 16px;
     padding-top: 14px;
@@ -671,9 +600,6 @@
   .action-btn.success:hover { background: var(--green-soft); color: var(--green); border-color: transparent; }
   .action-btn.danger:hover { background: var(--red-soft); color: var(--red); border-color: transparent; }
 
-  /* ============================================================
-     SKELETON / EMPTY / TOASTS
-     ============================================================ */
   .skeleton-hour {
     height: var(--hour-h);
     min-height: var(--hour-h);
@@ -715,9 +641,6 @@
   .toast.error { border-color: var(--red); color: var(--red); }
   .toast.success { border-color: var(--green); color: var(--green); }
 
-  /* ============================================================
-     RESPONSIVE
-     ============================================================ */
   @media (min-width: 821px) {
     .col-nav { display: none !important; }
   }
@@ -801,22 +724,6 @@
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo"><i data-lucide="calendar-days"></i></div>
-    <h1>Smartschool</h1>
-    <p>Meld aan met je Smartschool account</p>
-    <form id="login-form">
-      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
-      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
-      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
-      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
-      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
-      <div class="login-error" id="login-error"></div>
-    </form>
-  </div>
-</div>
-
 <div id="app">
   <div class="main">
     <main class="content">
@@ -837,7 +744,65 @@
 
       <div class="planner-wrap">
         <div class="planner-scroll" id="planner-scroll">
-          <div class="planner-grid" id="planner-grid"></div>
+          <div class="planner-grid" id="planner-grid">
+            <!-- Shimmer direct zichtbaar vanaf eerste paint -->
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+            <div class="day-col">
+              <div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>
+              <div class="day-body">
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div><div class="skeleton-hour"></div><div class="skeleton-hour"></div>
+                <div class="skeleton-hour"></div>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="col-nav" id="col-nav">
           <button id="btn-prev-col" title="Vorige dag"><i data-lucide="chevron-left"></i></button>
@@ -983,8 +948,7 @@ const plannerCache = {
 
 const api = {
   auth: {
-    async login({ username, password, main_url, mfa }) {
-      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+    async login() {
       const data = await apiFetch('/api/auth/login', { method: 'POST' });
       auth.user = { username: data.username, main_url: data.main_url };
       return auth.user;
@@ -1029,47 +993,34 @@ let currentWeekData = null;
 let currentDetail = null;
 let currentCol = 0;
 
-setupLogin();
 autoLogin();
 refreshIcons();
 
-function setupLogin() {
-  $('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = $('login-btn');
-    const err = $('login-error');
-    err.classList.remove('show');
-    btn.disabled = true;
-    btn.textContent = 'Aanmelden...';
-    try {
-      await api.auth.login({
-        username: $('in-user').value.trim(),
-        password: $('in-pass').value,
-        main_url: $('in-url').value.trim(),
-        mfa: $('in-mfa').value.trim(),
-      });
-      onLoggedIn();
-    } catch (e) {
-      err.textContent = e.message || 'Aanmelden mislukt';
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = 'Aanmelden';
-    }
-  });
-}
-
 async function autoLogin() {
-  if (!auth.tryRestore()) return;
+  if (!auth.tryRestore()) {
+    showNotLoggedIn();
+    return;
+  }
   try {
-    await apiFetch('/api/auth/login', { method: 'POST' });
-    auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
-    onLoggedIn();
-  } catch { auth.clear(); }
+    await api.auth.login();
+    onReady();
+  } catch (e) {
+    auth.clear();
+    showNotLoggedIn();
+  }
 }
 
-function onLoggedIn() {
-  $('login-screen').style.display = 'none';
-  $('app').classList.add('ready');
+function showNotLoggedIn() {
+  const msg = 'Niet ingelogd, gelieve in te loggen';
+  $('planner-grid').innerHTML =
+    '<div class="empty" style="grid-column: 1 / -1;">' +
+      icon('log-in') +
+      '<p>' + esc(msg) + '</p>' +
+    '</div>';
+  refreshIcons();
+}
+
+function onReady() {
   setupAppEvents();
   setupColNav();
   loadWeek(0);
@@ -1201,7 +1152,7 @@ function updateColIndicator() {
 }
 
 async function loadWeek(offset, force = false) {
-  renderSkeleton();
+  // Skeleton staat al in HTML — geen renderSkeleton() meer
   try {
     const data = await api.planner.week(offset, force);
     currentWeekData = data;
@@ -1246,21 +1197,6 @@ function updateWeekLabel(weekStart, weekEnd, meta) {
   }
 }
 
-function renderSkeleton() {
-  const cols = [];
-  for (let d = 0; d < 7; d++) {
-    let hours = '';
-    for (let u = 0; u < 7; u++) hours += '<div class="skeleton-hour"></div>';
-    cols.push(
-      '<div class="day-col">' +
-        '<div class="day-head"><div class="dh-name">—</div><div class="dh-date">—</div></div>' +
-        '<div class="day-body">' + hours + '</div>' +
-      '</div>'
-    );
-  }
-  $('planner-grid').innerHTML = cols.join('');
-}
-
 function isActivity(it) {
   return it && it.t === 'planned-school-activities';
 }
@@ -1281,7 +1217,6 @@ function renderWeek(data) {
     const dt = new Date(it.df);
     const dayIdx = (dt.getUTCDay() + 6) % 7;
 
-    // Schoolactiviteiten → eigen bak, niet in uur-slots
     if (isActivity(it)) {
       (activitiesByDay[dayIdx] = activitiesByDay[dayIdx] || []).push(it);
       continue;
@@ -1311,12 +1246,11 @@ function renderWeek(data) {
     const dateStr = dayDate.toISOString().slice(0, 10);
     const isToday = dateStr === todayStr;
 
-    // Altijd een .day-activities-zone (vaste hoogte via CSS)
-const acts = activitiesByDay[d] || [];
-const actsHtml =
-  '<div class="day-activities">' +
-    acts.map(renderActivityBar).join('') +
-  '</div>';
+    const acts = activitiesByDay[d] || [];
+    const actsHtml =
+      '<div class="day-activities">' +
+        acts.map(renderActivityBar).join('') +
+      '</div>';
 
     let hoursHtml = '';
     for (let u = 1; u <= 7; u++) {
