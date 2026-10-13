@@ -259,7 +259,7 @@
   }
   .hour-card.empty:hover { border-color: var(--border-soft); background: transparent; }
 
-  /* NIET-aangevuld (handmatig / niet automatisch aangevuld): krijgt subtiele accent-aanduiding */
+  /* NIET-aangevuld (echte les, niet automatisch aangevuld): subtiel streepje links */
   .hour-card:not(.empty):not(.filled) {
     background: var(--bg-3);
     border-color: var(--border);
@@ -268,7 +268,6 @@
     background: var(--card-hover);
     border-color: #3a3a40;
   }
-  /* Mini-indicator voor NIET-aangevuld: klein streepje links */
   .hour-card:not(.empty):not(.filled)::before {
     content: '';
     position: absolute;
@@ -282,7 +281,7 @@
     pointer-events: none;
   }
 
-  /* WEL-aangevuld: neutraal, mini mini stipje */
+  /* WEL-aangevuld: neutraal + mini mini stipje linksboven */
   .hour-card.filled {
     background: var(--bg-3);
     border-color: var(--border-soft);
@@ -291,7 +290,6 @@
     background: var(--card-hover);
     border-color: var(--border);
   }
-  /* Mini stipje voor aangevuld */
   .hour-card.filled::before {
     content: '';
     position: absolute;
@@ -639,9 +637,7 @@
       align-items: stretch;
     }
 
-    /* Kolommen: vaste breedte, gecentreerd door snap.
-       De padding op .planner-grid (14px) + gap (10px) zorgt dat
-       de kaartjes nooit tegen de viewport-rand plakken. */
+    /* Kolommen: vaste breedte, gecentreerd door snap. */
     .day-col {
       flex: 0 0 auto;
       width: calc(100vw - 48px);
