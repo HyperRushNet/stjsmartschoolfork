@@ -54,61 +54,9 @@
 
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
-  #login-screen {
-    position: fixed; inset: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle at 50% 0%, #1a1a1e 0%, var(--bg) 60%);
-    padding: 20px;
-  }
-  .login-card {
-    width: 100%; max-width: 400px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 36px 32px;
-    box-shadow: var(--shadow);
-    animation: slideUp 0.4s ease;
-  }
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
-  .login-logo {
-    width: 52px; height: 52px; border-radius: 14px;
-    background: #2a2a2e;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text); margin-bottom: 20px;
-    border: 1px solid var(--border);
-  }
-  .login-logo svg.lucide { width: 26px; height: 26px; stroke-width: 2; }
-  .login-card h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
-  .login-card p { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
-  .field { margin-bottom: 14px; }
-  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .field input, .field textarea, .field select {
-    width: 100%; padding: 11px 14px;
-    background: var(--bg-2); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); color: var(--text);
-    font-size: 14px; font-family: var(--font);
-    transition: border-color 0.15s, box-shadow 0.15s;
-  }
-  .field textarea { resize: vertical; min-height: 70px; }
-  .field select { cursor: pointer; }
-  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
-  .field input::placeholder, .field textarea::placeholder { color: var(--text-faint); }
-  .btn {
-    width: 100%; padding: 12px;
-    background: #2a2a2e; color: var(--text);
-    border: 1px solid #34343a;
-    border-radius: var(--radius-sm);
-    font-size: 14px; font-weight: 600; font-family: var(--font);
-    cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s;
-  }
-  .btn:hover { background: #35353a; border-color: #3f3f45; }
-  .btn:active { transform: scale(0.98); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .login-error { color: var(--red); font-size: 13px; margin-top: 12px; display: none; }
-  .login-error.show { display: block; }
 
-  #app { display: none; height: 100vh; height: 100dvh; flex-direction: column; }
-  #app.ready { display: flex; }
+  #app { display: flex; height: 100vh; height: 100dvh; flex-direction: column; }
 
   .main { flex: 1; display: flex; overflow: hidden; min-height: 0; }
   .content { flex: 1; overflow: hidden; padding: 24px 28px; display: flex; flex-direction: column; min-height: 0; }
@@ -235,9 +183,6 @@
     font-size: 11.5px;
   }
 
-  /* ============================================================
-     LAYOUT MET DETAIL-PANEEL RECHTS
-     ============================================================ */
   .tasks-layout {
     display: flex;
     gap: 16px;
@@ -326,7 +271,6 @@
     background: var(--yellow);
     opacity: 0.85;
   }
-  /* NIEUW: schoolactiviteiten */
   .task-card.is-activity::before {
     background: var(--blue);
     opacity: 0.85;
@@ -362,7 +306,6 @@
     animation: spin 0.7s linear infinite;
   }
 
-  /* NIEUW: icoon i.p.v. checkbox voor schoolactiviteiten */
   .task-activity-icon {
     width: 18px; height: 18px;
     flex-shrink: 0;
@@ -412,9 +355,6 @@
   .task-actions button.danger:hover { background: var(--red-soft); color: var(--red); }
   .task-actions button svg.lucide { width: 15px; height: 15px; }
 
-  /* ============================================================
-     DETAIL PANEEL
-     ============================================================ */
   .detail-panel {
     width: 0;
     flex-shrink: 0;
@@ -455,7 +395,6 @@
   .detail-type svg.lucide { width: 12px; height: 12px; }
   .detail-type.is-assignment { color: var(--purple); }
   .detail-type.is-unscheduled { color: var(--yellow); }
-  /* NIEUW: schoolactiviteit */
   .detail-type.is-activity { color: var(--blue); }
   .detail-title {
     font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
@@ -508,7 +447,6 @@
   .detail-badge.done { background: var(--green-soft); color: var(--green); }
   .detail-badge.unscheduled { background: var(--yellow-soft); color: var(--yellow); }
   .detail-badge.deadline { background: var(--red-soft); color: var(--red); }
-  /* NIEUW: schoolactiviteit */
   .detail-badge.activity { background: var(--blue-soft); color: var(--blue); }
 
   .detail-info { color: var(--text); }
@@ -612,7 +550,6 @@
     100% { background-position: -200% 0; }
   }
 
-  /* Nieuwe taak modal */
   .new-task-bg {
     position: fixed; inset: 0; z-index: 50;
     background: rgba(0,0,0,0.6);
@@ -665,6 +602,20 @@
     border-top: 1px solid var(--border-soft);
     display: flex; gap: 8px; justify-content: flex-end;
   }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input, .field textarea, .field select {
+    width: 100%; padding: 11px 14px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 14px; font-family: var(--font);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field select { cursor: pointer; }
+  .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: #444; box-shadow: 0 0 0 3px rgba(255,255,255,0.04); }
+  .field input::placeholder, .field textarea::placeholder { color: var(--text-faint); }
 
   .color-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .color-swatch {
@@ -755,22 +706,6 @@
 </head>
 <body>
 
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo"><i data-lucide="check-square"></i></div>
-    <h1>Smartschool</h1>
-    <p>Meld aan met je Smartschool account</p>
-    <form id="login-form">
-      <div class="field"><label>Gebruikersnaam</label><input id="in-user" placeholder="voornaam.naam" autocomplete="username" required></div>
-      <div class="field"><label>Wachtwoord</label><input id="in-pass" type="password" placeholder="••••••••" autocomplete="current-password" required></div>
-      <div class="field"><label>School domein</label><input id="in-url" placeholder="school.smartschool.be" autocomplete="url" required></div>
-      <div class="field"><label>MFA / geboortedatum <span style="color:var(--text-faint);text-transform:none;font-weight:400">(optioneel)</span></label><input id="in-mfa" placeholder="2011-07-27"></div>
-      <button class="btn" type="submit" id="login-btn">Aanmelden</button>
-      <div class="login-error" id="login-error"></div>
-    </form>
-  </div>
-</div>
-
 <div id="app">
   <div class="main">
     <main class="content">
@@ -808,7 +743,15 @@
       <div class="tasks-layout">
         <div class="tasks-panel">
           <div class="tasks-scroll" id="tasks-scroll">
-            <div class="tasks-list" id="tasks-list"></div>
+            <div class="tasks-list" id="tasks-list">
+              <!-- Shimmer direct zichtbaar vanaf eerste paint -->
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+              <div class="skeleton-row"></div>
+            </div>
           </div>
         </div>
 
@@ -988,8 +931,7 @@ const rangeCache = {
 
 const api = {
   auth: {
-    async login({ username, password, main_url, mfa }) {
-      auth.setCreds({ username, password, main_url, mfa: mfa || '' });
+    async login() {
       const data = await apiFetch('/api/auth/login', { method: 'POST' });
       auth.user = { username: data.username, main_url: data.main_url };
       return auth.user;
@@ -1119,9 +1061,6 @@ function computeRange(fromDate) {
   return { from: fromDate, to: addDays(fromDate, 13) };
 }
 
-/* ============================================================
-   RENDER LIJST
-   ============================================================ */
 function render() {
   const list = $('tasks-list');
   if (!rangeStart) return;
@@ -1154,7 +1093,6 @@ function render() {
   }
 
   const sortFn = (a, b) => {
-    // Volgorde binnen een dag: opdracht → activiteit → eigen taak
     const rank = x => isAssignment(x) ? 0 : isActivity(x) ? 1 : 2;
     const ar = rank(a), br = rank(b);
     if (ar !== br) return ar - br;
@@ -1217,7 +1155,6 @@ function renderTaskCard(item) {
   const noDl = hasNoDeadline(item);
   const active = currentDetailId && currentDetailId === item.i;
 
-  // Meta: vak of type-label
   let metaLabel = '';
   if (item.c) metaLabel = esc(item.c);
   else if (assignment) metaLabel = 'Opdracht';
@@ -1234,14 +1171,12 @@ function renderTaskCard(item) {
   else if (noDl) cls += ' is-unscheduled';
   if (active) cls += ' active';
 
-  // Vooraan: checkbox OF activiteit-icoon
   const leadHtml = activity
     ? '<div class="task-activity-icon" title="Schoolactiviteit">' + icon('sparkles') + '</div>'
     : '<div class="task-check' + (done ? ' checked' : '') + '" data-role="check" title="' + (done ? 'Heropenen' : 'Afronden') + '">' +
         (done ? icon('check') : '') +
       '</div>';
 
-  // Acties: geen trash voor assignments en activities
   const actionsHtml = (assignment || activity)
     ? ''
     : '<div class="task-actions">' +
@@ -1310,7 +1245,6 @@ async function toggleDone(card, id, type) {
     if (item) item.st = done ? '' : 'resolved';
     toast(done ? 'Heropend' : 'Afgerond', 'success');
     render();
-    // Als dit item in detail open staat, update paneel
     if (currentDetailId === id) {
       const updated = allItems.find(x => x.i === id);
       if (updated) renderDetailHeader(updated);
@@ -1336,9 +1270,6 @@ async function trashTask(card, id, type) {
   }
 }
 
-/* ============================================================
-   DETAIL PANEEL
-   ============================================================ */
 function renderDetailHeader(item) {
   const typeEl = $('detail-type');
   typeEl.className = 'detail-type';
@@ -1377,7 +1308,6 @@ function renderDetailBody(base, detail, errorMsg) {
   const activity = isActivity(base);
   const noDl = hasNoDeadline(base);
 
-  // Badges
   const badges = [];
   if (done) badges.push('<span class="detail-badge done">' + icon('check') + 'Afgerond</span>');
   if (assignment) badges.push('<span class="detail-badge assignment">' + icon('file-text') + 'Opdracht</span>');
@@ -1389,7 +1319,6 @@ function renderDetailBody(base, detail, errorMsg) {
     bodyHtml += '<div class="detail-badge-row">' + badges.join('') + '</div>';
   }
 
-  // Meta-rijen
   const rows = [];
   if (base.c) rows.push(row('book-open', 'Vak', base.c));
   if (base.te) rows.push(row('user', 'Leerkracht', base.te));
@@ -1405,7 +1334,6 @@ function renderDetailBody(base, detail, errorMsg) {
     bodyHtml += '<div class="detail-section" style="margin-top:0;padding-top:0;border-top:none">' + rows.join('') + '</div>';
   }
 
-  // Beschrijving
   if (detail?.public_info) {
     bodyHtml += '<div class="detail-section">' +
       '<div class="detail-section-title">' + icon('align-left') + 'Beschrijving</div>' +
@@ -1413,7 +1341,6 @@ function renderDetailBody(base, detail, errorMsg) {
     '</div>';
   }
 
-  // Bijlagen
   if (detail?.attachments?.length) {
     const chips = detail.attachments.map(a =>
       '<span class="detail-attach">' + icon('paperclip') + esc(a.name || 'bestand') + '</span>'
@@ -1424,7 +1351,6 @@ function renderDetailBody(base, detail, errorMsg) {
     '</div>';
   }
 
-  // Links
   if (detail?.weblinks?.length) {
     const links = detail.weblinks.map(u =>
       '<a class="detail-link" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' +
@@ -1449,7 +1375,6 @@ function renderDetailBody(base, detail, errorMsg) {
 function renderDetailFoot(base) {
   const foot = [];
 
-  // Schoolactiviteiten: geen acties — je kan ze niet afvinken of verwijderen
   if (!isActionable(base)) {
     $('detail-foot').innerHTML = '';
     return;
@@ -1506,7 +1431,6 @@ async function handleDetailAction(action) {
     if (updated) {
       renderDetailHeader(updated);
       renderDetailFoot(updated);
-      // Herrender body badges
       const cachedDetail = rangeCache.get('item:' + item.t + ':' + item.i);
       renderDetailBody(updated, cachedDetail);
     }
@@ -1516,7 +1440,6 @@ async function handleDetailAction(action) {
 }
 
 async function openDetail(id, type) {
-  // Toggle: klik zelfde = sluiten
   if (currentDetailId === id && $('detail-panel').classList.contains('open')) {
     closeDetail();
     return;
@@ -1526,19 +1449,15 @@ async function openDetail(id, type) {
   const item = allItems.find(x => x.i === id);
   if (!item) return;
 
-  // Highlight in lijst
   $$('#tasks-list .task-card').forEach(c => {
     c.classList.toggle('active', c.dataset.id === id);
   });
 
-  // Paneel openen
   $('detail-panel').classList.add('open');
   if (isMobile()) document.body.classList.add('overlay-open');
 
-  // Header direct
   renderDetailHeader(item);
 
-  // Body: skeleton of direct
   $('detail-body').innerHTML =
     '<div class="detail-empty">' + icon('loader') + '</div>';
   $('detail-foot').innerHTML = '';
@@ -1546,7 +1465,6 @@ async function openDetail(id, type) {
 
   renderDetailFoot(item);
 
-  // Detail laden
   try {
     const detail = await api.tasks.detail(id, type);
     renderDetailBody(item, detail);
@@ -1581,9 +1499,6 @@ function row(iconName, label, value) {
     '<strong>' + esc(value) + '</strong></div>';
 }
 
-/* ============================================================
-   RANGE LADEN
-   ============================================================ */
 function updateRangeLabel() {
   if (!rangeStart) return;
   const { to } = computeRange(rangeStart);
@@ -1595,7 +1510,6 @@ function updateRangeLabel() {
 }
 
 async function loadRange(force = false) {
-  renderSkeleton();
   const { from, to } = computeRange(rangeStart);
   const today = todayStr();
   currentRangeContainsToday = from <= today && today <= to;
@@ -1615,12 +1529,6 @@ async function loadRange(force = false) {
   }
 }
 
-function renderSkeleton() {
-  const parts = [];
-  for (let i = 0; i < 6; i++) parts.push('<div class="skeleton-row"></div>');
-  $('tasks-list').innerHTML = parts.join('');
-}
-
 function gotoRange(newStart) {
   rangeStart = newStart;
   closeDetail();
@@ -1638,23 +1546,20 @@ function setupRangeNav() {
   });
 }
 
-/* ============================================================
-   NIEUWE TAAK
-   ============================================================ */
 const newTaskState = { date: 'today', color: 'green-200' };
 
 function renderDateChips() {
-  const row = $('nt-date-row');
+  const rowEl = $('nt-date-row');
   const options = [
     { key: 'today', label: 'Vandaag' },
     { key: 'tomorrow', label: 'Morgen' },
     { key: 'week', label: 'Volgende week' },
     { key: 'none', label: 'Geen datum' },
   ];
-  row.innerHTML = options.map(o =>
+  rowEl.innerHTML = options.map(o =>
     '<button class="date-chip' + (newTaskState.date === o.key ? ' active' : '') + '" data-key="' + o.key + '">' + o.label + '</button>'
   ).join('');
-  row.querySelectorAll('.date-chip').forEach(btn => {
+  rowEl.querySelectorAll('.date-chip').forEach(btn => {
     btn.addEventListener('click', () => {
       newTaskState.date = btn.dataset.key;
       renderDateChips();
@@ -1735,9 +1640,6 @@ async function saveNewTask() {
   }
 }
 
-/* ============================================================
-   FILTERS
-   ============================================================ */
 function setupFilters() {
   $$('#filter-tabs .filter-tab').forEach(tab => {
     tab.addEventListener('click', () => {
@@ -1750,45 +1652,37 @@ function setupFilters() {
 }
 
 /* ============================================================
-   LOGIN / INIT
+   INIT — geen login-formulier, geen delay
    ============================================================ */
-function setupLogin() {
-  $('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = $('login-btn');
-    const err = $('login-error');
-    err.classList.remove('show');
-    btn.disabled = true;
-    btn.textContent = 'Aanmelden...';
-    try {
-      await api.auth.login({
-        username: $('in-user').value.trim(),
-        password: $('in-pass').value,
-        main_url: $('in-url').value.trim(),
-        mfa: $('in-mfa').value.trim(),
-      });
-      onLoggedIn();
-    } catch (e) {
-      err.textContent = e.message || 'Aanmelden mislukt';
-      err.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = 'Aanmelden';
-    }
-  });
-}
+autoLogin();
+refreshIcons();
 
 async function autoLogin() {
-  if (!auth.tryRestore()) return;
+  if (!auth.tryRestore()) {
+    showNotLoggedIn();
+    return;
+  }
   try {
     await apiFetch('/api/auth/login', { method: 'POST' });
     auth.user = { username: auth.creds.username, main_url: auth.creds.main_url };
-    onLoggedIn();
-  } catch { auth.clear(); }
+    onReady();
+  } catch (e) {
+    auth.clear();
+    showNotLoggedIn();
+  }
 }
 
-function onLoggedIn() {
-  $('login-screen').style.display = 'none';
-  $('app').classList.add('ready');
+function showNotLoggedIn() {
+  const msg = 'Niet ingelogd, gelieve in te loggen';
+  $('tasks-list').innerHTML =
+    '<div class="empty">' +
+      icon('log-in') +
+      '<p>' + esc(msg) + '</p>' +
+    '</div>';
+  refreshIcons();
+}
+
+function onReady() {
   setupAppEvents();
   setupRangeNav();
   setupFilters();
@@ -1820,6 +1714,7 @@ function setupAppEvents() {
     if ($('detail-panel').classList.contains('open') && isMobile()) return;
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+    if (!rangeStart) return;
     if (e.key === 'ArrowLeft') gotoRange(addDays(rangeStart, -14));
     if (e.key === 'ArrowRight') gotoRange(addDays(rangeStart, 14));
   });
@@ -1830,10 +1725,6 @@ function setupAppEvents() {
     }
   });
 }
-
-setupLogin();
-autoLogin();
-refreshIcons();
 </script>
 </body>
 </html>
