@@ -29,6 +29,7 @@
     --purple-soft:rgba(192,132,252,0.14);
     --green-soft: rgba(74,222,128,0.14);
     --yellow-soft:rgba(251,191,36,0.14);
+    --blue-soft:  rgba(96,165,250,0.14);
     --radius:     14px;
     --radius-sm:  9px;
     --shadow:     0 4px 24px rgba(0,0,0,0.55);
@@ -325,6 +326,11 @@
     background: var(--yellow);
     opacity: 0.85;
   }
+  /* NIEUW: schoolactiviteiten */
+  .task-card.is-activity::before {
+    background: var(--blue);
+    opacity: 0.85;
+  }
 
   .task-main {
     display: flex; align-items: center; gap: 12px;
@@ -356,6 +362,16 @@
     animation: spin 0.7s linear infinite;
   }
 
+  /* NIEUW: icoon i.p.v. checkbox voor schoolactiviteiten */
+  .task-activity-icon {
+    width: 18px; height: 18px;
+    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--blue);
+    opacity: 0.85;
+  }
+  .task-activity-icon svg.lucide { width: 15px; height: 15px; }
+
   .task-body { flex: 1; min-width: 0; }
   .task-name {
     font-size: 13.5px; font-weight: 600;
@@ -376,6 +392,10 @@
   }
   .task-meta .tm-vak {
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .task-meta .tm-vak.tm-activity {
+    color: var(--blue);
+    font-weight: 600;
   }
 
   .task-actions {
@@ -435,6 +455,8 @@
   .detail-type svg.lucide { width: 12px; height: 12px; }
   .detail-type.is-assignment { color: var(--purple); }
   .detail-type.is-unscheduled { color: var(--yellow); }
+  /* NIEUW: schoolactiviteit */
+  .detail-type.is-activity { color: var(--blue); }
   .detail-title {
     font-size: 17px; font-weight: 700; letter-spacing: -0.01em;
     line-height: 1.35; word-break: break-word;
@@ -486,6 +508,8 @@
   .detail-badge.done { background: var(--green-soft); color: var(--green); }
   .detail-badge.unscheduled { background: var(--yellow-soft); color: var(--yellow); }
   .detail-badge.deadline { background: var(--red-soft); color: var(--red); }
+  /* NIEUW: schoolactiviteit */
+  .detail-badge.activity { background: var(--blue-soft); color: var(--blue); }
 
   .detail-info { color: var(--text); }
   .detail-info p { margin: 0 0 10px; }
@@ -550,6 +574,7 @@
     display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;
     flex-shrink: 0;
   }
+  .detail-foot:empty { display: none; }
   .action-btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 6px;
     padding: 8px 12px; background: var(--bg-3); color: var(--text-dim);
@@ -1085,7 +1110,10 @@ let currentDetailId = null;
 
 function isDone(item) { return item.st === 'resolved'; }
 function isAssignment(item) { return item.t === 'planned-assignments'; }
+function isActivity(item) { return item.t === 'planned-school-activities'; }
+function isOwnTodo(item) { return item.t === 'planned-to-dos'; }
 function hasNoDeadline(item) { return !item.df; }
+function isActionable(item) { return isOwnTodo(item) || isAssignment(item); }
 
 function computeRange(fromDate) {
   return { from: fromDate, to: addDays(fromDate, 13) };
@@ -1126,9 +1154,10 @@ function render() {
   }
 
   const sortFn = (a, b) => {
-    const aAss = isAssignment(a) ? 0 : 1;
-    const bAss = isAssignment(b) ? 0 : 1;
-    if (aAss !== bAss) return aAss - bAss;
+    // Volgorde binnen een dag: opdracht → activiteit → eigen taak
+    const rank = x => isAssignment(x) ? 0 : isActivity(x) ? 1 : 2;
+    const ar = rank(a), br = rank(b);
+    if (ar !== br) return ar - br;
     if ((a.dl || 0) !== (b.dl || 0)) return (b.dl || 0) - (a.dl || 0);
     return (a.n || '').localeCompare(b.n || '');
   };
@@ -1184,35 +1213,50 @@ function render() {
 function renderTaskCard(item) {
   const done = isDone(item);
   const assignment = isAssignment(item);
+  const activity = isActivity(item);
   const noDl = hasNoDeadline(item);
   const active = currentDetailId && currentDetailId === item.i;
 
-  const vakHtml = item.c
-    ? '<span class="tm-vak">' + esc(item.c) + '</span>'
-    : (assignment ? '<span class="tm-vak">Opdracht</span>' : '');
+  // Meta: vak of type-label
+  let metaLabel = '';
+  if (item.c) metaLabel = esc(item.c);
+  else if (assignment) metaLabel = 'Opdracht';
+  else if (activity) metaLabel = 'Schoolactiviteit';
 
-  const metaHtml = vakHtml ? '<div class="task-meta">' + vakHtml + '</div>' : '';
+  const metaHtml = metaLabel
+    ? '<div class="task-meta"><span class="tm-vak' + (activity ? ' tm-activity' : '') + '">' + metaLabel + '</span></div>'
+    : '';
 
   let cls = 'task-card';
   if (done) cls += ' done';
   if (assignment) cls += ' is-assignment';
+  else if (activity) cls += ' is-activity';
   else if (noDl) cls += ' is-unscheduled';
   if (active) cls += ' active';
+
+  // Vooraan: checkbox OF activiteit-icoon
+  const leadHtml = activity
+    ? '<div class="task-activity-icon" title="Schoolactiviteit">' + icon('sparkles') + '</div>'
+    : '<div class="task-check' + (done ? ' checked' : '') + '" data-role="check" title="' + (done ? 'Heropenen' : 'Afronden') + '">' +
+        (done ? icon('check') : '') +
+      '</div>';
+
+  // Acties: geen trash voor assignments en activities
+  const actionsHtml = (assignment || activity)
+    ? ''
+    : '<div class="task-actions">' +
+        '<button class="danger" data-role="trash" title="Verwijderen">' + icon('trash-2') + '</button>' +
+      '</div>';
 
   return (
     '<div class="' + cls + '" data-id="' + esc(item.i) + '" data-type="' + esc(item.t) + '">' +
       '<div class="task-main">' +
-        '<div class="task-check' + (done ? ' checked' : '') + '" data-role="check" title="' + (done ? 'Heropenen' : 'Afronden') + '">' +
-          (done ? icon('check') : '') +
-        '</div>' +
+        leadHtml +
         '<div class="task-body">' +
           '<div class="task-name">' + esc(item.n || '(geen naam)') + '</div>' +
           metaHtml +
         '</div>' +
-        (!assignment ?
-          '<div class="task-actions">' +
-            '<button class="danger" data-role="trash" title="Verwijderen">' + icon('trash-2') + '</button>' +
-          '</div>' : '') +
+        actionsHtml +
       '</div>' +
     '</div>'
   );
@@ -1306,6 +1350,10 @@ function renderDetailHeader(item) {
     typeEl.classList.add('is-assignment');
     typeLabel = 'Opdracht';
     typeIcon = 'file-text';
+  } else if (isActivity(item)) {
+    typeEl.classList.add('is-activity');
+    typeLabel = 'Schoolactiviteit';
+    typeIcon = 'sparkles';
   } else if (hasNoDeadline(item)) {
     typeEl.classList.add('is-unscheduled');
     typeLabel = 'Geen deadline';
@@ -1326,13 +1374,15 @@ function renderDetailBody(base, detail, errorMsg) {
 
   const done = isDone(base);
   const assignment = isAssignment(base);
+  const activity = isActivity(base);
   const noDl = hasNoDeadline(base);
 
   // Badges
   const badges = [];
   if (done) badges.push('<span class="detail-badge done">' + icon('check') + 'Afgerond</span>');
   if (assignment) badges.push('<span class="detail-badge assignment">' + icon('file-text') + 'Opdracht</span>');
-  if (noDl) badges.push('<span class="detail-badge unscheduled">' + icon('pin') + 'Geen deadline</span>');
+  if (activity) badges.push('<span class="detail-badge activity">' + icon('sparkles') + 'Schoolactiviteit</span>');
+  if (noDl && !activity) badges.push('<span class="detail-badge unscheduled">' + icon('pin') + 'Geen deadline</span>');
 
   let bodyHtml = '';
   if (badges.length) {
@@ -1398,6 +1448,13 @@ function renderDetailBody(base, detail, errorMsg) {
 
 function renderDetailFoot(base) {
   const foot = [];
+
+  // Schoolactiviteiten: geen acties — je kan ze niet afvinken of verwijderen
+  if (!isActionable(base)) {
+    $('detail-foot').innerHTML = '';
+    return;
+  }
+
   const done = isDone(base);
   const assignment = isAssignment(base);
 
@@ -1423,6 +1480,7 @@ async function handleDetailAction(action) {
   if (!currentDetailId) return;
   const item = allItems.find(x => x.i === currentDetailId);
   if (!item) return;
+  if (!isActionable(item)) return;
 
   if (action === 'trash') {
     if (!confirm('Taak verwijderen?')) return;
