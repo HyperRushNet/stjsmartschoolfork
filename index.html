@@ -21,6 +21,8 @@
     --green:      #4ade80;
     --red:        #f87171;
     --blue:       #60a5fa;
+
+    --topbar-h: 48px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; width: 100%; overflow: hidden; }
@@ -31,15 +33,156 @@
     font-size: 14px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
   }
 
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
   /* ============================================================
-     IFRAME — vult het hele scherm
+     TOP BAR
      ============================================================ */
+  .topbar {
+    height: calc(var(--topbar-h) + env(safe-area-inset-top, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    background: var(--card);
+    border-bottom: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding-left: 12px;
+    padding-right: 10px;
+    flex-shrink: 0;
+    z-index: 100;
+    position: relative;
+  }
+
+  /* Logo */
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px 4px 0;
+    margin-right: 6px;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .brand .mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #2a2a2e, #1f1f23);
+    border: 1px solid var(--border);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--blue);
+  }
+  .brand .mark svg.lucide { width: 15px; height: 15px; }
+  .brand .name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  /* Nav tabs */
+  .nav {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .tab:hover { background: var(--bg-3); color: var(--text); }
+  .tab.active {
+    background: var(--accent);
+    color: var(--text);
+  }
+  .tab .ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .tab .ico svg.lucide { width: 16px; height: 16px; }
+  .tab .lbl { white-space: nowrap; }
+
+  /* Rechterkant (afmelden + status) */
+  .topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    margin-left: 6px;
+    padding-left: 10px;
+    border-left: 1px solid var(--border-soft);
+  }
+
+  .logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 500;
+    transition: background 0.12s, color 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+  }
+  .logout-btn:hover {
+    background: rgba(248,113,113,0.12);
+    color: var(--red);
+  }
+  .logout-btn .ico {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .logout-btn svg.lucide { width: 16px; height: 16px; }
+
+  /* ============================================================
+     IFRAME
+     ============================================================ */
+  .frame-wrap {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+  }
   .app-iframe {
-    position: fixed;
+    position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
@@ -48,159 +191,10 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
-    z-index: 1;
   }
   .app-iframe.active {
     opacity: 1;
     pointer-events: auto;
-  }
-
-  /* ============================================================
-     FLOATING MENU KNOP
-     ============================================================ */
-  .fab {
-    position: fixed;
-    top: 16px;
-    right: 16px;
-    z-index: 200;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
-    background: rgba(20,20,22,0.85);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    transition: background 0.15s, color 0.15s, transform 0.15s, border-color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .fab:hover, .fab:active {
-    background: rgba(30,30,33,0.95);
-    color: var(--text);
-    border-color: #34343a;
-    transform: scale(1.04);
-  }
-  .fab svg.lucide { width: 20px; height: 20px; }
-
-  /* Op mobiel: onderaan rechts, zodat het niet botst met content */
-  @media (max-width: 820px) {
-    .fab {
-      top: auto;
-      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      right: 16px;
-      width: 44px;
-      height: 44px;
-    }
-  }
-
-  /* ============================================================
-     DRAWER — slide van rechts
-     ============================================================ */
-  .drawer-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    background: rgba(0,0,0,0.55);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-  .drawer-bg.open { opacity: 1; pointer-events: auto; }
-
-  .drawer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 100%;
-    width: min(260px, 82vw);
-    background: var(--card);
-    border-left: 1px solid var(--border-soft);
-    display: flex;
-    flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  .drawer-bg.open .drawer { transform: translateX(0); }
-
-  .dr-head {
-    height: 48px;
-    padding: 0 8px 0 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border-soft);
-    flex-shrink: 0;
-  }
-  .dr-head span {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .dr-close {
-    width: 32px;
-    height: 32px;
-    border-radius: 7px;
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .dr-close:hover, .dr-close:active { background: var(--bg-3); color: var(--text); }
-  .dr-close svg.lucide { width: 17px; height: 17px; }
-
-  .dr-nav {
-    flex: 1;
-    padding: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    overflow-y: auto;
-  }
-
-  .dr-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 11px 12px;
-    border-radius: 8px;
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    text-align: left;
-    width: 100%;
-    transition: background 0.12s, color 0.12s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .dr-item:hover, .dr-item:active { background: var(--bg-3); color: var(--text); }
-  .dr-item.active { background: var(--accent); color: var(--text); }
-  .dr-item .ico {
-    width: 20px; height: 20px;
-    display: inline-flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .dr-item .ico svg.lucide { width: 17px; height: 17px; }
-
-  .dr-foot {
-    padding: 6px;
-    border-top: 1px solid var(--border-soft);
-    flex-shrink: 0;
   }
 
   /* ============================================================
@@ -234,7 +228,7 @@
   .toasts {
     position: fixed;
     bottom: 16px;
-    left: 16px;
+    right: 16px;
     z-index: 600;
     display: flex;
     flex-direction: column;
@@ -352,14 +346,48 @@
     border-color: rgba(248,113,113,0.45);
   }
 
+  /* ============================================================
+     MOBILE
+     ============================================================ */
   @media (max-width: 820px) {
+    .topbar {
+      padding-left: 8px;
+      padding-right: 8px;
+      gap: 0;
+    }
+    .brand {
+      padding: 4px 6px 4px 0;
+      margin-right: 0;
+    }
+    .brand .name { display: none; }
+
+    .nav {
+      gap: 0;
+      padding: 0 4px;
+    }
+    .tab {
+      padding: 8px 10px;
+      gap: 0;
+    }
+    .tab .lbl { display: none; }
+
+    .topbar-right {
+      padding-left: 6px;
+      margin-left: 0;
+    }
+    .logout-btn {
+      padding: 8px 10px;
+      gap: 0;
+    }
+    .logout-btn .lbl { display: none; }
+
     .toasts {
       left: 12px;
-      right: 76px; /* ruimte voor FAB */
+      right: 12px;
       bottom: calc(12px + env(safe-area-inset-bottom, 0px));
       max-width: none;
     }
-    .toast { max-width: none; }
+    .toast { max-width: none; width: 100%; }
   }
 </style>
 </head>
@@ -370,48 +398,43 @@
   <div class="boot-spin"></div>
 </div>
 
-<!-- IFRAME -->
-<iframe class="app-iframe" id="frame" title="App"></iframe>
-
-<!-- FLOATING MENU KNOP -->
-<button class="fab" id="fab" title="Menu">
-  <i data-lucide="menu"></i>
-</button>
-
-<!-- DRAWER -->
-<div class="drawer-bg" id="drawer-bg">
-  <div class="drawer">
-    <div class="dr-head">
-      <span>Menu</span>
-      <button class="dr-close" id="dr-close" title="Sluiten">
-        <i data-lucide="x"></i>
-      </button>
-    </div>
-    <nav class="dr-nav">
-      <button class="dr-item" data-page="messages">
-        <span class="ico"><i data-lucide="mail"></i></span>
-        <span>Berichten</span>
-      </button>
-      <button class="dr-item" data-page="tasks">
-        <span class="ico"><i data-lucide="check-square"></i></span>
-        <span>Taken</span>
-      </button>
-      <button class="dr-item" data-page="planner">
-        <span class="ico"><i data-lucide="calendar-days"></i></span>
-        <span>Planner</span>
-      </button>
-      <button class="dr-item" data-page="grades">
-        <span class="ico"><i data-lucide="graduation-cap"></i></span>
-        <span>Cijfers</span>
-      </button>
-    </nav>
-    <div class="dr-foot">
-      <button class="dr-item" data-page="__logout">
-        <span class="ico"><i data-lucide="log-out"></i></span>
-        <span>Afmelden</span>
-      </button>
-    </div>
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <span class="mark"><i data-lucide="graduation-cap"></i></span>
+    <span class="name">Smartschool</span>
   </div>
+
+  <nav class="nav">
+    <button class="tab" data-page="messages">
+      <span class="ico"><i data-lucide="mail"></i></span>
+      <span class="lbl">Berichten</span>
+    </button>
+    <button class="tab" data-page="tasks">
+      <span class="ico"><i data-lucide="check-square"></i></span>
+      <span class="lbl">Taken</span>
+    </button>
+    <button class="tab" data-page="planner">
+      <span class="ico"><i data-lucide="calendar-days"></i></span>
+      <span class="lbl">Planner</span>
+    </button>
+    <button class="tab" data-page="grades">
+      <span class="ico"><i data-lucide="graduation-cap"></i></span>
+      <span class="lbl">Cijfers</span>
+    </button>
+  </nav>
+
+  <div class="topbar-right">
+    <button class="logout-btn" id="logout-btn" title="Afmelden">
+      <span class="ico"><i data-lucide="log-out"></i></span>
+      <span class="lbl">Afmelden</span>
+    </button>
+  </div>
+</header>
+
+<!-- IFRAME -->
+<div class="frame-wrap">
+  <iframe class="app-iframe" id="frame" title="App"></iframe>
 </div>
 
 <!-- TOASTS -->
@@ -539,7 +562,7 @@ function hasCreds() {
 let currentPage = null;
 
 function setActive(page) {
-  document.querySelectorAll('[data-page]').forEach(el => {
+  document.querySelectorAll('.tab').forEach(el => {
     el.classList.toggle('active', el.dataset.page === page);
   });
 }
@@ -562,50 +585,12 @@ function loadPage(page) {
 }
 
 /* ============================================================
-   DRAWER
-   ============================================================ */
-function openDrawer() {
-  $('drawer-bg').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeDrawer() {
-  $('drawer-bg').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
-/* ============================================================
-   NAV HANDLERS
-   ============================================================ */
-function setupNav() {
-  document.querySelectorAll('[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => onClickNav(btn.dataset.page));
-  });
-}
-
-async function onClickNav(page) {
-  if (page === '__logout') {
-    const ok = await confirmModal({
-      title: 'Afmelden?',
-      text: 'Je opgeslagen inloggegevens worden gewist en je keert terug naar het login-scherm.',
-      okLabel: 'Afmelden',
-      danger: true,
-      icon: 'log-out',
-    });
-    if (!ok) return;
-    try { localStorage.removeItem('ss_creds'); } catch {}
-    location.reload();
-    return;
-  }
-  closeDrawer();
-  loadPage(page);
-}
-
-/* ============================================================
    LOGIN
    ============================================================ */
 let loginPoll = null;
 
 function showLogin() {
+  document.body.classList.add('login-mode');
   const frame = $('frame');
   frame.src = 'login.html';
   frame.onload = () => frame.classList.add('active');
@@ -616,6 +601,7 @@ function showLogin() {
     if (hasCreds()) {
       clearInterval(loginPoll);
       loginPoll = null;
+      document.body.classList.remove('login-mode');
       const frame = $('frame');
       frame.classList.remove('active');
       setTimeout(() => {
@@ -627,6 +613,7 @@ function showLogin() {
 }
 
 function startApp() {
+  document.body.classList.remove('login-mode');
   const hash = (location.hash || '').replace('#', '');
   loadPage(PAGES.includes(hash) ? hash : DEFAULT_PAGE);
 }
@@ -641,25 +628,26 @@ window.addEventListener('hashchange', () => {
 });
 
 /* ============================================================
-   KEYBOARD
-   ============================================================ */
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape' && $('drawer-bg').classList.contains('open')) {
-    closeDrawer();
-  }
-});
-
-/* ============================================================
    INIT
    ============================================================ */
 function init() {
   refreshIcons();
-  setupNav();
 
-  $('fab').addEventListener('click', openDrawer);
-  $('dr-close').addEventListener('click', closeDrawer);
-  $('drawer-bg').addEventListener('click', e => {
-    if (e.target === $('drawer-bg')) closeDrawer();
+  document.querySelectorAll('.tab').forEach(btn => {
+    btn.addEventListener('click', () => loadPage(btn.dataset.page));
+  });
+
+  $('logout-btn').addEventListener('click', async () => {
+    const ok = await confirmModal({
+      title: 'Afmelden?',
+      text: 'Je opgeslagen inloggegevens worden gewist en je keert terug naar het login-scherm.',
+      okLabel: 'Afmelden',
+      danger: true,
+      icon: 'log-out',
+    });
+    if (!ok) return;
+    try { localStorage.removeItem('ss_creds'); } catch {}
+    location.reload();
   });
 
   setTimeout(() => {
