@@ -18,56 +18,43 @@
     --text-dim:   #8a8a8e;
     --text-faint: #5a5a5e;
     --accent:     #2e2e33;
-    --accent-hover:#3a3a40;
-    --accent-soft: rgba(255,255,255,0.05);
     --green:      #4ade80;
     --red:        #f87171;
     --blue:       #60a5fa;
-    --purple:     #c084fc;
-    --red-soft:   rgba(248,113,113,0.12);
-    --green-soft: rgba(74,222,128,0.14);
-    --radius:     14px;
-    --radius-sm:  9px;
-    --shadow:     0 4px 24px rgba(0,0,0,0.55);
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
 
-    --sidebar-w: 64px;
-    --sidebar-w-expanded: 220px;
-    --topbar-h: 56px;
+    --sidebar-w: 52px;
+    --sidebar-w-exp: 190px;
+    --topbar-h: 44px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; width: 100%; }
+  html, body {
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+  }
   body {
-    font-family: var(--font);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     font-size: 14px;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    overflow: hidden;
   }
-
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: #333338; }
 
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
   /* ============================================================
-     APP SHELL LAYOUT
+     SHELL
      ============================================================ */
   .app {
     display: flex;
     height: 100dvh;
-    height: 100vh;
     width: 100vw;
     overflow: hidden;
-    position: relative;
   }
 
   /* ============================================================
-     SIDEBAR (desktop)
+     SIDEBAR — compact, alleen iconen
      ============================================================ */
   .sidebar {
     width: var(--sidebar-w);
@@ -76,159 +63,115 @@
     border-right: 1px solid var(--border-soft);
     display: flex;
     flex-direction: column;
-    transition: width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-                transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: width 0.22s cubic-bezier(0.22, 1, 0.36, 1);
     overflow: hidden;
     z-index: 100;
-    position: relative;
-    transform: translateX(-100%);
   }
-  .sidebar.ready { transform: translateX(0); }
-  .sidebar:hover,
-  .sidebar.expanded { width: var(--sidebar-w-expanded); }
+  .sidebar:hover { width: var(--sidebar-w-exp); }
 
-  .sidebar-logo {
-    height: 60px;
+  .sb-logo {
+    height: 52px;
     display: flex;
     align-items: center;
-    padding: 0 18px;
-    gap: 12px;
+    justify-content: center;
+    flex-shrink: 0;
     border-bottom: 1px solid var(--border-soft);
-    flex-shrink: 0;
     overflow: hidden;
-    white-space: nowrap;
+    padding: 0 10px;
+    gap: 10px;
   }
-  .sidebar-logo .logo-mark {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #2a2a2e 0%, #1f1f23 100%);
-    display: inline-flex; align-items: center; justify-content: center;
+  .sb-logo .mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #2a2a2e, #1f1f23);
     border: 1px solid var(--border);
-    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: var(--blue);
+    flex-shrink: 0;
   }
-  .sidebar-logo .logo-mark svg.lucide { width: 16px; height: 16px; }
-  .sidebar-logo .logo-text {
-    font-size: 14px;
+  .sb-logo .mark svg.lucide { width: 15px; height: 15px; }
+  .sb-logo .name {
+    font-size: 13.5px;
     font-weight: 700;
     color: var(--text);
-    letter-spacing: -0.01em;
+    white-space: nowrap;
     opacity: 0;
-    transition: opacity 0.15s;
+    transition: opacity 0.12s;
   }
-  .sidebar:hover .sidebar-logo .logo-text,
-  .sidebar.expanded .sidebar-logo .logo-text {
-    opacity: 1;
-    transition-delay: 0.08s;
-  }
+  .sidebar:hover .sb-logo .name { opacity: 1; transition-delay: 0.08s; }
 
-  .sidebar-nav {
+  .sb-nav {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding: 10px 8px;
+    padding: 8px 6px;
+    gap: 2px;
     overflow-y: auto;
     overflow-x: hidden;
   }
 
-  .nav-item {
+  .sb-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 12px;
-    border-radius: 9px;
-    color: var(--text-dim);
+    padding: 9px 12px;
+    border-radius: 8px;
     background: transparent;
     border: none;
+    color: var(--text-dim);
     cursor: pointer;
-    font-family: var(--font);
+    font-family: inherit;
     font-size: 13.5px;
     font-weight: 500;
-    text-align: left;
     white-space: nowrap;
+    text-align: left;
+    transition: background 0.12s, color 0.12s;
     overflow: hidden;
-    transition: background 0.15s, color 0.15s;
-    text-decoration: none;
-    position: relative;
     flex-shrink: 0;
+    position: relative;
     -webkit-tap-highlight-color: transparent;
   }
-  .nav-item:hover { background: var(--bg-3); color: var(--text); }
-  .nav-item.active {
-    background: var(--accent);
-    color: var(--text);
-  }
-  .nav-item.active::before {
-    content: '';
-    position: absolute;
-    left: -8px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 3px;
+  .sb-item:hover { background: var(--bg-3); color: var(--text); }
+  .sb-item.active { background: var(--accent); color: var(--text); }
+
+  .sb-item .ico {
+    width: 20px;
     height: 20px;
-    border-radius: 0 3px 3px 0;
-    background: var(--blue);
-  }
-  .nav-item .nav-icon {
-    width: 24px;
-    height: 24px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
   }
-  .nav-item .nav-icon svg.lucide {
-    width: 18px; height: 18px;
-    stroke-width: 2;
-  }
-  .nav-item .nav-label {
-    opacity: 0;
-    transition: opacity 0.15s;
-  }
-  .sidebar:hover .nav-item .nav-label,
-  .sidebar.expanded .nav-item .nav-label {
-    opacity: 1;
-    transition-delay: 0.08s;
-  }
+  .sb-item .ico svg.lucide { width: 17px; height: 17px; }
 
-  .nav-item::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-left: 14px;
-    background: var(--bg-3);
-    color: var(--text);
-    border: 1px solid var(--border);
-    padding: 6px 10px;
-    border-radius: 7px;
-    font-size: 12px;
-    font-weight: 500;
-    white-space: nowrap;
-    pointer-events: none;
+  .sb-item .lbl {
     opacity: 0;
-    transition: opacity 0.15s;
-    z-index: 200;
-    box-shadow: var(--shadow);
+    transition: opacity 0.12s;
   }
-  .sidebar:not(:hover):not(.expanded) .nav-item:hover::after {
-    opacity: 1;
-  }
+  .sidebar:hover .sb-item .lbl { opacity: 1; transition-delay: 0.08s; }
 
-  .sidebar-foot {
-    padding: 8px;
+  .sb-foot {
+    padding: 6px;
     border-top: 1px solid var(--border-soft);
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
     flex-shrink: 0;
   }
 
   /* ============================================================
-     TOP BAR (mobile)
+     MAIN
      ============================================================ */
+  .main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* Topbar — alleen op mobiel */
   .topbar {
     display: none;
     height: var(--topbar-h);
@@ -238,184 +181,46 @@
     border-bottom: 1px solid var(--border-soft);
     align-items: center;
     justify-content: space-between;
-    padding-left: 14px;
-    padding-right: 8px;
+    padding-left: 12px;
+    padding-right: 6px;
     flex-shrink: 0;
-    z-index: 100;
-    position: relative;
   }
-  .topbar-brand {
+  .tb-mark {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #2a2a2e, #1f1f23);
+    border: 1px solid var(--border);
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-  .topbar-brand .logo-mark {
-    width: 28px; height: 28px;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #2a2a2e 0%, #1f1f23 100%);
-    display: inline-flex; align-items: center; justify-content: center;
-    border: 1px solid var(--border);
+    justify-content: center;
     color: var(--blue);
-    flex-shrink: 0;
   }
-  .topbar-brand .logo-mark svg.lucide { width: 16px; height: 16px; }
-  .topbar-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.01em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .tb-mark svg.lucide { width: 15px; height: 15px; }
 
-  .topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    flex-shrink: 0;
-  }
-  .topbar-btn {
-    width: 40px; height: 40px;
-    border-radius: 10px;
+  .tb-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     background: transparent;
     border: none;
     color: var(--text-dim);
-    display: inline-flex; align-items: center; justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.12s, color 0.12s;
     -webkit-tap-highlight-color: transparent;
   }
-  .topbar-btn:hover,
-  .topbar-btn:active { background: var(--bg-3); color: var(--text); }
-  .topbar-btn svg.lucide { width: 20px; height: 20px; }
+  .tb-btn:hover, .tb-btn:active { background: var(--bg-3); color: var(--text); }
+  .tb-btn svg.lucide { width: 19px; height: 19px; }
 
-  /* Mobile drawer menu */
-  .mobile-menu {
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.25s ease;
-  }
-  .mobile-menu.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .mobile-menu-panel {
-    position: absolute;
-    top: 0; right: 0;
-    height: 100%;
-    width: min(320px, 88vw);
-    background: var(--card);
-    border-left: 1px solid var(--border-soft);
-    display: flex;
-    flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    box-shadow: -8px 0 30px rgba(0,0,0,0.5);
-  }
-  .mobile-menu.open .mobile-menu-panel {
-    transform: translateX(0);
-  }
-  .mobile-menu-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
-    border-bottom: 1px solid var(--border-soft);
-  }
-  .mobile-menu-head h3 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.01em;
-  }
-  .mobile-menu-close {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    background: var(--bg-3);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    display: inline-flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
-  .mobile-menu-close:hover { background: var(--card-hover); color: var(--text); }
-  .mobile-menu-close svg.lucide { width: 18px; height: 18px; }
-
-  .mobile-menu-nav {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .mobile-nav-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 13px 14px;
-    border-radius: 10px;
-    background: transparent;
-    border: none;
-    color: var(--text-dim);
-    cursor: pointer;
-    font-family: var(--font);
-    font-size: 14.5px;
-    font-weight: 500;
-    text-align: left;
-    width: 100%;
-    transition: background 0.15s, color 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .mobile-nav-item:hover,
-  .mobile-nav-item:active { background: var(--bg-3); color: var(--text); }
-  .mobile-nav-item.active {
-    background: var(--accent);
-    color: var(--text);
-  }
-  .mobile-nav-item .nav-icon {
-    width: 24px; height: 24px;
-    display: inline-flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-  }
-  .mobile-nav-item .nav-icon svg.lucide { width: 19px; height: 19px; }
-  .mobile-nav-item .nav-label { flex: 1; }
-
-  .mobile-menu-foot {
-    padding: 10px;
-    border-top: 1px solid var(--border-soft);
-  }
-
-  /* ============================================================
-     MAIN AREA — iframe
-     ============================================================ */
-  .app-main {
-    flex: 1;
-    min-width: 0;
-    background: var(--bg);
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
+  /* Iframe */
   .iframe-wrap {
     flex: 1;
-    position: relative;
     min-height: 0;
+    position: relative;
   }
-
   .app-iframe {
     position: absolute;
     inset: 0;
@@ -425,7 +230,7 @@
     background: var(--bg);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.2s ease;
   }
   .app-iframe.active {
     opacity: 1;
@@ -433,317 +238,386 @@
   }
 
   /* ============================================================
-     BOOT OVERLAY
+     BOOT
      ============================================================ */
-  .boot-overlay {
+  .boot {
     position: fixed;
     inset: 0;
     background: var(--bg);
     z-index: 500;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
     opacity: 1;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.3s ease;
   }
-  .boot-overlay.hide {
-    opacity: 0;
-    pointer-events: none;
-  }
-  .boot-spinner {
-    width: 40px; height: 40px;
+  .boot.hide { opacity: 0; pointer-events: none; }
+  .boot-spin {
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    border: 3px solid var(--bg-3);
+    border: 2.5px solid var(--bg-3);
     border-top-color: var(--blue);
     animation: spin 0.9s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* ============================================================
-     TOASTS (geen browser alerts meer)
+     MOBILE DRAWER — van rechts, compact
      ============================================================ */
-  .toast-wrap {
+  .drawer-bg {
     position: fixed;
-    bottom: 20px;
-    right: 20px;
+    inset: 0;
+    z-index: 300;
+    background: rgba(0,0,0,0.55);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .drawer-bg.open { opacity: 1; pointer-events: auto; }
+
+  .drawer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: min(260px, 82vw);
+    background: var(--card);
+    border-left: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.26s cubic-bezier(0.22, 1, 0.36, 1);
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .drawer-bg.open .drawer { transform: translateX(0); }
+
+  .dr-head {
+    height: 48px;
+    padding: 0 8px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .dr-head span {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .dr-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dr-close:hover, .dr-close:active { background: var(--bg-3); color: var(--text); }
+  .dr-close svg.lucide { width: 17px; height: 17px; }
+
+  .dr-nav {
+    flex: 1;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow-y: auto;
+  }
+
+  .dr-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: left;
+    width: 100%;
+    transition: background 0.12s, color 0.12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .dr-item:hover, .dr-item:active { background: var(--bg-3); color: var(--text); }
+  .dr-item.active { background: var(--accent); color: var(--text); }
+  .dr-item .ico {
+    width: 20px; height: 20px;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .dr-item .ico svg.lucide { width: 17px; height: 17px; }
+
+  .dr-foot {
+    padding: 6px;
+    border-top: 1px solid var(--border-soft);
+    flex-shrink: 0;
+  }
+
+  /* ============================================================
+     TOASTS
+     ============================================================ */
+  .toasts {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
     z-index: 600;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    max-width: calc(100vw - 40px);
+    gap: 6px;
+    max-width: 340px;
     pointer-events: none;
   }
   .toast {
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: var(--bg-3);
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    border-radius: 8px;
     font-size: 13px;
-    box-shadow: var(--shadow);
-    animation: toastIn 0.25s ease;
-    max-width: 340px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     display: flex;
     align-items: center;
     gap: 10px;
     pointer-events: auto;
+    animation: tin 0.2s ease;
   }
-  .toast svg.lucide { width: 16px; height: 16px; flex-shrink: 0; }
+  .toast svg.lucide { width: 15px; height: 15px; flex-shrink: 0; }
   .toast.error { border-color: rgba(248,113,113,0.4); color: var(--red); }
   .toast.success { border-color: rgba(74,222,128,0.4); color: var(--green); }
-  @keyframes toastIn {
-    from { opacity: 0; transform: translateY(12px); }
+  @keyframes tin {
+    from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: none; }
   }
 
   /* ============================================================
-     CUSTOM MODAL (vervangt confirm)
+     MODAL
      ============================================================ */
-  .modal-overlay {
+  .modal-bg {
     position: fixed;
     inset: 0;
     z-index: 700;
-    background: rgba(0,0,0,0.65);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.62);
+    -webkit-backdrop-filter: blur(5px);
+    backdrop-filter: blur(5px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.18s ease;
   }
-  .modal-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .modal-card {
+  .modal-bg.open { opacity: 1; pointer-events: auto; }
+
+  .modal {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 18px;
-    width: 100%;
-    max-width: 400px;
-    padding: 26px 26px 20px;
-    box-shadow: var(--shadow);
-    transform: translateY(12px) scale(0.98);
-    transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .modal-overlay.open .modal-card {
-    transform: translateY(0) scale(1);
-  }
-  .modal-icon {
-    width: 48px; height: 48px;
     border-radius: 14px;
-    background: rgba(248,113,113,0.12);
-    border: 1px solid rgba(248,113,113,0.25);
-    display: inline-flex; align-items: center; justify-content: center;
-    color: var(--red);
-    margin-bottom: 14px;
+    width: 100%;
+    max-width: 380px;
+    padding: 22px 22px 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.55);
+    transform: translateY(8px) scale(0.98);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .modal-icon svg.lucide { width: 22px; height: 22px; }
-  .modal-title {
-    font-size: 17px;
+  .modal-bg.open .modal { transform: none; }
+
+  .m-ico {
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(248,113,113,0.1);
+    border: 1px solid rgba(248,113,113,0.22);
+    color: var(--red);
+    margin-bottom: 12px;
+  }
+  .m-ico svg.lucide { width: 19px; height: 19px; }
+
+  .m-title {
+    font-size: 15.5px;
     font-weight: 700;
     color: var(--text);
     letter-spacing: -0.01em;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
   }
-  .modal-text {
-    font-size: 13.5px;
+  .m-text {
+    font-size: 13px;
     color: var(--text-dim);
-    line-height: 1.55;
-    margin-bottom: 22px;
+    line-height: 1.5;
+    margin-bottom: 18px;
   }
-  .modal-actions {
+  .m-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     justify-content: flex-end;
   }
-  .modal-btn {
-    padding: 10px 16px;
-    border-radius: 10px;
-    font-size: 13.5px;
+  .m-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 600;
-    font-family: var(--font);
+    font-family: inherit;
     cursor: pointer;
     border: 1px solid var(--border);
     background: var(--bg-3);
     color: var(--text);
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    transition: background 0.12s, border-color 0.12s, color 0.12s;
     -webkit-tap-highlight-color: transparent;
   }
-  .modal-btn:hover { background: var(--card-hover); border-color: #3a3a40; }
-  .modal-btn.danger {
-    background: rgba(248,113,113,0.14);
-    border-color: rgba(248,113,113,0.3);
+  .m-btn:hover { background: var(--card-hover); border-color: #3a3a40; }
+  .m-btn.danger {
+    background: rgba(248,113,113,0.12);
+    border-color: rgba(248,113,113,0.28);
     color: var(--red);
   }
-  .modal-btn.danger:hover {
-    background: rgba(248,113,113,0.22);
-    border-color: rgba(248,113,113,0.5);
+  .m-btn.danger:hover {
+    background: rgba(248,113,113,0.2);
+    border-color: rgba(248,113,113,0.45);
   }
 
   /* ============================================================
-     RESPONSIVE — mobile top bar, hide sidebar
+     MOBILE
      ============================================================ */
   @media (max-width: 820px) {
-    :root { --sidebar-w: 56px; }
-
-    .app {
-      flex-direction: column;
-    }
+    .app { flex-direction: column; }
     .sidebar { display: none; }
     .topbar { display: flex; }
 
-    .app-main {
-      flex: 1;
-      min-height: 0;
-    }
-
-    .toast-wrap {
-      bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-      right: 16px;
-      left: 16px;
+    .toasts {
+      left: 12px;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom, 0px));
       max-width: none;
-      align-items: stretch;
     }
-    .toast {
-      max-width: none;
-      width: 100%;
-    }
+    .toast { max-width: none; width: 100%; }
   }
 </style>
 </head>
 <body>
 
-<!-- ============================================================
-     BOOT OVERLAY
-     ============================================================ -->
-<div class="boot-overlay" id="boot-overlay">
-  <div class="boot-spinner"></div>
+<!-- BOOT -->
+<div class="boot" id="boot">
+  <div class="boot-spin"></div>
 </div>
 
-<!-- ============================================================
-     APP
-     ============================================================ -->
+<!-- APP -->
 <div class="app">
 
   <!-- SIDEBAR (desktop) -->
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-      <span class="logo-mark"><i data-lucide="graduation-cap"></i></span>
-      <span class="logo-text">Smartschool</span>
+    <div class="sb-logo">
+      <span class="mark"><i data-lucide="graduation-cap"></i></span>
+      <span class="name">Smartschool</span>
     </div>
 
-    <nav class="sidebar-nav" id="sidebar-nav">
-      <button class="nav-item" data-page="messages" data-tooltip="Berichten">
-        <span class="nav-icon"><i data-lucide="mail"></i></span>
-        <span class="nav-label">Berichten</span>
+    <nav class="sb-nav">
+      <button class="sb-item" data-page="messages" title="Berichten">
+        <span class="ico"><i data-lucide="mail"></i></span>
+        <span class="lbl">Berichten</span>
       </button>
-      <button class="nav-item" data-page="tasks" data-tooltip="Taken">
-        <span class="nav-icon"><i data-lucide="check-square"></i></span>
-        <span class="nav-label">Taken</span>
+      <button class="sb-item" data-page="tasks" title="Taken">
+        <span class="ico"><i data-lucide="check-square"></i></span>
+        <span class="lbl">Taken</span>
       </button>
-      <button class="nav-item" data-page="planner" data-tooltip="Planner">
-        <span class="nav-icon"><i data-lucide="calendar-days"></i></span>
-        <span class="nav-label">Planner</span>
+      <button class="sb-item" data-page="planner" title="Planner">
+        <span class="ico"><i data-lucide="calendar-days"></i></span>
+        <span class="lbl">Planner</span>
       </button>
-      <button class="nav-item" data-page="grades" data-tooltip="Cijfers">
-        <span class="nav-icon"><i data-lucide="graduation-cap"></i></span>
-        <span class="nav-label">Cijfers</span>
+      <button class="sb-item" data-page="grades" title="Cijfers">
+        <span class="ico"><i data-lucide="graduation-cap"></i></span>
+        <span class="lbl">Cijfers</span>
       </button>
     </nav>
 
-    <div class="sidebar-foot">
-      <button class="nav-item" data-page="__logout" data-tooltip="Afmelden">
-        <span class="nav-icon"><i data-lucide="log-out"></i></span>
-        <span class="nav-label">Afmelden</span>
+    <div class="sb-foot">
+      <button class="sb-item" data-page="__logout" title="Afmelden">
+        <span class="ico"><i data-lucide="log-out"></i></span>
+        <span class="lbl">Afmelden</span>
       </button>
     </div>
   </aside>
 
   <!-- MAIN -->
-  <main class="app-main">
+  <main class="main">
 
-    <!-- TOP BAR (mobile) -->
-    <div class="topbar" id="topbar">
-      <div class="topbar-brand">
-        <span class="logo-mark"><i data-lucide="graduation-cap"></i></span>
-        <span class="topbar-title" id="topbar-title">Smartschool</span>
-      </div>
-      <div class="topbar-actions">
-        <button class="topbar-btn" id="topbar-menu-btn" title="Menu">
-          <i data-lucide="menu"></i>
-        </button>
-      </div>
+    <!-- TOPBAR (mobile) -->
+    <div class="topbar">
+      <span class="tb-mark"><i data-lucide="graduation-cap"></i></span>
+      <button class="tb-btn" id="tb-menu" title="Menu">
+        <i data-lucide="menu"></i>
+      </button>
     </div>
 
     <div class="iframe-wrap">
-      <iframe class="app-iframe" id="app-iframe" title="Smartschool app"></iframe>
+      <iframe class="app-iframe" id="frame" title="App"></iframe>
     </div>
   </main>
 </div>
 
-<!-- ============================================================
-     MOBILE MENU DRAWER
-     ============================================================ -->
-<div class="mobile-menu" id="mobile-menu">
-  <div class="mobile-menu-panel">
-    <div class="mobile-menu-head">
-      <h3>Menu</h3>
-      <button class="mobile-menu-close" id="mobile-menu-close" title="Sluiten">
+<!-- DRAWER (mobile) -->
+<div class="drawer-bg" id="drawer-bg">
+  <div class="drawer">
+    <div class="dr-head">
+      <span>Menu</span>
+      <button class="dr-close" id="dr-close" title="Sluiten">
         <i data-lucide="x"></i>
       </button>
     </div>
-    <nav class="mobile-menu-nav" id="mobile-menu-nav">
-      <button class="mobile-nav-item" data-page="messages">
-        <span class="nav-icon"><i data-lucide="mail"></i></span>
-        <span class="nav-label">Berichten</span>
+    <nav class="dr-nav">
+      <button class="dr-item" data-page="messages">
+        <span class="ico"><i data-lucide="mail"></i></span>
+        <span>Berichten</span>
       </button>
-      <button class="mobile-nav-item" data-page="tasks">
-        <span class="nav-icon"><i data-lucide="check-square"></i></span>
-        <span class="nav-label">Taken</span>
+      <button class="dr-item" data-page="tasks">
+        <span class="ico"><i data-lucide="check-square"></i></span>
+        <span>Taken</span>
       </button>
-      <button class="mobile-nav-item" data-page="planner">
-        <span class="nav-icon"><i data-lucide="calendar-days"></i></span>
-        <span class="nav-label">Planner</span>
+      <button class="dr-item" data-page="planner">
+        <span class="ico"><i data-lucide="calendar-days"></i></span>
+        <span>Planner</span>
       </button>
-      <button class="mobile-nav-item" data-page="grades">
-        <span class="nav-icon"><i data-lucide="graduation-cap"></i></span>
-        <span class="nav-label">Cijfers</span>
+      <button class="dr-item" data-page="grades">
+        <span class="ico"><i data-lucide="graduation-cap"></i></span>
+        <span>Cijfers</span>
       </button>
     </nav>
-    <div class="mobile-menu-foot">
-      <button class="mobile-nav-item" data-page="__logout">
-        <span class="nav-icon"><i data-lucide="log-out"></i></span>
-        <span class="nav-label">Afmelden</span>
+    <div class="dr-foot">
+      <button class="dr-item" data-page="__logout">
+        <span class="ico"><i data-lucide="log-out"></i></span>
+        <span>Afmelden</span>
       </button>
     </div>
   </div>
 </div>
 
-<!-- ============================================================
-     TOASTS
-     ============================================================ -->
-<div class="toast-wrap" id="toasts"></div>
+<!-- TOASTS -->
+<div class="toasts" id="toasts"></div>
 
-<!-- ============================================================
-     CUSTOM CONFIRM MODAL
-     ============================================================ -->
-<div class="modal-overlay" id="confirm-modal">
-  <div class="modal-card" role="dialog" aria-modal="true">
-    <div class="modal-icon" id="confirm-icon">
-      <i data-lucide="log-out"></i>
-    </div>
-    <div class="modal-title" id="confirm-title">Afmelden?</div>
-    <div class="modal-text" id="confirm-text">
-      Je opgeslagen inloggegevens worden gewist.
-    </div>
-    <div class="modal-actions">
-      <button class="modal-btn" id="confirm-cancel">Annuleren</button>
-      <button class="modal-btn danger" id="confirm-ok">Afmelden</button>
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-ico" id="m-ico"><i data-lucide="log-out"></i></div>
+    <div class="m-title" id="m-title">Afmelden?</div>
+    <div class="m-text" id="m-text">Je opgeslagen inloggegevens worden gewist.</div>
+    <div class="m-actions">
+      <button class="m-btn" id="m-cancel">Annuleren</button>
+      <button class="m-btn danger" id="m-ok">Afmelden</button>
     </div>
   </div>
 </div>
@@ -751,130 +625,105 @@
 <script>
 'use strict';
 
-const $  = id => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
 const PAGES = ['messages', 'tasks', 'planner', 'grades'];
 const DEFAULT_PAGE = 'messages';
-const PAGE_TITLES = {
-  messages: 'Berichten',
-  tasks:    'Taken',
-  planner:  'Planner',
-  grades:   'Cijfers',
-};
 
 /* ============================================================
-   ICONS — robuust, her-render na DOM wijzigingen
+   ICONS
    ============================================================ */
 function refreshIcons() {
-  if (window.lucide && typeof window.lucide.createIcons === 'function') {
-    try { window.lucide.createIcons(); } catch (e) { /* stil falen */ }
+  if (window.lucide?.createIcons) {
+    try { window.lucide.createIcons(); } catch {}
   }
 }
 
-// Lucide opnieuw proberen als het script laadde NA onze eerste init
 if (typeof window.lucide === 'undefined') {
-  let tries = 0;
+  let n = 0;
   const iv = setInterval(() => {
-    tries++;
-    if (window.lucide || tries > 40) {
-      clearInterval(iv);
-      refreshIcons();
-    }
+    n++;
+    if (window.lucide || n > 40) { clearInterval(iv); refreshIcons(); }
   }, 100);
 }
 
 /* ============================================================
-   TOASTS — geen browser alert
+   TOASTS
    ============================================================ */
 function toast(msg, type = '') {
   const wrap = $('toasts');
   const el = document.createElement('div');
   el.className = 'toast ' + type;
-  const iconName = type === 'error' ? 'alert-circle'
-                 : type === 'success' ? 'check-circle'
-                 : 'info';
-  el.innerHTML = `<i data-lucide="${iconName}"></i><span>${escapeHtml(msg)}</span>`;
+  const ic = type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info';
+  el.innerHTML = `<i data-lucide="${ic}"></i><span>${escHtml(msg)}</span>`;
   wrap.appendChild(el);
   refreshIcons();
   setTimeout(() => {
+    el.style.transition = 'opacity 0.2s, transform 0.2s';
     el.style.opacity = '0';
-    el.style.transform = 'translateY(8px)';
-    el.style.transition = 'all 0.25s ease';
-    setTimeout(() => el.remove(), 280);
-  }, 3400);
+    el.style.transform = 'translateY(6px)';
+    setTimeout(() => el.remove(), 220);
+  }, 3200);
 }
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+function escHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => (
+    { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
+  ));
 }
 
 /* ============================================================
-   CUSTOM CONFIRM MODAL — geen browser confirm()
+   MODAL — Promise API
    ============================================================ */
-function customConfirm({ title, text, okLabel, danger = false, icon = 'alert-circle' }) {
+function confirmModal({ title, text, okLabel, danger = false, icon = 'alert-circle' }) {
   return new Promise(resolve => {
-    const overlay = $('confirm-modal');
-    const iconEl  = $('confirm-icon');
-    const titleEl = $('confirm-title');
-    const textEl  = $('confirm-text');
-    const okBtn   = $('confirm-ok');
-    const cancel  = $('confirm-cancel');
-
-    iconEl.innerHTML = `<i data-lucide="${icon}"></i>`;
-    iconEl.style.background = danger
-      ? 'rgba(248,113,113,0.12)'
-      : 'rgba(96,165,250,0.12)';
-    iconEl.style.borderColor = danger
-      ? 'rgba(248,113,113,0.25)'
-      : 'rgba(96,165,250,0.25)';
-    iconEl.style.color = danger ? 'var(--red)' : 'var(--blue)';
-
-    titleEl.textContent = title || 'Bevestigen';
-    textEl.textContent = text || '';
+    const bg = $('modal-bg');
+    const ico = $('m-ico');
+    ico.innerHTML = `<i data-lucide="${icon}"></i>`;
+    ico.style.background  = danger ? 'rgba(248,113,113,0.1)' : 'rgba(96,165,250,0.1)';
+    ico.style.borderColor = danger ? 'rgba(248,113,113,0.22)' : 'rgba(96,165,250,0.22)';
+    ico.style.color       = danger ? 'var(--red)' : 'var(--blue)';
+    $('m-title').textContent = title || 'Bevestigen';
+    $('m-text').textContent  = text || '';
+    const okBtn = $('m-ok');
     okBtn.textContent = okLabel || 'Bevestigen';
-    okBtn.classList.toggle('danger', !!danger);
-
+    okBtn.classList.toggle('danger', danger);
     refreshIcons();
-    overlay.classList.add('open');
 
-    function cleanup(result) {
-      overlay.classList.remove('open');
+    bg.classList.add('open');
+
+    function done(v) {
+      bg.classList.remove('open');
       okBtn.removeEventListener('click', onOk);
-      cancel.removeEventListener('click', onCancel);
-      overlay.removeEventListener('click', onBackdrop);
+      $('m-cancel').removeEventListener('click', onCancel);
+      bg.removeEventListener('click', onBg);
       document.removeEventListener('keydown', onKey);
-      resolve(result);
+      resolve(v);
     }
-    function onOk() { cleanup(true); }
-    function onCancel() { cleanup(false); }
-    function onBackdrop(e) { if (e.target === overlay) cleanup(false); }
+    function onOk() { done(true); }
+    function onCancel() { done(false); }
+    function onBg(e) { if (e.target === bg) done(false); }
     function onKey(e) {
-      if (e.key === 'Escape') cleanup(false);
-      else if (e.key === 'Enter') cleanup(true);
+      if (e.key === 'Escape') done(false);
+      else if (e.key === 'Enter') done(true);
     }
-
     okBtn.addEventListener('click', onOk);
-    cancel.addEventListener('click', onCancel);
-    overlay.addEventListener('click', onBackdrop);
+    $('m-cancel').addEventListener('click', onCancel);
+    bg.addEventListener('click', onBg);
     document.addEventListener('keydown', onKey);
-
-    setTimeout(() => okBtn.focus(), 60);
+    setTimeout(() => okBtn.focus(), 50);
   });
 }
 
 /* ============================================================
-   LOCALSTORAGE CHECK
+   CREDS
    ============================================================ */
 function hasCreds() {
   try {
     const raw = localStorage.getItem('ss_creds');
     if (!raw) return false;
-    const obj = JSON.parse(raw);
-    return !!(obj && obj.username && obj.password && obj.main_url);
-  } catch {
-    return false;
-  }
+    const o = JSON.parse(raw);
+    return !!(o && o.username && o.password && o.main_url);
+  } catch { return false; }
 }
 
 /* ============================================================
@@ -882,11 +731,10 @@ function hasCreds() {
    ============================================================ */
 let currentPage = null;
 
-function setActiveNav(page) {
-  document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
+function setActive(page) {
+  document.querySelectorAll('[data-page]').forEach(el => {
     el.classList.toggle('active', el.dataset.page === page);
   });
-  $('topbar-title').textContent = PAGE_TITLES[page] || 'Smartschool';
 }
 
 function loadPage(page) {
@@ -894,48 +742,42 @@ function loadPage(page) {
   if (currentPage === page) return;
   currentPage = page;
 
-  const iframe = $('app-iframe');
-  iframe.classList.remove('active');
-  iframe.src = page + '.html';
-  iframe.onload = () => {
-    iframe.classList.add('active');
+  const frame = $('frame');
+  frame.classList.remove('active');
+  frame.src = page + '.html';
+  frame.onload = () => {
+    frame.classList.add('active');
     refreshIcons();
   };
 
-  setActiveNav(page);
-
+  setActive(page);
   try { history.replaceState(null, '', '#' + page); } catch {}
 }
 
 /* ============================================================
-   MOBILE MENU
+   DRAWER
    ============================================================ */
-function openMobileMenu() {
-  $('mobile-menu').classList.add('open');
+function openDrawer() {
+  $('drawer-bg').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
-function closeMobileMenu() {
-  $('mobile-menu').classList.remove('open');
+function closeDrawer() {
+  $('drawer-bg').classList.remove('open');
   document.body.style.overflow = '';
 }
 
 /* ============================================================
-   NAV EVENTS
+   NAV HANDLERS
    ============================================================ */
 function setupNav() {
-  // Desktop sidebar
-  document.querySelectorAll('.sidebar .nav-item[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => handleNavClick(btn.dataset.page));
-  });
-  // Mobile drawer
-  document.querySelectorAll('.mobile-nav-item[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => handleNavClick(btn.dataset.page));
+  document.querySelectorAll('[data-page]').forEach(btn => {
+    btn.addEventListener('click', () => onClickNav(btn.dataset.page));
   });
 }
 
-async function handleNavClick(page) {
+async function onClickNav(page) {
   if (page === '__logout') {
-    const ok = await customConfirm({
+    const ok = await confirmModal({
       title: 'Afmelden?',
       text: 'Je opgeslagen inloggegevens worden gewist en je keert terug naar het login-scherm.',
       okLabel: 'Afmelden',
@@ -943,53 +785,43 @@ async function handleNavClick(page) {
       icon: 'log-out',
     });
     if (!ok) return;
-
     try { localStorage.removeItem('ss_creds'); } catch {}
     location.reload();
     return;
   }
-
-  closeMobileMenu();
+  closeDrawer();
   loadPage(page);
 }
 
 /* ============================================================
-   LOGIN FLOW
+   LOGIN
    ============================================================ */
-let loginPollTimer = null;
+let loginPoll = null;
 
-function showLoginIframe() {
-  const iframe = $('app-iframe');
-  iframe.src = 'login.html';
-  iframe.onload = () => iframe.classList.add('active');
+function showLogin() {
+  const frame = $('frame');
+  frame.src = 'login.html';
+  frame.onload = () => frame.classList.add('active');
+  setActive(null);
 
-  $('sidebar').classList.remove('ready');
-  setActiveNav(null);
-
-  if (loginPollTimer) clearInterval(loginPollTimer);
-  loginPollTimer = setInterval(() => {
+  if (loginPoll) clearInterval(loginPoll);
+  loginPoll = setInterval(() => {
     if (hasCreds()) {
-      clearInterval(loginPollTimer);
-      loginPollTimer = null;
-
-      const iframe = $('app-iframe');
-      iframe.classList.remove('active');
-
+      clearInterval(loginPoll);
+      loginPoll = null;
+      const frame = $('frame');
+      frame.classList.remove('active');
       setTimeout(() => {
-        $('sidebar').classList.add('ready');
         const hash = (location.hash || '').replace('#', '');
-        const page = PAGES.includes(hash) ? hash : DEFAULT_PAGE;
-        loadPage(page);
-      }, 260);
+        loadPage(PAGES.includes(hash) ? hash : DEFAULT_PAGE);
+      }, 220);
     }
   }, 1000);
 }
 
 function startApp() {
-  $('sidebar').classList.add('ready');
   const hash = (location.hash || '').replace('#', '');
-  const page = PAGES.includes(hash) ? hash : DEFAULT_PAGE;
-  loadPage(page);
+  loadPage(PAGES.includes(hash) ? hash : DEFAULT_PAGE);
 }
 
 /* ============================================================
@@ -998,17 +830,15 @@ function startApp() {
 window.addEventListener('hashchange', () => {
   if (!hasCreds()) return;
   const hash = (location.hash || '').replace('#', '');
-  if (PAGES.includes(hash) && hash !== currentPage) {
-    loadPage(hash);
-  }
+  if (PAGES.includes(hash) && hash !== currentPage) loadPage(hash);
 });
 
 /* ============================================================
-   KEYBOARD — ESC sluit mobile menu
+   KEYBOARD
    ============================================================ */
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && $('mobile-menu').classList.contains('open')) {
-    closeMobileMenu();
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('drawer-bg').classList.contains('open')) {
+    closeDrawer();
   }
 });
 
@@ -1019,28 +849,20 @@ function init() {
   refreshIcons();
   setupNav();
 
-  // Mobile menu knoppen
-  $('topbar-menu-btn').addEventListener('click', openMobileMenu);
-  $('mobile-menu-close').addEventListener('click', closeMobileMenu);
-  $('mobile-menu').addEventListener('click', (e) => {
-    if (e.target === $('mobile-menu')) closeMobileMenu();
+  $('tb-menu').addEventListener('click', openDrawer);
+  $('dr-close').addEventListener('click', closeDrawer);
+  $('drawer-bg').addEventListener('click', e => {
+    if (e.target === $('drawer-bg')) closeDrawer();
   });
 
-  // Boot overlay weghalen + beslissing maken
   setTimeout(() => {
-    $('boot-overlay').classList.add('hide');
-
-    if (hasCreds()) {
-      startApp();
-    } else {
-      showLoginIframe();
-    }
-  }, 250);
+    $('boot').classList.add('hide');
+    if (hasCreds()) startApp();
+    else showLogin();
+  }, 200);
 }
 
 init();
-
-// Extra zekerheid: render icons nog een keer na load
 window.addEventListener('load', refreshIcons);
 document.addEventListener('DOMContentLoaded', refreshIcons);
 </script>
