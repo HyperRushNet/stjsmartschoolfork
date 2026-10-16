@@ -18,16 +18,16 @@
     --text-dim:   #8a8a8e;
     --text-faint: #5a5a5e;
     --accent:     #2e2e33;
-    --accent-hover:#3a3a40;
     --accent-soft: rgba(255,255,255,0.05);
     --green:      #4ade80;
     --red:        #f87171;
     --red-soft:   rgba(248,113,113,0.12);
+    --yellow:     #fbbf24;
+    --yellow-soft:rgba(251,191,36,0.12);
     --radius:     14px;
     --radius-sm:  9px;
     --shadow:     0 4px 24px rgba(0,0,0,0.55);
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', system-ui, sans-serif;
-    --mono: 'SF Mono', 'Fira Code', ui-monospace, monospace;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; }
@@ -49,11 +49,19 @@
   svg.lucide { width: 16px; height: 16px; stroke-width: 2; }
 
   @keyframes slideUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes subtlePulse {
+    0%, 100% { opacity: 0.25; }
+    50% { opacity: 0.6; }
+  }
 
   #app { display: flex; height: 100vh; flex-direction: column; }
-
   .main { flex: 1; display: flex; overflow: hidden; }
-
   .content { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; }
 
   .page-head {
@@ -64,10 +72,7 @@
   .page-head h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
   .page-head p { color: var(--text-dim); font-size: 13px; margin-top: 3px; }
 
-  .page-head-actions {
-    display: flex; align-items: center; gap: 8px;
-    flex-shrink: 0;
-  }
+  .page-head-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 
   .btn-new {
     display: inline-flex; align-items: center; gap: 8px;
@@ -91,7 +96,6 @@
   .btn-refresh-head:hover { background: #35353a; border-color: #3f3f45; color: var(--text); }
   .btn-refresh-head svg.lucide { width: 16px; height: 16px; }
   .btn-refresh-head.spinning svg.lucide { animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
 
   .msg-layout { display: flex; gap: 16px; flex: 1; min-height: 0; }
 
@@ -103,17 +107,53 @@
     display: flex; flex-direction: column;
     overflow: hidden;
   }
-  .msg-tabs {
-    display: flex; align-items: center; gap: 4px; padding: 10px;
+
+  .msg-tabs-wrap {
+    position: relative;
+    flex-shrink: 0;
     border-bottom: 1px solid var(--border-soft);
-    flex-wrap: wrap; flex-shrink: 0;
+    background: var(--card);
   }
+  .msg-tabs-wrap::before,
+  .msg-tabs-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 28px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .msg-tabs-wrap::before {
+    left: 0;
+    background: linear-gradient(to right, var(--card) 30%, transparent);
+  }
+  .msg-tabs-wrap::after {
+    right: 0;
+    background: linear-gradient(to left, var(--card) 30%, transparent);
+  }
+  .msg-tabs-wrap.can-scroll-left::before { opacity: 1; }
+  .msg-tabs-wrap.can-scroll-right::after { opacity: 1; }
+
+  .msg-tabs {
+    display: flex; align-items: center; gap: 4px;
+    padding: 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+  }
+  .msg-tabs::-webkit-scrollbar { display: none; }
+
   .msg-tab {
     padding: 6px 12px; border-radius: 7px; font-size: 12px;
     background: transparent; color: var(--text-dim); border: none;
     cursor: pointer; font-family: var(--font); font-weight: 500;
-    text-transform: capitalize; display: inline-flex; align-items: center; gap: 6px;
+    display: inline-flex; align-items: center; gap: 6px;
     transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .msg-tab svg.lucide { width: 14px; height: 14px; }
   .msg-tab:hover { background: var(--bg-3); color: var(--text); }
@@ -141,6 +181,8 @@
     transition: background 0.15s;
   }
   .msg-row.unread::before { background: var(--text); }
+  .msg-row.draft::before { background: var(--yellow); }
+  .msg-row.scheduled::before { background: var(--green); }
 
   .msg-from {
     font-size: 13px; font-weight: 500; color: var(--text-dim);
@@ -153,6 +195,17 @@
   .msg-date { font-size: 11px; color: var(--text-faint); margin-top: 1px; }
   .msg-row.unread .msg-from { font-weight: 700; color: var(--text); }
   .msg-row.unread .msg-subject { font-weight: 600; color: var(--text); }
+
+  .msg-badge-dot {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    margin-left: 6px;
+    vertical-align: middle;
+    flex-shrink: 0;
+  }
+  .msg-badge-dot.scheduled { background: var(--green); }
+  .msg-badge-dot.draft { background: var(--yellow); }
 
   .skeleton-row {
     padding: 12px 14px; border-bottom: 1px solid var(--border-soft);
@@ -170,10 +223,6 @@
   .skeleton-line.w60 { width: 60%; }
   .skeleton-line.w85 { width: 85%; }
   .skeleton-line.w40 { width: 40%; height: 8px; }
-  @keyframes shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
 
   .msg-view {
     flex: 1; background: var(--card);
@@ -206,35 +255,20 @@
   .msg-view-body p { margin: 0 0 12px; }
   .msg-view-body p:last-child { margin-bottom: 0; }
   .msg-view-body img { max-width: 100%; height: auto; }
+  .msg-view-body ul, .msg-view-body ol { margin: 8px 0 12px; padding-left: 28px; }
+  .msg-view-body li { margin: 4px 0; }
+  .msg-view-body hr { border: none; border-top: 1px solid var(--border-soft); margin: 16px 0; }
 
-  .msg-view-body ul,
-  .msg-view-body ol {
-    margin: 8px 0 12px;
-    padding-left: 28px;
+  .msg-loading {
+    display: flex; flex-direction: column; gap: 12px;
+    padding: 24px;
+    animation: fadeIn 0.15s ease;
   }
-  .msg-view-body ul ul,
-  .msg-view-body ol ol,
-  .msg-view-body ul ol,
-  .msg-view-body ol ul {
-    margin: 4px 0 6px;
-    padding-left: 24px;
-  }
-  .msg-view-body li {
-    margin: 4px 0;
-    padding-left: 2px;
-  }
-  .msg-view-body li > p {
-    margin: 0 0 4px;
-  }
-  .msg-view-body li > p:last-child {
-    margin-bottom: 0;
-  }
-
-  .msg-view-body hr {
-    border: none;
-    border-top: 1px solid var(--border-soft);
-    margin: 16px 0;
-  }
+  .msg-loading .skeleton-line { height: 12px; }
+  .msg-loading .skeleton-line.w95 { width: 95%; }
+  .msg-loading .skeleton-line.w80 { width: 80%; }
+  .msg-loading .skeleton-line.w70 { width: 70%; }
+  .msg-loading .skeleton-line.w50 { width: 50%; }
 
   .msg-view-actions {
     padding: 12px 20px;
@@ -254,7 +288,10 @@
   .action-btn:hover { background: var(--card-hover); color: var(--text); }
   .action-btn.primary { background: #2a2a2e; border-color: #34343a; color: var(--text); }
   .action-btn.primary:hover { background: #35353a; border-color: #3f3f45; }
+  .action-btn.warning { background: var(--yellow-soft); border-color: rgba(251,191,36,0.3); color: var(--yellow); }
+  .action-btn.warning:hover { background: rgba(251,191,36,0.2); }
   .action-btn.danger:hover { background: var(--red-soft); color: var(--red); border-color: transparent; }
+  .action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .attach-wrap { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
   .attach-title {
@@ -353,6 +390,7 @@
   }
   .recipient-chip.cc { background: #2a2e33; border-color: #343a40; }
   .recipient-chip.bcc { background: #2e2a33; border-color: #3a3440; }
+  .recipient-chip.co { border-style: dashed; }
   .recipient-chip button {
     background: transparent; border: none; color: var(--text-dim);
     cursor: pointer; font-size: 13px; line-height: 1; padding: 0;
@@ -365,11 +403,8 @@
   }
 
   .cc-bcc-fields {
-    display: none;
-    flex-direction: column;
-    gap: 14px;
-    margin-top: 14px;
-    padding-top: 14px;
+    display: none; flex-direction: column; gap: 14px;
+    margin-top: 14px; padding-top: 14px;
     border-top: 1px dashed var(--border);
     animation: slideDown 0.2s ease;
   }
@@ -383,7 +418,7 @@
     position: absolute; top: 100%; left: 0; right: 0;
     background: var(--bg-3); border: 1px solid var(--border);
     border-radius: var(--radius-sm); margin-top: 4px;
-    max-height: 220px; overflow-y: auto; z-index: 10;
+    max-height: 260px; overflow-y: auto; z-index: 10;
     box-shadow: var(--shadow);
   }
   .suggestion {
@@ -392,11 +427,6 @@
   }
   .suggestion:hover, .suggestion.active { background: var(--card-hover); }
   .suggestion .sugg-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .suggestion .sugg-badge {
-    font-size: 10px; padding: 2px 6px; border-radius: 4px;
-    background: var(--bg-3); color: var(--text-faint);
-    border: 1px solid var(--border); flex-shrink: 0;
-  }
 
   .editor-toolbar {
     display: flex; flex-wrap: wrap; gap: 2px;
@@ -414,20 +444,14 @@
   .toolbar-btn:hover { background: var(--bg-3); color: var(--text); }
   .toolbar-btn.active { background: var(--accent-soft); color: var(--text); }
   .toolbar-btn svg.lucide { width: 15px; height: 15px; }
-  .toolbar-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-  .toolbar-sep {
-    width: 1px; background: var(--border); margin: 0 4px;
-    align-self: stretch;
-  }
+  .toolbar-sep { width: 1px; background: var(--border); margin: 0 4px; align-self: stretch; }
   .toolbar-select {
     height: 30px; padding: 0 8px;
     background: transparent; border: none; color: var(--text-dim);
     font-size: 12px; font-family: var(--font);
     border-radius: 6px; cursor: pointer;
-    transition: background 0.12s, color 0.12s;
   }
   .toolbar-select:hover { background: var(--bg-3); color: var(--text); }
-  .toolbar-select:focus { outline: none; color: var(--text); }
   .toolbar-color {
     width: 30px; height: 30px; padding: 0;
     background: transparent; border: none; cursor: pointer;
@@ -439,7 +463,6 @@
   .toolbar-color svg.lucide { width: 15px; height: 15px; }
   .toolbar-color input[type="color"] {
     position: absolute; inset: 0; opacity: 0; cursor: pointer;
-    width: 100%; height: 100%;
   }
 
   .editor-area {
@@ -460,19 +483,9 @@
     color: var(--text-faint);
     pointer-events: none;
   }
-  .editor-area.dragover {
-    border-color: var(--accent-hover);
-    background: rgba(255,255,255,0.03);
-  }
-  .editor-area img {
-    max-width: 100%; height: auto;
-    border-radius: 6px; margin: 4px 0;
-  }
+  .editor-area img { max-width: 100%; height: auto; border-radius: 6px; margin: 4px 0; }
 
-  .attach-list {
-    margin-top: 8px;
-    display: flex; flex-wrap: wrap; gap: 6px;
-  }
+  .attach-list { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
   .attach-list:empty { display: none; }
   .attach-list-item {
     display: inline-flex; align-items: center; gap: 8px;
@@ -485,9 +498,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     max-width: 200px;
   }
-  .attach-list-item .ali-size {
-    color: var(--text-faint); font-size: 11px; flex-shrink: 0;
-  }
+  .attach-list-item .ali-size { color: var(--text-faint); font-size: 11px; flex-shrink: 0; }
   .attach-list-item .ali-remove {
     background: transparent; border: none; color: var(--text-dim);
     cursor: pointer; padding: 0; display: inline-flex;
@@ -529,36 +540,72 @@
     border: 1px solid var(--border);
     align-items: center; justify-content: center;
     cursor: pointer; flex-shrink: 0;
-    transition: background 0.15s, border-color 0.15s;
   }
   .msg-view-close:hover { background: var(--card-hover); border-color: #3a3a40; }
   .msg-view-close svg.lucide { width: 18px; height: 18px; }
+
+  .schedule-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px;
+  }
+  .schedule-row input[type="datetime-local"] {
+    flex: 1; padding: 8px 10px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-size: 13px; font-family: var(--font);
+  }
+  .schedule-row input[type="datetime-local"]:focus { outline: none; border-color: #444; }
+  .schedule-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-dim); cursor: pointer;
+    user-select: none;
+  }
+  .schedule-toggle input[type="checkbox"] {
+    accent-color: #4ade80; width: 14px; height: 14px;
+  }
+
+  .index-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: transparent;
+    border: 1px solid transparent;
+    flex-shrink: 0;
+    transition: background 0.4s, border-color 0.4s, opacity 0.4s;
+    opacity: 0;
+  }
+  .index-dot.visible { opacity: 0.5; }
+  .index-dot.idle { background: #2a2a2e; border-color: #2a2a2e; opacity: 0.35; }
+  .index-dot.working {
+    background: #3a3a40;
+    border-color: #3a3a40;
+    animation: subtlePulse 2.2s ease-in-out infinite;
+  }
+  .index-dot.ready {
+    background: #2f4a35;
+    border-color: #2f4a35;
+    opacity: 0.6;
+  }
+  .index-dot.stale {
+    background: #4a4030;
+    border-color: #4a4030;
+    opacity: 0.55;
+  }
 
   @media (max-width: 820px) {
     .content { padding: 16px; }
     .msg-layout { flex-direction: column; }
     .msg-list { width: 100%; flex: 1; max-height: none; }
-
     .msg-view {
-      position: fixed;
-      inset: 0;
-      z-index: 60;
-      border-radius: 0;
-      border: none;
+      position: fixed; inset: 0; z-index: 60;
+      border-radius: 0; border: none;
       transform: translateY(100%);
       transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
-      pointer-events: none;
-      opacity: 0;
+      pointer-events: none; opacity: 0;
     }
-    .msg-view.mobile-open {
-      transform: translateY(0);
-      pointer-events: auto;
-      opacity: 1;
-    }
+    .msg-view.mobile-open { transform: translateY(0); pointer-events: auto; opacity: 1; }
     .msg-view.mobile-open .msg-view-close { display: inline-flex; }
     .msg-view-head {
       display: flex; align-items: flex-start; gap: 12px;
-      padding: 14px 16px 14px 16px;
+      padding: 14px 16px;
       padding-top: calc(14px + env(safe-area-inset-top, 0px));
     }
     .msg-view-head-inner { flex: 1; min-width: 0; }
@@ -589,42 +636,26 @@
       <div class="page-head">
         <div>
           <h2>Berichten</h2>
-          <p>Je inbox en verzonden berichten</p>
+          <p>Je inbox, concepten en verzonden berichten</p>
         </div>
         <div class="page-head-actions">
+          <span class="index-dot" id="index-dot" title=""></span>
           <button class="btn-refresh-head" id="btn-refresh-list" title="Vernieuwen"><i data-lucide="refresh-cw"></i></button>
           <button class="btn-new" id="btn-new-message"><i data-lucide="pen-square"></i> Nieuw bericht</button>
         </div>
       </div>
       <div class="msg-layout">
         <div class="msg-list" id="msg-list">
-          <div class="msg-tabs" id="msg-tabs">
-            <button class="msg-tab active" data-box="inbox"><i data-lucide="inbox"></i> Inbox</button>
-            <button class="msg-tab" data-box="outbox"><i data-lucide="send-horizontal"></i> Verzonden</button>
-            <button class="msg-tab" data-box="trash"><i data-lucide="trash-2"></i> Prullenbak</button>
+          <div class="msg-tabs-wrap" id="msg-tabs-wrap">
+            <div class="msg-tabs" id="msg-tabs">
+              <button class="msg-tab active" data-box="inbox"><i data-lucide="inbox"></i> Inbox</button>
+              <button class="msg-tab" data-box="outbox"><i data-lucide="send-horizontal"></i> Verzonden</button>
+              <button class="msg-tab" data-box="scheduled"><i data-lucide="clock"></i> Gepland</button>
+              <button class="msg-tab" data-box="draft"><i data-lucide="file-pen"></i> Concepten</button>
+              <button class="msg-tab" data-box="trash"><i data-lucide="trash-2"></i> Prullenbak</button>
+            </div>
           </div>
           <div class="msg-rows" id="msg-rows">
-            <!-- Shimmer direct zichtbaar vanaf eerste paint -->
-            <div class="skeleton-row">
-              <div class="skeleton-line w60"></div>
-              <div class="skeleton-line w85"></div>
-              <div class="skeleton-line w40"></div>
-            </div>
-            <div class="skeleton-row">
-              <div class="skeleton-line w60"></div>
-              <div class="skeleton-line w85"></div>
-              <div class="skeleton-line w40"></div>
-            </div>
-            <div class="skeleton-row">
-              <div class="skeleton-line w60"></div>
-              <div class="skeleton-line w85"></div>
-              <div class="skeleton-line w40"></div>
-            </div>
-            <div class="skeleton-row">
-              <div class="skeleton-line w60"></div>
-              <div class="skeleton-line w85"></div>
-              <div class="skeleton-line w40"></div>
-            </div>
             <div class="skeleton-row">
               <div class="skeleton-line w60"></div>
               <div class="skeleton-line w85"></div>
@@ -653,7 +684,7 @@
 <div class="modal-bg" id="compose-modal">
   <div class="modal">
     <div class="modal-head">
-      <h3><i data-lucide="pen-square"></i> Nieuw bericht</h3>
+      <h3><i data-lucide="pen-square"></i> <span id="compose-title">Nieuw bericht</span></h3>
       <button class="action-btn" id="compose-close" style="padding:6px 8px"><i data-lucide="x"></i></button>
     </div>
     <div class="modal-body">
@@ -721,9 +752,20 @@
         <input type="file" id="file-input-image" accept="image/*" style="display:none">
         <input type="file" id="file-input-attach" style="display:none" multiple>
       </div>
+
+      <div class="field">
+        <label class="schedule-toggle">
+          <input type="checkbox" id="schedule-check">
+          Uitgesteld versturen
+        </label>
+        <div class="schedule-row" id="schedule-row" style="display:none">
+          <input type="datetime-local" id="schedule-datetime">
+        </div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="action-btn" id="compose-cancel"><i data-lucide="x"></i> Annuleren</button>
+      <button class="action-btn warning" id="compose-save-draft"><i data-lucide="save"></i> Opslaan als concept</button>
       <button class="action-btn primary" id="compose-send"><i data-lucide="send"></i> Versturen</button>
     </div>
   </div>
@@ -778,6 +820,20 @@ function fmtBytes(bytes) {
   return n.toFixed(n >= 10 || i === 0 ? 0 : 2) + ' ' + units[i];
 }
 
+function fmtReceivers(list) {
+  if (!list || !list.length) return '';
+  const out = [];
+  for (const u of list) {
+    if (typeof u === 'string') {
+      if (u) out.push(u);
+    } else if (u && typeof u === 'object') {
+      const s = (u.name || u.user_id || '').trim();
+      if (s) out.push(s);
+    }
+  }
+  return out.join(', ');
+}
+
 function icon(name) { return `<i data-lucide="${name}"></i>`; }
 function refreshIcons() {
   if (window.lucide && typeof window.lucide.createIcons === 'function') {
@@ -786,6 +842,276 @@ function refreshIcons() {
 }
 
 const isMobile = () => window.matchMedia('(max-width: 820px)').matches;
+
+/* ============================================================
+   USER INDEX
+   ============================================================ */
+const USER_INDEX_KEY = 'ss_user_index_v1';
+const USER_INDEX_TTL = 7 * 24 * 60 * 60 * 1000;
+const USER_INDEX_MAX = 5000;
+
+const SWEEP_QUERIES = [
+  'a', 'e', 'i', 'o', 'u',
+  'ij', 'aa', 'ee', 'oo', 'uu', 'ie', 'ei', 'ou', 'au', 'eu',
+  'de', 'van', 'den', 'der', 'el', 'ar', 'er', 'en', 'an', 'in', 'on',
+  's', 't', 'n', 'r', 'm', 'k', 'l', 'b', 'd', 'p', 'h', 'v', 'w',
+];
+
+const userIndex = {
+  _data: null,
+  _dirty: false,
+  _saveTimer: null,
+  _indexing: false,
+
+  _key(u) {
+    return String(u.user_id || '') + '|' + String(u.user_lt || '0');
+  },
+
+  _empty() {
+    return {
+      version: 1,
+      ts: 0,
+      users: {},
+      doneQueries: [],
+      pendingQueries: SWEEP_QUERIES.slice(),
+      totalQueries: SWEEP_QUERIES.length,
+    };
+  },
+
+  _load() {
+    if (this._data) return this._data;
+    try {
+      const raw = localStorage.getItem(USER_INDEX_KEY);
+      if (!raw) { this._data = this._empty(); return this._data; }
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') { this._data = this._empty(); return this._data; }
+      if (!parsed.users) parsed.users = {};
+      if (!Array.isArray(parsed.doneQueries)) parsed.doneQueries = [];
+      if (!Array.isArray(parsed.pendingQueries)) parsed.pendingQueries = SWEEP_QUERIES.slice();
+      if (!parsed.totalQueries) parsed.totalQueries = SWEEP_QUERIES.length;
+      this._data = parsed;
+    } catch {
+      this._data = this._empty();
+    }
+    return this._data;
+  },
+
+  _scheduleSave() {
+    this._dirty = true;
+    if (this._saveTimer) return;
+    this._saveTimer = setTimeout(() => {
+      this._saveTimer = null;
+      if (!this._dirty) return;
+      this._dirty = false;
+      try {
+        localStorage.setItem(USER_INDEX_KEY, JSON.stringify(this._data));
+      } catch (e) {
+        try {
+          this._pruneAggressive();
+          localStorage.setItem(USER_INDEX_KEY, JSON.stringify(this._data));
+        } catch {}
+      }
+    }, 400);
+  },
+
+  _pruneAggressive() {
+    const data = this._load();
+    const keys = Object.keys(data.users);
+    if (keys.length <= USER_INDEX_MAX) return;
+    const sorted = keys
+      .map(k => ({ k, ts: data.users[k].ts || 0 }))
+      .sort((a, b) => a.ts - b.ts);
+    const drop = sorted.slice(0, Math.floor(keys.length / 2));
+    for (const { k } of drop) delete data.users[k];
+  },
+
+  putMany(users, ts = Date.now()) {
+    const data = this._load();
+    for (const u of (users || [])) {
+      if (!u || !u.user_id) continue;
+      const key = this._key(u);
+      data.users[key] = {
+        user: {
+          user_id: u.user_id,
+          name: u.name || '',
+          raw_name: u.raw_name || '',
+          coaccount_name: u.coaccount_name || '',
+          is_co_account: !!u.is_co_account,
+          user_type: u.user_type || 'U',
+          user_lt: String(u.user_lt || '0'),
+          ss_id: u.ss_id || '455',
+          classname: u.classname || '',
+          type_label: u.type_label || '',
+        },
+        ts,
+      };
+    }
+    if (Object.keys(data.users).length > USER_INDEX_MAX) this._pruneAggressive();
+    this._scheduleSave();
+  },
+
+  put(u) { return this.putMany([u]); },
+
+  search(query, limit = 20) {
+    if (!query) return [];
+    const q = query.trim().toLowerCase();
+    if (q.length < 1) return [];
+    const data = this._load();
+    const now = Date.now();
+    const hits = [];
+
+    for (const key in data.users) {
+      const entry = data.users[key];
+      if (!entry) continue;
+      const u = entry.user;
+
+      const fields = [
+        { val: (u.name || '').toLowerCase(), weight: 0 },
+        { val: (u.raw_name || '').toLowerCase(), weight: 1 },
+        { val: (u.coaccount_name || '').toLowerCase(), weight: 1 },
+      ];
+
+      let bestScore = -1;
+      for (const f of fields) {
+        if (!f.val) continue;
+        const idx = f.val.indexOf(q);
+        if (idx === -1) continue;
+        let s = 100 - idx;
+        if (idx === 0) s += 50;
+        else if (f.val[idx - 1] === ' ') s += 25;
+        s -= f.weight * 5;
+        if (s > bestScore) bestScore = s;
+      }
+      if (bestScore < 0) continue;
+
+      const ageDays = (now - (entry.ts || 0)) / 86400000;
+      if (ageDays < 1) bestScore += 3;
+
+      hits.push({ u, score: bestScore });
+    }
+
+    hits.sort((a, b) => b.score - a.score);
+    return hits.slice(0, limit).map(h => h.u);
+  },
+
+  stats() {
+    const data = this._load();
+    const count = Object.keys(data.users).length;
+    const age = data.ts ? Date.now() - data.ts : 0;
+    const done = data.doneQueries.length;
+    const total = data.totalQueries;
+    return { count, ts: data.ts, age, done, total };
+  },
+
+  isFresh() {
+    const data = this._load();
+    if (!data.ts || !Object.keys(data.users).length) return false;
+    return (Date.now() - data.ts) < USER_INDEX_TTL && data.pendingQueries.length === 0;
+  },
+
+  resetForNewSweep() {
+    const data = this._load();
+    data.users = {};
+    data.doneQueries = [];
+    data.pendingQueries = SWEEP_QUERIES.slice();
+    data.totalQueries = SWEEP_QUERIES.length;
+    data.ts = 0;
+    this._scheduleSave();
+  },
+
+  markQueryDone(q) {
+    const data = this._load();
+    if (!data.doneQueries.includes(q)) data.doneQueries.push(q);
+    data.pendingQueries = data.pendingQueries.filter(x => x !== q);
+    this._scheduleSave();
+  },
+
+  markSweepComplete() {
+    const data = this._load();
+    data.ts = Date.now();
+    data.pendingQueries = [];
+    this._scheduleSave();
+  },
+
+  clear() {
+    this._data = this._empty();
+    this._dirty = true;
+    this._scheduleSave();
+  },
+};
+
+/* ============================================================
+   ACHTERGROND-INDEXERING
+   ============================================================ */
+async function indexUsersInBackground({ force = false } = {}) {
+  if (userIndex._indexing) return;
+
+  const stats = userIndex.stats();
+
+  if (!force && userIndex.isFresh()) {
+    updateIndexDot();
+    return;
+  }
+
+  if (force || stats.age >= USER_INDEX_TTL) {
+    userIndex.resetForNewSweep();
+  }
+
+  userIndex._indexing = true;
+  updateIndexDot({ indexing: true });
+
+  const queries = userIndex._load().pendingQueries.slice();
+
+  for (const q of queries) {
+    if (!userIndex._indexing) break;
+
+    try {
+      const users = await api.messages.searchUsers(q, 'all');
+      userIndex.putMany(users);
+      userIndex.markQueryDone(q);
+    } catch {}
+
+    updateIndexDot({ indexing: true });
+    await new Promise(r => setTimeout(r, 650));
+  }
+
+  userIndex.markSweepComplete();
+  userIndex._indexing = false;
+  updateIndexDot();
+}
+
+/* ============================================================
+   INDEX-DOT
+   ============================================================ */
+function updateIndexDot({ indexing = false } = {}) {
+  const el = $('index-dot');
+  if (!el) return;
+
+  el.classList.remove('visible', 'idle', 'working', 'ready', 'stale');
+  el.removeAttribute('title');
+
+  if (indexing || userIndex._indexing) {
+    el.classList.add('visible', 'working');
+    el.title = '';
+    return;
+  }
+
+  const { count, age, done, total } = userIndex.stats();
+
+  if (!count) {
+    el.classList.add('visible', 'idle');
+    el.title = 'Zoekindex leeg';
+    return;
+  }
+
+  if (age < USER_INDEX_TTL && done === total) {
+    el.classList.add('visible', 'ready');
+    el.title = '';
+  } else {
+    el.classList.add('visible', 'stale');
+    el.title = 'Zoekindex verouderd';
+  }
+}
 
 /* ============================================================
    TOASTS
@@ -823,6 +1149,7 @@ const auth = {
     this.creds = null; this.user = null;
     try { localStorage.removeItem('ss_creds'); } catch {}
     msgCache.clear();
+    userIndex.clear();
   },
 };
 
@@ -861,7 +1188,7 @@ function withQuery(path, params) {
 }
 
 /* ============================================================
-   CACHE VOOR BERICHTEN
+   CACHE
    ============================================================ */
 const CACHE_TTL = 5 * 60 * 1000;
 
@@ -876,9 +1203,7 @@ class MessageCache {
     if (Date.now() - e.ts > CACHE_TTL) { this._lists.delete(box); return null; }
     return e.data;
   }
-  setList(box, data) {
-    this._lists.set(box, { data, ts: Date.now() });
-  }
+  setList(box, data) { this._lists.set(box, { data, ts: Date.now() }); }
   getItem(box, id) {
     const key = box + ':' + id;
     const e = this._items.get(key);
@@ -886,9 +1211,7 @@ class MessageCache {
     if (Date.now() - e.ts > CACHE_TTL) { this._items.delete(key); return null; }
     return e.data;
   }
-  setItem(box, id, data) {
-    this._items.set(box + ':' + id, { data, ts: Date.now() });
-  }
+  setItem(box, id, data) { this._items.set(box + ':' + id, { data, ts: Date.now() }); }
   invalidateList(box) { this._lists.delete(box); }
   invalidateItem(box, id) { this._items.delete(box + ':' + id); }
   clear() { this._lists.clear(); this._items.clear(); }
@@ -913,7 +1236,10 @@ const api = {
         const cached = msgCache.getList(box);
         if (cached) return cached;
       }
-      const data = await apiFetch(withQuery('/api/messages', { box }));
+      const endpoint = box === 'draft'
+        ? '/api/messages/drafts'
+        : withQuery('/api/messages', { box });
+      const data = await apiFetch(endpoint);
       const list = data.messages || [];
       msgCache.setList(box, list);
       return list;
@@ -934,8 +1260,6 @@ const api = {
         const m = cachedList.find(x => String(x.id) === String(id));
         if (m) { m.unread = false; m.is_unread = false; }
       }
-      const cachedItem = msgCache.getItem(box, id);
-      if (cachedItem) cachedItem.unread = false;
       return res;
     },
     async action(id, action) {
@@ -958,19 +1282,16 @@ const api = {
       const data = await apiFetch(withQuery('/api/messages/search-users', { q, type }));
       return data.users || [];
     },
-    async send({ subject, message_html, to, cc, bcc, attachments, send_date, draft_id }) {
+    async send(payload) {
       const res = await apiFetch('/api/messages/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject, message_html,
-          to: to || [], cc: cc || [], bcc: bcc || [],
-          attachments: attachments || [],
-          send_date: send_date || '', draft_id: draft_id || '',
-        }),
+        body: JSON.stringify(payload),
       });
       msgCache.invalidateList('outbox');
       msgCache.invalidateList('inbox');
+      msgCache.invalidateList('scheduled');
+      msgCache.invalidateList('draft');
       return res;
     },
     async uploadImage(file) {
@@ -982,6 +1303,59 @@ const api = {
       const fd = new FormData();
       fd.append('file', file);
       return apiFetch('/api/messages/upload', { method: 'POST', body: fd });
+    },
+    async getScheduled(id, edit = false) {
+      const path = `/api/messages/${encodeURIComponent(id)}/scheduled${edit ? '?edit=1' : ''}`;
+      return apiFetch(path);
+    },
+    async updateScheduled(id, data) {
+      return apiFetch(`/api/messages/${encodeURIComponent(id)}/scheduled`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    },
+    async cancelScheduled(id) {
+      return apiFetch(`/api/messages/${encodeURIComponent(id)}/cancel-scheduled`, { method: 'POST' });
+    },
+    async reschedule(id, sendDate, data = {}) {
+      return apiFetch(`/api/messages/${encodeURIComponent(id)}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ send_date: sendDate, ...data }),
+      });
+    },
+    async getDraftFull(id, edit = false) {
+      const path = `/api/messages/draft/${encodeURIComponent(id)}/full${edit ? '?edit=1' : ''}`;
+      return apiFetch(path);
+    },
+    async saveDraft(data) {
+      const res = await apiFetch('/api/messages/draft/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      msgCache.invalidateList('draft');
+      return res;
+    },
+    async deleteDraft(id) {
+      const res = await apiFetch(`/api/messages/draft/${encodeURIComponent(id)}/delete`, { method: 'POST' });
+      msgCache.invalidateList('draft');
+      msgCache.invalidateItem('draft', id);
+      return res;
+    },
+    async scheduleDraft(id, data) {
+      const res = await apiFetch(`/api/messages/draft/${encodeURIComponent(id)}/schedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      msgCache.invalidateList('draft');
+      msgCache.invalidateList('scheduled');
+      return res;
+    },
+    async getDraft(draftId) {
+      return apiFetch(`/api/messages/draft/${encodeURIComponent(draftId)}`);
     },
   },
 };
@@ -1080,7 +1454,6 @@ function lighten(input, amount = 1.35, cap = 0.72) {
 }
 
 const LIGHTENED_FLAG = '__ssLightened';
-
 function shouldSkip(el) {
   if (!el || !el.closest) return false;
   if (el.closest('.attach-wrap')) return true;
@@ -1120,15 +1493,6 @@ function applyLighten() {
       el[LIGHTENED_FLAG] = true;
     } catch {}
   }
-  for (const s of root.querySelectorAll('style')) {
-    s.textContent = (s.textContent || '').replace(
-      /(?<![-\w])color\s*:\s*([^;{}]+?)(\s*!important)?\s*(?=[;}])/gi,
-      (m, val, imp) => {
-        const w = lighten(val.trim());
-        return w ? `color:${w}${imp || ''}` : m;
-      }
-    );
-  }
 }
 setInterval(applyLighten, 400);
 
@@ -1137,7 +1501,6 @@ setInterval(applyLighten, 400);
    ============================================================ */
 function cleanMessageBody(root) {
   if (!root) return;
-
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
   const toFix = [];
   let node;
@@ -1151,7 +1514,6 @@ function cleanMessageBody(root) {
     if (/^\s*Bijlagen:\s*$/i.test(v)) v = 'Bijlagen';
     n.nodeValue = v;
   }
-
   const links = root.querySelectorAll('a[href]');
   for (let i = 0; i < links.length; i++) {
     const a = links[i];
@@ -1170,34 +1532,25 @@ document.addEventListener('click', (e) => {
   if (!href) return;
   if (href.startsWith('#')) return;
   if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
-
   e.preventDefault();
   e.stopPropagation();
-
   try {
     window.open(link.href, '_blank', 'noopener,noreferrer');
   } catch {
     const a = document.createElement('a');
-    a.href = link.href;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+    a.href = link.href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
 }, true);
 
 /* ============================================================
-   INIT — geen login-formulier, geen delay
+   INIT
    ============================================================ */
 autoLogin();
 refreshIcons();
 
 async function autoLogin() {
-  if (!auth.tryRestore()) {
-    showNotLoggedIn();
-    return;
-  }
+  if (!auth.tryRestore()) { showNotLoggedIn(); return; }
   try {
     await api.auth.login();
     onReady();
@@ -1211,20 +1564,35 @@ function showNotLoggedIn() {
   const msg = 'Niet ingelogd, gelieve in te loggen';
   $('msg-rows').innerHTML =
     '<div class="empty" style="height:auto;padding:40px 20px">' +
-      icon('log-in') +
-      '<p>' + esc(msg) + '</p>' +
+      icon('log-in') + '<p>' + esc(msg) + '</p>' +
     '</div>';
   $('msg-view').innerHTML =
-    '<div class="empty">' +
-      icon('log-in') +
-      '<p>' + esc(msg) + '</p>' +
-    '</div>';
+    '<div class="empty">' + icon('log-in') + '<p>' + esc(msg) + '</p></div>';
+  updateIndexDot();
   refreshIcons();
 }
 
 function onReady() {
   setupAppEvents();
   loadMessages('inbox');
+  updateIndexDot();
+
+  setTimeout(() => {
+    indexUsersInBackground();
+  }, 1500);
+}
+
+/* ============================================================
+   SCROLLBARE TABS MET FADES
+   ============================================================ */
+function updateTabFades() {
+  const wrap = $('msg-tabs-wrap');
+  const tabs = $('msg-tabs');
+  if (!wrap || !tabs) return;
+  const canLeft = tabs.scrollLeft > 2;
+  const canRight = tabs.scrollLeft < tabs.scrollWidth - tabs.clientWidth - 2;
+  wrap.classList.toggle('can-scroll-left', canLeft);
+  wrap.classList.toggle('can-scroll-right', canRight);
 }
 
 /* ============================================================
@@ -1249,16 +1617,31 @@ function setupAppEvents() {
     }
   });
 
+  $('index-dot').addEventListener('click', () => {
+    if (userIndex._indexing) return;
+    indexUsersInBackground({ force: true });
+  });
+
   $('msg-tabs').addEventListener('click', (e) => {
     const tab = e.target.closest('.msg-tab');
     if (!tab) return;
+    const newBox = tab.dataset.box;
+    if (newBox === currentBox && currentMessageId === null) return;
+
     $$('.msg-tab', $('msg-tabs')).forEach(t => t.classList.toggle('active', t === tab));
-    currentBox = tab.dataset.box;
+    currentBox = newBox;
     currentMessageId = null;
+    ss_currentMessage = null;
+
+    renderMessageList([], true);
     closeMessageView();
-    loadMessages(currentBox);
     renderEmptyView();
+    loadMessages(currentBox);
+    updateTabFades();
   });
+
+  $('msg-tabs').addEventListener('scroll', updateTabFades, { passive: true });
+  window.addEventListener('resize', updateTabFades);
 
   $('msg-rows').addEventListener('click', (e) => {
     const row = e.target.closest('.msg-row');
@@ -1278,6 +1661,18 @@ function setupAppEvents() {
   $('compose-close').addEventListener('click', closeCompose);
   $('compose-cancel').addEventListener('click', closeCompose);
   $('compose-send').addEventListener('click', sendCompose);
+  $('compose-save-draft').addEventListener('click', saveDraftHandler);
+
+  $('schedule-check').addEventListener('change', () => {
+    $('schedule-row').style.display = $('schedule-check').checked ? 'flex' : 'none';
+    if ($('schedule-check').checked && !$('schedule-datetime').value) {
+      const d = new Date(Date.now() + 3600000);
+      const pad = n => String(n).padStart(2, '0');
+      $('schedule-datetime').value =
+        d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+        'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    }
+  });
 
   $('cc-bcc-toggle').addEventListener('click', () => {
     const btn = $('cc-bcc-toggle');
@@ -1290,6 +1685,8 @@ function setupAppEvents() {
   setupRecipientField('cc');
   setupRecipientField('bcc');
   setupEditor();
+
+  setTimeout(updateTabFades, 100);
 }
 
 /* ============================================================
@@ -1309,12 +1706,12 @@ function renderEmptyView() {
 
 async function loadMessages(box, force = false) {
   currentBox = box;
-
   const cached = !force && msgCache.getList(box);
+
   if (cached) {
     renderMessageList(cached);
   } else {
-    // Skeleton staat al in de HTML — niks doen
+    renderMessageList([], true);
   }
 
   try {
@@ -1323,38 +1720,73 @@ async function loadMessages(box, force = false) {
     );
     renderMessageList(list);
   } catch (e) {
-    if (!cached) toast('Berichten: ' + e.message, 'error');
+    if (!cached) {
+      $('msg-rows').innerHTML =
+        '<div class="empty" style="padding:40px 20px">' +
+          icon('alert-circle') + '<p style="color:var(--red)">' + esc(e.message) + '</p>' +
+        '</div>';
+      refreshIcons();
+    }
+    toast('Berichten: ' + e.message, 'error');
   }
 }
 
-function renderMessageList(list) {
+function renderMessageList(list, showSkeleton = false) {
   const container = $('msg-rows');
+
+  if (showSkeleton) {
+    container.innerHTML =
+      '<div class="skeleton-row">' +
+        '<div class="skeleton-line w60"></div>' +
+        '<div class="skeleton-line w85"></div>' +
+        '<div class="skeleton-line w40"></div>' +
+      '</div>'.repeat(4);
+    return;
+  }
+
   if (!list.length) {
     container.innerHTML = '<div class="empty" style="padding:40px 20px">' + icon('mail') + '<p>Geen berichten</p></div>';
     refreshIcons();
     return;
   }
+
+  const isScheduledBox = currentBox === 'scheduled';
+  const isDraftBox = currentBox === 'draft';
   const parts = [];
+
   for (let i = 0; i < list.length; i++) {
     const m = list[i];
-    const isUnread = m.unread || m.is_unread;
+    const isUnread = !isDraftBox && !isScheduledBox && (m.unread || m.is_unread);
     const active = String(m.id) === String(currentMessageId);
+    const isDraft = isDraftBox || m.is_draft;
+    const isScheduled = isScheduledBox;
+
+    let cls = 'msg-row';
+    if (isUnread) cls += ' unread';
+    if (active) cls += ' active';
+    if (isDraft) cls += ' draft';
+    if (isScheduled) cls += ' scheduled';
+
+    let badgeDot = '';
+    if (isScheduled) badgeDot = '<span class="msg-badge-dot scheduled"></span>';
+    else if (isDraft) badgeDot = '<span class="msg-badge-dot draft"></span>';
+
     parts.push(
-      '<div class="msg-row' + (isUnread ? ' unread' : '') + (active ? ' active' : '') + '" data-id="' + esc(m.id) + '">' +
+      '<div class="' + cls + '" data-id="' + esc(m.id) + '">' +
         '<div class="msg-from">' + esc(m.from || m.sender || 'Onbekend') + '</div>' +
         '<div class="msg-subject">' + esc(m.subject || '(geen onderwerp)') + '</div>' +
-        '<div class="msg-date">' + fmtDate(m.date || m.timestamp) + '</div>' +
+        '<div class="msg-date">' + fmtDate(m.date || m.timestamp) + badgeDot + '</div>' +
       '</div>'
     );
   }
   container.innerHTML = parts.join('');
+  refreshIcons();
 }
 
 function setRowUnread(id, unread) {
   const row = document.querySelector('.msg-row[data-id="' + CSS.escape(String(id)) + '"]');
   if (!row) return;
-  if (unread) row.classList.add('unread');
-  else row.classList.remove('unread');
+  row.classList.toggle('unread', unread);
 }
 
 function closeMessageView() {
@@ -1363,8 +1795,33 @@ function closeMessageView() {
   document.body.classList.remove('overlay-open');
 }
 
+function renderViewSkeleton() {
+  return (
+    '<div class="msg-view-head">' +
+      '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
+      '<div class="msg-view-head-inner">' +
+        '<h3><span class="skeleton-line" style="display:inline-block;width:60%;height:18px;vertical-align:middle"></span></h3>' +
+        '<div class="msg-view-meta">' +
+          '<span class="skeleton-line" style="display:inline-block;width:120px;height:11px"></span>' +
+          '<span class="skeleton-line" style="display:inline-block;width:80px;height:11px"></span>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="msg-view-body">' +
+      '<div class="msg-loading">' +
+        '<div class="skeleton-line w95"></div>' +
+        '<div class="skeleton-line w80"></div>' +
+        '<div class="skeleton-line w70"></div>' +
+        '<div class="skeleton-line w50"></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="msg-view-actions"></div>'
+  );
+}
+
 async function openMessage(id) {
   currentMessageId = id;
+
   $$('.msg-row').forEach(r => r.classList.toggle('active', r.dataset.id === id));
 
   const view = $('msg-view');
@@ -1374,22 +1831,40 @@ async function openMessage(id) {
   }
 
   const cachedMsg = msgCache.getItem(currentBox, id);
-  if (cachedMsg) {
+  if (cachedMsg && currentBox !== 'draft' && currentBox !== 'scheduled') {
     ss_currentMessage = cachedMsg;
     renderMessageView(cachedMsg);
+  } else if (currentBox === 'draft' && cachedMsg) {
+    ss_currentMessage = cachedMsg;
+    renderDraftView(id, cachedMsg);
+  } else if (currentBox === 'scheduled' && cachedMsg) {
+    ss_currentMessage = cachedMsg;
+    renderScheduledView(id, cachedMsg);
   } else {
-    view.innerHTML = '<div class="empty">' + icon('mail') + '<p>Laden…</p></div>';
+    view.innerHTML = renderViewSkeleton();
     refreshIcons();
   }
 
   if (currentBox === 'inbox') {
     setRowUnread(id, false);
-    api.messages.markRead(id, currentBox).catch(() => {
-      setRowUnread(id, true);
-    });
+    api.messages.markRead(id, currentBox).catch(() => setRowUnread(id, true));
   }
 
   try {
+    if (currentBox === 'draft') {
+      const data = await api.messages.getDraftFull(id, true);
+      ss_currentMessage = data;
+      msgCache.setItem(currentBox, id, data);
+      renderDraftView(id, data);
+      return;
+    }
+    if (currentBox === 'scheduled') {
+      const data = await api.messages.getScheduled(id, true);
+      ss_currentMessage = data;
+      msgCache.setItem(currentBox, id, data);
+      renderScheduledView(id, data);
+      return;
+    }
     const msg = await api.messages.openMessage(id, currentBox);
     ss_currentMessage = msg;
     renderMessageView(msg);
@@ -1399,6 +1874,72 @@ async function openMessage(id) {
       refreshIcons();
     }
   }
+}
+
+function renderScheduledView(id, data) {
+  const toList  = fmtReceivers(data.to);
+  const ccList  = fmtReceivers(data.cc);
+  const bccList = fmtReceivers(data.bcc);
+  const body = data.body_html || '<p style="color:var(--text-dim)">Geen inhoud</p>';
+
+  $('msg-view').innerHTML =
+    '<div class="msg-view-head">' +
+      '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
+      '<div class="msg-view-head-inner">' +
+        '<h3>' + esc(data.subject || '(geen onderwerp)') + '</h3>' +
+        '<div class="msg-view-meta">' +
+          (toList ? '<span>' + icon('users') + 'Aan: <strong>' + esc(toList) + '</strong></span>' : '') +
+          (ccList ? '<span>' + icon('users') + 'CC: <strong>' + esc(ccList) + '</strong></span>' : '') +
+          (bccList ? '<span>' + icon('users') + 'BCC: <strong>' + esc(bccList) + '</strong></span>' : '') +
+          '<span>' + icon('clock') + 'Gepland: <strong>' + esc(data.send_date || '') + '</strong></span>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="msg-view-body">' + body + '</div>' +
+    '<div class="msg-view-actions">' +
+      '<button class="action-btn primary" data-action="edit-scheduled">' + icon('pencil') + ' Bewerken</button>' +
+      '<button class="action-btn" data-action="reschedule">' + icon('calendar-clock') + ' Opnieuw plannen</button>' +
+      '<button class="action-btn danger" data-action="cancel-scheduled">' + icon('x-circle') + ' Annuleren</button>' +
+    '</div>';
+
+  refreshIcons();
+  fixRelativeImages($('msg-view'));
+  cleanMessageBody($('.msg-view-body'));
+  applyLighten();
+  refreshIcons();
+}
+
+function renderDraftView(id, data) {
+  const toList  = fmtReceivers(data.to);
+  const ccList  = fmtReceivers(data.cc);
+  const bccList = fmtReceivers(data.bcc);
+  const body = data.body_html || '<p style="color:var(--text-dim)">Geen inhoud</p>';
+
+  $('msg-view').innerHTML =
+    '<div class="msg-view-head">' +
+      '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
+      '<div class="msg-view-head-inner">' +
+        '<h3>' + esc(data.subject || '(geen onderwerp)') + '</h3>' +
+        '<div class="msg-view-meta">' +
+          (toList ? '<span>' + icon('users') + 'Aan: <strong>' + esc(toList) + '</strong></span>' : '') +
+          (ccList ? '<span>' + icon('users') + 'CC: <strong>' + esc(ccList) + '</strong></span>' : '') +
+          (bccList ? '<span>' + icon('users') + 'BCC: <strong>' + esc(bccList) + '</strong></span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="msg-view-body">' + body + '</div>' +
+    '<div class="msg-view-actions">' +
+      '<button class="action-btn primary" data-action="edit-draft">' + icon('pencil') + ' Bewerken</button>' +
+      '<button class="action-btn warning" data-action="schedule-draft">' + icon('calendar-clock') + ' Inplannen</button>' +
+      '<button class="action-btn" data-action="send-draft">' + icon('send') + ' Nu versturen</button>' +
+      '<button class="action-btn danger" data-action="delete-draft">' + icon('trash-2') + ' Verwijderen</button>' +
+    '</div>';
+
+  refreshIcons();
+  fixRelativeImages($('msg-view'));
+  cleanMessageBody($('.msg-view-body'));
+  applyLighten();
+  refreshIcons();
 }
 
 function renderMessageView(msg) {
@@ -1452,9 +1993,10 @@ function renderMessageView(msg) {
     '</div>' +
     '<div class="msg-view-body">' + body + attachHtml + '</div>' +
     '<div class="msg-view-actions">' +
-      (canReply  ? '<button class="action-btn primary" data-action="reply" title="Antwoorden">' + icon('reply') + '</button>' : '') +
-      (canUnread ? '<button class="action-btn" data-action="unread" title="Markeer als ongelezen">' + icon('mail') + '<span>Ongelezen</span></button>' : '') +
-      (canTrash  ? '<button class="action-btn danger" data-action="trash" title="Verwijderen">' + icon('trash-2') + '</button>' : '') +
+      (canReply  ? '<button class="action-btn primary" data-action="reply" title="Beantwoorden">' + icon('reply') + '</button>' : '') +
+      (canReply  ? '<button class="action-btn" data-action="reply-all" title="Allen beantwoorden">' + icon('reply-all') + '</button>' : '') +
+      (canUnread ? '<button class="action-btn" data-action="unread">' + icon('mail') + '<span>Ongelezen</span></button>' : '') +
+      (canTrash  ? '<button class="action-btn danger" data-action="trash">' + icon('trash-2') + '</button>' : '') +
     '</div>';
 
   refreshIcons();
@@ -1469,9 +2011,7 @@ function renderMessageView(msg) {
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast('Download gestart', 'success');
-      } catch (e) {
-        toast('Download mislukt: ' + e.message, 'error');
-      }
+      } catch (e) { toast('Download mislukt: ' + e.message, 'error'); }
     });
   });
 
@@ -1481,12 +2021,300 @@ function renderMessageView(msg) {
   refreshIcons();
 }
 
+/* ============================================================
+   REPLY
+   ============================================================ */
+
+function cleanDisplayName(raw) {
+  if (!raw) return '';
+  let s = String(raw).trim();
+  s = s.replace(/\s*\([^)]*\)\s*/g, ' ');
+  s = s.replace(/\s+via\s+.*$/i, '');
+  const mailAngle = s.match(/^([^<]+)<[^>]+>$/);
+  if (mailAngle) s = mailAngle[1];
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) {
+    s = s.split('@')[0].replace(/[._-]+/g, ' ');
+  }
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+function nameSearchVariants(raw) {
+  const clean = cleanDisplayName(raw);
+  if (!clean) return [];
+
+  const out = [clean];
+  const tokens = clean.split(/\s+/).filter(Boolean);
+
+  if (tokens.length > 2) {
+    out.push(tokens.slice(0, 2).join(' '));
+    out.push(tokens.slice(-2).join(' '));
+  }
+
+  if (tokens.length > 1) {
+    out.push(tokens.slice().reverse().join(' '));
+    out.push(tokens[tokens.length - 1]);
+  }
+
+  const seen = new Set();
+  return out.filter(v => {
+    const k = v.toLowerCase();
+    if (!k || seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
+function findUserByName(displayName, candidates) {
+  if (!candidates || !candidates.length) return null;
+
+  const norm = (s) => String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const want = norm(displayName);
+  const wantTokens = want.split(' ').filter(Boolean).sort().join(' ');
+
+  const toRec = (u) => ({
+    user_id: String(u.user_id),
+    name: u.name || u.raw_name || u.coaccount_name || displayName,
+    is_co_account: !!u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id || '455',
+  });
+
+  for (const u of candidates) {
+    if (norm(u.name) === want) return toRec(u);
+  }
+
+  for (const u of candidates) {
+    const tokens = norm(u.name).split(' ').filter(Boolean).sort().join(' ');
+    if (tokens && tokens === wantTokens) return toRec(u);
+  }
+
+  const wantSet = wantTokens.split(' ').filter(Boolean);
+  for (const u of candidates) {
+    const hay = norm(u.name);
+    if (wantSet.every(t => hay.includes(t))) return toRec(u);
+  }
+
+  if (candidates.length === 1) return toRec(candidates[0]);
+
+  return null;
+}
+
+async function resolveSender(msg) {
+  if (!msg) return null;
+
+  const s = msg.sender_obj || msg.sender_user || msg.from_user
+          || (typeof msg.sender === 'object' ? msg.sender : null);
+  if (s && typeof s === 'object') {
+    const uid = s.user_id || s.id || s.uid;
+    if (uid) {
+      return {
+        user_id: String(uid),
+        name: s.name || s.display_name || s.username || String(uid),
+        is_co_account: !!s.is_co_account,
+        user_lt: String(s.user_lt || (s.is_co_account ? '2' : '0')),
+        ss_id: s.ss_id || '455',
+      };
+    }
+  }
+
+  const uid = msg.sender_id || msg.from_id || msg.user_id
+            || msg.sender_user_id || msg.from_user_id;
+  if (uid) {
+    return {
+      user_id: String(uid),
+      name: cleanDisplayName(msg.sender || msg.from) || String(uid),
+      is_co_account: false,
+      user_lt: '0',
+      ss_id: '455',
+    };
+  }
+
+  const rawName = msg.sender || msg.from || '';
+  if (!rawName.trim()) return null;
+
+  const variants = nameSearchVariants(rawName);
+
+  for (const v of variants) {
+    const hit = findUserByName(v, userIndex.search(v, 10));
+    if (hit) return hit;
+  }
+
+  for (const v of variants.slice(0, 3)) {
+    try {
+      const users = await api.messages.searchUsers(v, 'all');
+      userIndex.putMany(users);
+      const hit = findUserByName(v, users);
+      if (hit) return hit;
+    } catch {}
+  }
+
+  return null;
+}
+
+async function resolveReplyAllRecipients(msg) {
+  const out = [];
+  const seen = new Set();
+
+  const push = (u) => {
+    if (!u || !u.user_id) return;
+    const lt = String(u.user_lt || (u.is_co_account ? '2' : '0'));
+    const key = String(u.user_id) + '|' + lt;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({
+      user_id: String(u.user_id),
+      name: u.name || u.user_id,
+      is_co_account: !!u.is_co_account,
+      user_lt: lt,
+      ss_id: u.ss_id || '455',
+    });
+  };
+
+  push(await resolveSender(msg));
+
+  const collect = async (list) => {
+    if (!list) return;
+    const arr = Array.isArray(list) ? list : [list];
+    for (const item of arr) {
+      if (!item) continue;
+      if (typeof item === 'string') {
+        let hit = findUserByName(item, userIndex.search(item, 5));
+        if (!hit) {
+          try {
+            const users = await api.messages.searchUsers(item, 'all');
+            userIndex.putMany(users);
+            hit = findUserByName(item, users);
+          } catch {}
+        }
+        if (hit) push(hit);
+      } else if (typeof item === 'object') {
+        push({
+          user_id: item.user_id,
+          name: item.name,
+          is_co_account: item.is_co_account,
+          user_lt: item.user_lt,
+          ss_id: item.ss_id,
+        });
+      }
+    }
+  };
+
+  await collect(msg.to_full || msg.to);
+  await collect(msg.cc_full || msg.cc);
+
+  return out;
+}
+
+function buildQuotedBody(msg) {
+  const raw = msg.body_html || msg.bodyHtml || msg.body || msg.html || '';
+  if (!raw) return '';
+
+  let clean = raw;
+  try {
+    const doc = new DOMParser().parseFromString(
+      '<div id="__quoteRoot">' + raw + '</div>',
+      'text/html'
+    );
+    const root = doc.getElementById('__quoteRoot');
+    if (root) {
+      root.querySelectorAll('script, style, iframe, object, embed, link, meta')
+        .forEach(n => n.remove());
+      root.querySelectorAll('*').forEach(el => {
+        for (const attr of Array.from(el.attributes)) {
+          const n = attr.name.toLowerCase();
+          if (n.startsWith('on')) el.removeAttribute(attr.name);
+          if (n === 'srcdoc') el.removeAttribute(attr.name);
+        }
+      });
+      clean = root.innerHTML;
+    }
+  } catch {
+    clean = '<p>' + esc(String(raw).replace(/<[^>]*>/g, '')) + '</p>';
+  }
+
+  const senderName = esc(msg.sender || msg.from || 'Onbekend');
+  const dateStr = esc(msg.date || '');
+
+  return (
+    '<p><br></p>' +
+    '<p><br></p>' +
+    '<div class="ss-quote" ' +
+      'style="margin-top:16px;padding-top:12px;border-top:1px solid #333;color:#8a8a8e;font-size:13px;">' +
+      '<p style="margin:0 0 10px;">Op ' + dateStr + ' schreef <strong>' + senderName + '</strong>:</p>' +
+      '<blockquote style="margin:0;padding-left:12px;border-left:2px solid #333;">' +
+        clean +
+      '</blockquote>' +
+    '</div>'
+  );
+}
+
+async function doReply(replyAll = false) {
+  const id = currentMessageId;
+  if (!id) return;
+
+  let msg = ss_currentMessage;
+  const needFull = !msg || (!msg.body_html && !msg.bodyHtml && !msg.body && !msg.html);
+  if (needFull) {
+    try {
+      msg = await api.messages.openMessage(id, currentBox, true);
+      ss_currentMessage = msg;
+      msgCache.setItem(currentBox, id, msg);
+    } catch (e) {
+      toast('Kon bericht niet laden: ' + e.message, 'error');
+      return;
+    }
+  }
+  if (!msg) { toast('Bericht niet gevonden', 'error'); return; }
+
+  const sender = await resolveSender(msg);
+  if (!sender) {
+    toast('Afzender onbekend — voeg handmatig een ontvanger toe', 'error');
+  }
+
+  const recipients = replyAll
+    ? await resolveReplyAllRecipients(msg)
+    : (sender ? [sender] : []);
+
+  let subject = (msg.subject || '').trim();
+  if (!/^re\s*:/i.test(subject)) subject = 'Re: ' + subject;
+
+  const quotedBody = buildQuotedBody(msg);
+
+  openCompose();
+  composeState.to = recipients;
+  renderRecipients('to');
+  $('compose-subject').value = subject;
+  $('compose-body').innerHTML = quotedBody;
+
+  try {
+    const editor = $('compose-body');
+    editor.focus();
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.setStart(editor, 0);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    savedRange = range.cloneRange();
+  } catch {}
+}
+
 async function handleMessageAction(action, btn) {
   const id = currentMessageId;
   if (!id) return;
+
   if (action === 'reply') {
-    const msg = ss_currentMessage || {};
-    openCompose(msg.sender || msg.from, 'Re: ' + (msg.subject || ''));
+    await doReply(false);
+    return;
+  }
+  if (action === 'reply-all') {
+    await doReply(true);
     return;
   }
 
@@ -1514,6 +2342,110 @@ async function handleMessageAction(action, btn) {
     });
     return;
   }
+
+  if (action === 'edit-scheduled') {
+    try {
+      const full = await api.messages.getScheduled(id, true);
+      openComposeFromScheduled(id, full);
+    } catch (e) { toast('Kon niet laden: ' + e.message, 'error'); }
+    return;
+  }
+  if (action === 'reschedule') {
+    const data = ss_currentMessage || {};
+    const current = data.send_date || '';
+    let defaultVal = '';
+    try {
+      const dt = new Date(current);
+      if (!isNaN(dt)) {
+        const pad = n => String(n).padStart(2, '0');
+        defaultVal = dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) +
+          'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+      }
+    } catch {}
+    const newDate = prompt('Nieuwe datum en tijd (YYYY-MM-DDTHH:MM):', defaultVal || '');
+    if (!newDate) return;
+    try {
+      await api.messages.reschedule(id, newDate);
+      toast('Opnieuw gepland', 'success');
+      msgCache.invalidateList('scheduled');
+      loadMessages('scheduled', true);
+      renderEmptyView();
+      currentMessageId = null;
+    } catch (e) { toast('Mislukt: ' + e.message, 'error'); }
+    return;
+  }
+  if (action === 'cancel-scheduled') {
+    if (!confirm('Gepland bericht annuleren?')) return;
+    try {
+      await api.messages.cancelScheduled(id);
+      toast('Geannuleerd', 'success');
+      msgCache.invalidateList('scheduled');
+      loadMessages('scheduled', true);
+      renderEmptyView();
+      currentMessageId = null;
+    } catch (e) { toast('Mislukt: ' + e.message, 'error'); }
+    return;
+  }
+
+  if (action === 'edit-draft') {
+    try {
+      const full = await api.messages.getDraftFull(id, true);
+      openComposeFromDraft(id, full);
+    } catch (e) { toast('Kon niet laden: ' + e.message, 'error'); }
+    return;
+  }
+  if (action === 'schedule-draft') {
+    const d = new Date(Date.now() + 3600000);
+    const pad = n => String(n).padStart(2, '0');
+    const defaultVal = d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate()) +
+      'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+    const newDate = prompt('Wanneer versturen? (YYYY-MM-DDTHH:MM)', defaultVal);
+    if (!newDate) return;
+    try {
+      await api.messages.scheduleDraft(id, { send_date: newDate });
+      toast('Concept ingepland', 'success');
+      msgCache.invalidateList('draft');
+      msgCache.invalidateList('scheduled');
+      loadMessages('draft', true);
+      renderEmptyView();
+      currentMessageId = null;
+    } catch (e) { toast('Mislukt: ' + e.message, 'error'); }
+    return;
+  }
+  if (action === 'send-draft') {
+    if (!confirm('Concept nu versturen?')) return;
+    const data = ss_currentMessage || {};
+    try {
+      await api.messages.send({
+        draft_id: id,
+        subject: data.subject,
+        message_html: data.body_html,
+        to: data.to_full || data.to,
+        cc: data.cc_full || data.cc,
+        bcc: data.bcc_full || data.bcc,
+        send_date: '',
+      });
+      toast('Verstuurd', 'success');
+      msgCache.invalidateList('draft');
+      msgCache.invalidateList('outbox');
+      loadMessages('draft', true);
+      renderEmptyView();
+      currentMessageId = null;
+    } catch (e) { toast('Mislukt: ' + e.message, 'error'); }
+    return;
+  }
+  if (action === 'delete-draft') {
+    if (!confirm('Concept verwijderen?')) return;
+    try {
+      await api.messages.deleteDraft(id);
+      toast('Concept verwijderd', 'success');
+      msgCache.invalidateList('draft');
+      loadMessages('draft', true);
+      renderEmptyView();
+      currentMessageId = null;
+    } catch (e) { toast('Mislukt: ' + e.message, 'error'); }
+    return;
+  }
 }
 
 /* ============================================================
@@ -1524,65 +2456,127 @@ const composeState = {
   cc: [],
   bcc: [],
   attachments: [],
+  editMode: null,
 };
 
 function setupRecipientField(field) {
   const input = $(field + '-input');
   const sugg = $(field + '-suggestions');
-  const box = $(field + '-box');
-  let timer = null;
-  let currentResults = [];
-  let activeIndex = -1;
 
-  function renderSuggestions(list) {
-    if (!list.length) { sugg.style.display = 'none'; sugg.innerHTML = ''; return; }
-    const parts = [];
-    for (let i = 0; i < list.length; i++) {
-      const u = list[i];
-      const badge = u.is_co_account ? 'ouder' : (u.type_label || '');
-      parts.push(
-        '<div class="suggestion' + (i === activeIndex ? ' active' : '') + '" data-index="' + i + '">' +
-          '<span class="sugg-name">' + esc(u.name || u.user_id) + '</span>' +
-          (badge ? '<span class="sugg-badge">' + esc(badge) + '</span>' : '') +
-        '</div>'
-      );
-    }
-    sugg.innerHTML = parts.join('');
-    sugg.style.display = 'block';
+  const st = {
+    query: '',
+    localResults: [],
+    liveResults: [],
+    merged: [],
+    activeIndex: -1,
+    backendTimer: null,
+    backendReqId: 0,
+  };
+
+  function userKey(u) {
+    return String(u.user_id) + '|' + String(u.user_lt || '0') + '|' + (u.name || '').toLowerCase();
   }
 
-  function pickUser(u) {
-    if (!u) return;
-    const list = composeState[field];
-    if (list.some(x => String(x.user_id) === String(u.user_id))) {
-      toast('Al toegevoegd', 'error');
+  function suggestionInnerHtml(u) {
+    return '<span class="sugg-name">' + esc(u.name || u.user_id) + '</span>';
+  }
+
+  function renderSuggestions() {
+    const list = st.merged;
+    if (!list.length) {
+      sugg.style.display = 'none';
+      sugg.innerHTML = '';
+      st.activeIndex = -1;
       return;
     }
-    list.push({
-      user_id: u.user_id,
-      name: u.name,
-      is_co_account: !!u.is_co_account,
-      ss_id: u.ss_id,
-    });
-    input.value = '';
-    sugg.style.display = 'none';
-    activeIndex = -1;
-    renderRecipients(field);
+
+    const existingNodes = sugg.querySelectorAll('.suggestion');
+    const sameLength = existingNodes.length === list.length;
+
+    if (sameLength && sugg.style.display === 'block') {
+      for (let i = 0; i < list.length; i++) {
+        const u = list[i];
+        const node = existingNodes[i];
+        const key = userKey(u);
+        if (node.dataset.key === key) {
+          node.classList.toggle('active', i === st.activeIndex);
+          continue;
+        }
+        node.dataset.key = key;
+        node.dataset.index = i;
+        node.innerHTML = suggestionInnerHtml(u);
+        node.classList.toggle('active', i === st.activeIndex);
+      }
+    } else {
+      const parts = [];
+      for (let i = 0; i < list.length; i++) {
+        const u = list[i];
+        const key = userKey(u);
+        parts.push(
+          '<div class="suggestion' + (i === st.activeIndex ? ' active' : '') +
+          '" data-index="' + i + '" data-key="' + esc(key) + '">' +
+            suggestionInnerHtml(u) +
+          '</div>'
+        );
+      }
+      sugg.innerHTML = parts.join('');
+      sugg.style.display = 'block';
+    }
+  }
+
+  function recomputeMerged() {
+    const merged = [];
+    const seen = new Set();
+    for (const u of st.localResults) {
+      const k = userKey(u);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(u);
+    }
+    for (const u of st.liveResults) {
+      const k = userKey(u);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      merged.push(u);
+    }
+    st.merged = merged.slice(0, 12);
   }
 
   input.addEventListener('input', () => {
-    clearTimeout(timer);
-    activeIndex = -1;
     const q = input.value.trim();
-    if (q.length < 2) { sugg.style.display = 'none'; return; }
-    timer = setTimeout(async () => {
+    st.query = q;
+    st.activeIndex = -1;
+
+    if (q.length < 2) {
+      sugg.style.display = 'none';
+      sugg.innerHTML = '';
+      st.localResults = [];
+      st.liveResults = [];
+      st.merged = [];
+      clearTimeout(st.backendTimer);
+      return;
+    }
+
+    st.localResults = userIndex.search(q, 15);
+    st.liveResults = [];
+    recomputeMerged();
+    renderSuggestions();
+
+    clearTimeout(st.backendTimer);
+    st.backendTimer = setTimeout(async () => {
+      const reqId = ++st.backendReqId;
+      const currentQuery = q;
       try {
-        const users = await api.messages.searchUsers(q, 'all');
-        currentResults = users.slice(0, 10);
-        renderSuggestions(currentResults);
-      } catch {
-        sugg.style.display = 'none';
-      }
+        const users = await api.messages.searchUsers(currentQuery, 'all');
+        if (reqId !== st.backendReqId || input.value.trim() !== currentQuery) return;
+
+        userIndex.putMany(users);
+
+        const marked = users.map(u => ({ ...u, _source: 'live' }));
+        st.liveResults = marked;
+        recomputeMerged();
+        renderSuggestions();
+      } catch {}
     }, 200);
   });
 
@@ -1590,32 +2584,79 @@ function setupRecipientField(field) {
     const el = e.target.closest('.suggestion');
     if (!el) return;
     const idx = parseInt(el.dataset.index, 10);
-    pickUser(currentResults[idx]);
+    pickUser(st.merged[idx]);
   });
 
   input.addEventListener('keydown', (e) => {
     if (sugg.style.display !== 'block') return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      activeIndex = Math.min(activeIndex + 1, currentResults.length - 1);
-      renderSuggestions(currentResults);
+      st.activeIndex = Math.min(st.activeIndex + 1, st.merged.length - 1);
+      renderSuggestions();
+      scrollActiveIntoView(sugg);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
-      activeIndex = Math.max(activeIndex - 1, 0);
-      renderSuggestions(currentResults);
+      st.activeIndex = Math.max(st.activeIndex - 1, 0);
+      renderSuggestions();
+      scrollActiveIntoView(sugg);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (activeIndex >= 0 && currentResults[activeIndex]) pickUser(currentResults[activeIndex]);
-      else if (currentResults[0]) pickUser(currentResults[0]);
+      if (st.activeIndex >= 0 && st.merged[st.activeIndex]) pickUser(st.merged[st.activeIndex]);
+      else if (st.merged[0]) pickUser(st.merged[0]);
     } else if (e.key === 'Escape') {
       sugg.style.display = 'none';
-      activeIndex = -1;
+      st.activeIndex = -1;
     }
   });
 
   input.addEventListener('blur', () => {
     setTimeout(() => { sugg.style.display = 'none'; }, 150);
   });
+
+  function pickUser(u) {
+    if (!u) return;
+    const list = composeState[field];
+    const isCo = !!u.is_co_account;
+    const userLt = String(u.user_lt || (isCo ? '2' : '0'));
+    const name = (u.name || '').trim().toLowerCase();
+    if (list.some(x => {
+      const xLt = String(x.user_lt || (x.is_co_account ? '2' : '0'));
+      const xName = (x.name || '').trim().toLowerCase();
+      return String(x.user_id) === String(u.user_id) &&
+             xLt === userLt &&
+             xName === name;
+    })) {
+      toast('Al toegevoegd', 'error');
+      return;
+    }
+    list.push({
+      user_id: u.user_id,
+      name: u.name,
+      is_co_account: isCo,
+      user_lt: userLt,
+      ss_id: u.ss_id,
+    });
+    userIndex.put(u);
+    input.value = '';
+    sugg.style.display = 'none';
+    st.activeIndex = -1;
+    st.query = '';
+    st.localResults = [];
+    st.liveResults = [];
+    st.merged = [];
+    renderRecipients(field);
+  }
+}
+
+function scrollActiveIntoView(container) {
+  const el = container.querySelector('.suggestion.active');
+  if (!el) return;
+  const top = el.offsetTop;
+  const bottom = top + el.offsetHeight;
+  if (top < container.scrollTop) container.scrollTop = top;
+  else if (bottom > container.scrollTop + container.clientHeight) {
+    container.scrollTop = bottom - container.clientHeight;
+  }
 }
 
 function renderRecipients(field) {
@@ -1626,7 +2667,11 @@ function renderRecipients(field) {
   for (let i = 0; i < list.length; i++) {
     const r = list[i];
     const chip = document.createElement('span');
-    chip.className = 'recipient-chip' + (field === 'cc' ? ' cc' : '') + (field === 'bcc' ? ' bcc' : '');
+    let cls = 'recipient-chip';
+    if (field === 'cc') cls += ' cc';
+    if (field === 'bcc') cls += ' bcc';
+    if (r.is_co_account) cls += ' co';
+    chip.className = cls;
     chip.innerHTML = esc(r.name || r.user_id) + ' <button data-i="' + i + '">×</button>';
     chip.querySelector('button').addEventListener('click', () => {
       list.splice(i, 1);
@@ -1661,18 +2706,13 @@ function restoreEditorRange() {
     sel.removeAllRanges();
     sel.addRange(savedRange);
     return true;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
 function getTextNodesInRange(range) {
   const root = range.commonAncestorContainer;
   const nodes = [];
-  if (root.nodeType === Node.TEXT_NODE) {
-    nodes.push(root);
-    return nodes;
-  }
+  if (root.nodeType === Node.TEXT_NODE) { nodes.push(root); return nodes; }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       if (!node.nodeValue || !node.nodeValue.length) return NodeFilter.FILTER_REJECT;
@@ -1685,16 +2725,9 @@ function getTextNodesInRange(range) {
   return nodes;
 }
 
-function splitTextNode(node, start, end) {
-  if (start > 0) node = node.splitText(start);
-  if (end - start < node.nodeValue.length) node.splitText(end - start);
-  return node;
-}
-
 function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
   const editor = $('compose-body');
   if (!editor) return;
-
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
   const range = sel.getRangeAt(0);
@@ -1711,8 +2744,7 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
       let found = false;
       while (el && el !== editor) {
         if (el.tagName === 'SPAN' && el.style[toggleOff.styleProp] === toggleOff.styleValue) {
-          found = true;
-          break;
+          found = true; break;
         }
         el = el.parentElement;
       }
@@ -1724,46 +2756,18 @@ function wrapSelectionWithStyle(styleProp, styleValue, toggleOff = null) {
     }
   }
 
-  const firstNode = textNodes[0];
-  const lastNode = textNodes[textNodes.length - 1];
-  let startOffset = (firstNode === range.startContainer) ? range.startOffset : 0;
-  let endOffset = (lastNode === range.endContainer) ? range.endOffset : lastNode.nodeValue.length;
-
-  const startNode = splitTextNode(firstNode, startOffset, endOffset === firstNode.nodeValue.length ? firstNode.nodeValue.length : endOffset);
-  const rangeNodes = getTextNodesInRange((() => {
-    const r = document.createRange();
-    r.setStart(startNode, 0);
-    r.setEnd(lastNode === firstNode ? startNode : lastNode, endOffset);
-    return r;
-  })());
-
-  const spans = [];
-  for (const tn of rangeNodes) {
+  for (const tn of textNodes) {
     if (!tn.parentNode) continue;
     const parent = tn.parentElement;
     if (parent && parent !== editor && parent.tagName === 'SPAN' &&
-        parent.style[styleProp] === styleValue &&
-        parent.childNodes.length === 1) {
-      spans.push(parent);
+        parent.style[styleProp] === styleValue && parent.childNodes.length === 1) {
       continue;
     }
     const span = document.createElement('span');
     span.style[styleProp] = styleValue;
     tn.parentNode.insertBefore(span, tn);
     span.appendChild(tn);
-    spans.push(span);
   }
-
-  if (spans.length) {
-    const newRange = document.createRange();
-    newRange.setStartBefore(spans[0]);
-    newRange.setEndAfter(spans[spans.length - 1]);
-    sel.removeAllRanges();
-    sel.addRange(newRange);
-    savedRange = newRange.cloneRange();
-  }
-
-  normalizeSpans(editor);
   editor.dispatchEvent(new Event('input'));
 }
 
@@ -1773,29 +2777,21 @@ function removeStyleFromSelection(styleProp, styleValue) {
   const sel = window.getSelection();
   if (!sel || !sel.rangeCount) return;
   const range = sel.getRangeAt(0);
-
   const textNodes = getTextNodesInRange(range);
   const toUnwrap = new Set();
-
   for (const tn of textNodes) {
     let el = tn.parentElement;
     while (el && el !== editor) {
-      if (el.tagName === 'SPAN' && el.style[styleProp] === styleValue) {
-        toUnwrap.add(el);
-        break;
-      }
+      if (el.tagName === 'SPAN' && el.style[styleProp] === styleValue) { toUnwrap.add(el); break; }
       el = el.parentElement;
     }
   }
-
   for (const span of toUnwrap) {
     if (!span.parentNode) continue;
     const parent = span.parentNode;
     while (span.firstChild) parent.insertBefore(span.firstChild, span);
     parent.removeChild(span);
   }
-
-  normalizeSpans(editor);
   editor.dispatchEvent(new Event('input'));
 }
 
@@ -1806,57 +2802,22 @@ function removeAllFormatting() {
   if (!sel || !sel.rangeCount) return;
   const range = sel.getRangeAt(0);
   if (range.collapsed) return;
-
   const textNodes = getTextNodesInRange(range);
   const toUnwrap = new Set();
-
   for (const tn of textNodes) {
     let el = tn.parentElement;
     while (el && el !== editor) {
-      if (el.tagName === 'SPAN' && el.style && el.style.cssText) {
-        toUnwrap.add(el);
-      }
+      if (el.tagName === 'SPAN' && el.style && el.style.cssText) toUnwrap.add(el);
       el = el.parentElement;
     }
   }
-
   for (const span of toUnwrap) {
     if (!span.parentNode) continue;
     const parent = span.parentNode;
     while (span.firstChild) parent.insertBefore(span.firstChild, span);
     parent.removeChild(span);
   }
-
-  normalizeSpans(editor);
   editor.dispatchEvent(new Event('input'));
-}
-
-function normalizeSpans(root) {
-  if (!root) return;
-  root.querySelectorAll('span').forEach(span => {
-    if (!span.textContent && !span.querySelector('img')) span.remove();
-  });
-  const spans = Array.from(root.querySelectorAll('span'));
-  for (const span of spans) {
-    if (!span.parentNode) continue;
-    const children = Array.from(span.children);
-    for (const child of children) {
-      if (child.tagName === 'SPAN' && child.style.cssText === span.style.cssText) {
-        while (child.firstChild) span.insertBefore(child.firstChild, child);
-        child.remove();
-      }
-    }
-    let next = span.nextSibling;
-    while (next && next.nodeType === Node.TEXT_NODE && !next.nodeValue) {
-      const nn = next.nextSibling;
-      next.remove();
-      next = nn;
-    }
-    if (next && next.tagName === 'SPAN' && next.style.cssText === span.style.cssText) {
-      while (next.firstChild) span.appendChild(next.firstChild);
-      next.remove();
-    }
-  }
 }
 
 function applyStyle(styleProp, styleValue, toggleOff = null) {
@@ -1864,60 +2825,36 @@ function applyStyle(styleProp, styleValue, toggleOff = null) {
   if (!editor) return;
   editor.focus();
   restoreEditorRange();
-
-  const sel = window.getSelection();
-  if (!sel || !sel.rangeCount) return;
-  const range = sel.getRangeAt(0);
-  if (range.collapsed) return;
-  if (!editor.contains(range.commonAncestorContainer)) return;
-
   wrapSelectionWithStyle(styleProp, styleValue, toggleOff);
   updateToolbarState();
 }
 
 function toggleBold() {
-  const editor = $('compose-body');
-  const sel = window.getSelection();
-  if (!sel || !sel.rangeCount) return;
-  const range = sel.getRangeAt(0);
-  const isBold = selectionHasStyle(range, 'fontWeight', '700');
-  if (isBold) {
-    removeStyleFromSelection('fontWeight', '700');
-  } else {
-    applyStyle('fontWeight', '700', { styleProp: 'fontWeight', styleValue: '700' });
-  }
+  const range = window.getSelection()?.getRangeAt(0);
+  const isBold = range && selectionHasStyle(range, 'fontWeight', '700');
+  if (isBold) removeStyleFromSelection('fontWeight', '700');
+  else applyStyle('fontWeight', '700', { styleProp: 'fontWeight', styleValue: '700' });
   updateToolbarState();
 }
 
 function toggleItalic() {
   const range = window.getSelection()?.getRangeAt(0);
   const isItalic = range && selectionHasStyle(range, 'fontStyle', 'italic');
-  if (isItalic) {
-    removeStyleFromSelection('fontStyle', 'italic');
-  } else {
-    applyStyle('fontStyle', 'italic', { styleProp: 'fontStyle', styleValue: 'italic' });
-  }
+  if (isItalic) removeStyleFromSelection('fontStyle', 'italic');
+  else applyStyle('fontStyle', 'italic', { styleProp: 'fontStyle', styleValue: 'italic' });
   updateToolbarState();
 }
 
 function toggleUnderline() {
   const range = window.getSelection()?.getRangeAt(0);
   const isUnderline = range && selectionHasStyle(range, 'textDecoration', 'underline');
-  if (isUnderline) {
-    removeStyleFromSelection('textDecoration', 'underline');
-  } else {
-    applyStyle('textDecoration', 'underline', { styleProp: 'textDecoration', styleValue: 'underline' });
-  }
+  if (isUnderline) removeStyleFromSelection('textDecoration', 'underline');
+  else applyStyle('textDecoration', 'underline', { styleProp: 'textDecoration', styleValue: 'underline' });
   updateToolbarState();
 }
 
-function setTextColor(color) {
-  applyStyle('color', color, { styleProp: 'color', styleValue: color });
-}
-
-function setFontSize(px) {
-  applyStyle('fontSize', px + 'px', { styleProp: 'fontSize', styleValue: px + 'px' });
-}
+function setTextColor(color) { applyStyle('color', color, { styleProp: 'color', styleValue: color }); }
+function setFontSize(px) { applyStyle('fontSize', px + 'px', { styleProp: 'fontSize', styleValue: px + 'px' }); }
 
 function selectionHasStyle(range, styleProp, styleValue) {
   const editor = $('compose-body');
@@ -1928,10 +2865,7 @@ function selectionHasStyle(range, styleProp, styleValue) {
     let el = tn.parentElement;
     let found = false;
     while (el && el !== editor) {
-      if (el.tagName === 'SPAN' && el.style[styleProp] === styleValue) {
-        found = true;
-        break;
-      }
+      if (el.tagName === 'SPAN' && el.style[styleProp] === styleValue) { found = true; break; }
       el = el.parentElement;
     }
     if (!found) return false;
@@ -1941,22 +2875,15 @@ function selectionHasStyle(range, styleProp, styleValue) {
 
 function setupEditor() {
   const editor = $('compose-body');
-
   document.addEventListener('selectionchange', () => {
     const sel = window.getSelection();
     if (!sel || !sel.rangeCount) return;
     const node = sel.anchorNode;
-    if (node && editor.contains(node)) {
-      saveEditorRange();
-      updateToolbarState();
-    }
+    if (node && editor.contains(node)) { saveEditorRange(); updateToolbarState(); }
   });
 
   $$('.editor-toolbar .toolbar-btn[data-cmd]').forEach(btn => {
-    btn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      saveEditorRange();
-    });
+    btn.addEventListener('mousedown', (e) => { e.preventDefault(); saveEditorRange(); });
     btn.addEventListener('click', (e) => {
       e.preventDefault();
       const cmd = btn.dataset.cmd;
@@ -1980,9 +2907,7 @@ function setupEditor() {
 
   const colorInput = $('toolbar-color');
   colorInput.addEventListener('mousedown', () => saveEditorRange());
-  colorInput.addEventListener('input', () => {
-    setTextColor(colorInput.value);
-  });
+  colorInput.addEventListener('input', () => setTextColor(colorInput.value));
 
   editor.addEventListener('keyup', updateToolbarState);
   editor.addEventListener('mouseup', () => { saveEditorRange(); updateToolbarState(); });
@@ -2005,46 +2930,28 @@ function setupEditor() {
     updateToolbarState();
   });
 
-  editor.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    editor.classList.add('dragover');
-  });
+  editor.addEventListener('dragover', (e) => { e.preventDefault(); editor.classList.add('dragover'); });
   editor.addEventListener('dragleave', () => editor.classList.remove('dragover'));
   editor.addEventListener('drop', async (e) => {
     e.preventDefault();
     editor.classList.remove('dragover');
     const files = Array.from(e.dataTransfer.files || []);
     for (const file of files) {
-      if (file.type.startsWith('image/')) {
-        await uploadAndInsertImage(file);
-      } else {
-        await uploadAndAttachFile(file);
-      }
+      if (file.type.startsWith('image/')) await uploadAndInsertImage(file);
+      else await uploadAndAttachFile(file);
     }
   });
 
-  $('btn-insert-image').addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    saveEditorRange();
-  });
-  $('btn-insert-image').addEventListener('click', (e) => {
-    e.preventDefault();
-    $('file-input-image').click();
-  });
+  $('btn-insert-image').addEventListener('mousedown', (e) => { e.preventDefault(); saveEditorRange(); });
+  $('btn-insert-image').addEventListener('click', (e) => { e.preventDefault(); $('file-input-image').click(); });
   $('file-input-image').addEventListener('change', async (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
     for (const f of files) await uploadAndInsertImage(f);
   });
 
-  $('btn-attach-file').addEventListener('mousedown', (e) => {
-    e.preventDefault();
-    saveEditorRange();
-  });
-  $('btn-attach-file').addEventListener('click', (e) => {
-    e.preventDefault();
-    $('file-input-attach').click();
-  });
+  $('btn-attach-file').addEventListener('mousedown', (e) => { e.preventDefault(); saveEditorRange(); });
+  $('btn-attach-file').addEventListener('click', (e) => { e.preventDefault(); $('file-input-attach').click(); });
   $('file-input-attach').addEventListener('change', async (e) => {
     const files = Array.from(e.target.files || []);
     e.target.value = '';
@@ -2059,7 +2966,6 @@ function updateToolbarState() {
   if (!sel || !sel.rangeCount) return;
   const range = sel.getRangeAt(0);
   if (!editor.contains(range.commonAncestorContainer)) return;
-
   const boldBtn = document.querySelector('.toolbar-btn[data-cmd="bold"]');
   if (boldBtn) boldBtn.classList.toggle('active', selectionHasStyle(range, 'fontWeight', '700'));
   const italicBtn = document.querySelector('.toolbar-btn[data-cmd="italic"]');
@@ -2092,9 +2998,7 @@ async function uploadAndInsertImage(file) {
   setUploadStatus('Afbeelding uploaden…');
   try {
     const data = await api.messages.uploadImage(file);
-    if (!data || !data.ok || !data.url) {
-      throw new Error(data?.error || 'upload mislukt');
-    }
+    if (!data || !data.ok || !data.url) throw new Error(data?.error || 'upload mislukt');
     const editor = $('compose-body');
     editor.focus();
     restoreEditorRange();
@@ -2115,12 +3019,8 @@ async function uploadAndInsertImage(file) {
     }
     saveEditorRange();
     toast('Afbeelding toegevoegd', 'success');
-  } catch (e) {
-    toast('Afbeelding mislukt: ' + e.message, 'error');
-  } finally {
-    _uploadCount--;
-    if (_uploadCount <= 0) clearUploadStatus();
-  }
+  } catch (e) { toast('Afbeelding mislukt: ' + e.message, 'error'); }
+  finally { _uploadCount--; if (_uploadCount <= 0) clearUploadStatus(); }
 }
 
 async function uploadAndAttachFile(file) {
@@ -2128,9 +3028,7 @@ async function uploadAndAttachFile(file) {
   setUploadStatus('Bestand uploaden…');
   try {
     const data = await api.messages.uploadFile(file);
-    if (!data || !data.ok || !data.url) {
-      throw new Error(data?.error || 'upload mislukt');
-    }
+    if (!data || !data.ok || !data.url) throw new Error(data?.error || 'upload mislukt');
     composeState.attachments.push({
       url: data.url,
       filename: data.filename || file.name || 'bestand',
@@ -2139,20 +3037,13 @@ async function uploadAndAttachFile(file) {
     });
     renderAttachments();
     toast('Bestand toegevoegd', 'success');
-  } catch (e) {
-    toast('Bestand mislukt: ' + e.message, 'error');
-  } finally {
-    _uploadCount--;
-    if (_uploadCount <= 0) clearUploadStatus();
-  }
+  } catch (e) { toast('Bestand mislukt: ' + e.message, 'error'); }
+  finally { _uploadCount--; if (_uploadCount <= 0) clearUploadStatus(); }
 }
 
 function renderAttachments() {
   const wrap = $('attach-list');
-  if (!composeState.attachments.length) {
-    wrap.innerHTML = '';
-    return;
-  }
+  if (!composeState.attachments.length) { wrap.innerHTML = ''; return; }
   const parts = [];
   for (let i = 0; i < composeState.attachments.length; i++) {
     const a = composeState.attachments[i];
@@ -2184,6 +3075,7 @@ function openCompose(to, subject) {
   composeState.cc = [];
   composeState.bcc = [];
   composeState.attachments = [];
+  composeState.editMode = null;
   if (to) composeState.to.push({ user_id: to, name: to });
   $('compose-subject').value = subject || '';
   const editor = $('compose-body');
@@ -2196,6 +3088,121 @@ function openCompose(to, subject) {
   $('bcc-suggestions').style.display = 'none';
   $('cc-bcc-fields').classList.remove('open');
   $('cc-bcc-toggle').classList.remove('open');
+  $('schedule-check').checked = false;
+  $('schedule-row').style.display = 'none';
+  $('schedule-datetime').value = '';
+  $('compose-title').textContent = 'Nieuw bericht';
+  $('compose-send').innerHTML = icon('send') + ' Versturen';
+  $('compose-save-draft').innerHTML = icon('save') + ' Opslaan als concept';
+  renderRecipients('to');
+  renderRecipients('cc');
+  renderRecipients('bcc');
+  renderAttachments();
+  clearUploadStatus();
+  savedRange = null;
+  $('compose-modal').classList.add('show');
+  refreshIcons();
+  requestAnimationFrame(() => $('to-input').focus());
+}
+
+function openComposeFromScheduled(msgId, data) {
+  composeState.to = (data.to || []).map(u => ({
+    user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id,
+  }));
+  composeState.cc = (data.cc || []).map(u => ({
+    user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id,
+  }));
+  composeState.bcc = (data.bcc || []).map(u => ({
+    user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id,
+  }));
+  composeState.attachments = [];
+  composeState.editMode = { type: 'scheduled', msgId };
+
+  $('compose-subject').value = data.subject || '';
+  $('compose-body').innerHTML = data.body_html || '';
+
+  if (composeState.cc.length || composeState.bcc.length) {
+    $('cc-bcc-fields').classList.add('open');
+    $('cc-bcc-toggle').classList.add('open');
+  } else {
+    $('cc-bcc-fields').classList.remove('open');
+    $('cc-bcc-toggle').classList.remove('open');
+  }
+
+  if (data.send_date) {
+    $('schedule-check').checked = true;
+    $('schedule-row').style.display = 'flex';
+    try {
+      const dt = new Date(data.send_date);
+      if (!isNaN(dt)) {
+        const pad = n => String(n).padStart(2, '0');
+        $('schedule-datetime').value =
+          dt.getFullYear() + '-' + pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) +
+          'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+      }
+    } catch {}
+  } else {
+    $('schedule-check').checked = false;
+    $('schedule-row').style.display = 'none';
+  }
+
+  $('compose-title').textContent = 'Gepland bericht bewerken';
+  $('compose-send').innerHTML = icon('send') + ' Bijwerken';
+  $('compose-save-draft').innerHTML = icon('save') + ' Naar concept';
+  renderRecipients('to');
+  renderRecipients('cc');
+  renderRecipients('bcc');
+  renderAttachments();
+  clearUploadStatus();
+  savedRange = null;
+  $('compose-modal').classList.add('show');
+  refreshIcons();
+  requestAnimationFrame(() => $('to-input').focus());
+}
+
+function openComposeFromDraft(draftId, data) {
+  composeState.to = (data.to || []).map(u => ({
+    user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id,
+  }));
+  composeState.cc = (data.cc || []).map(u => ({
+    user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id,
+  }));
+  composeState.bcc = (data.bcc || []).map(u => ({
+    user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
+    user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
+    ss_id: u.ss_id,
+  }));
+  composeState.attachments = [];
+  composeState.editMode = { type: 'draft', msgId: draftId };
+
+  $('compose-subject').value = data.subject || '';
+  $('compose-body').innerHTML = data.body_html || '';
+
+  if (composeState.cc.length || composeState.bcc.length) {
+    $('cc-bcc-fields').classList.add('open');
+    $('cc-bcc-toggle').classList.add('open');
+  } else {
+    $('cc-bcc-fields').classList.remove('open');
+    $('cc-bcc-toggle').classList.remove('open');
+  }
+
+  $('schedule-check').checked = false;
+  $('schedule-row').style.display = 'none';
+  $('schedule-datetime').value = '';
+
+  $('compose-title').textContent = 'Concept bewerken';
+  $('compose-send').innerHTML = icon('send') + ' Versturen';
+  $('compose-save-draft').innerHTML = icon('save') + ' Concept opslaan';
   renderRecipients('to');
   renderRecipients('cc');
   renderRecipients('bcc');
@@ -2212,12 +3219,59 @@ function closeCompose() {
   composeState.cc = [];
   composeState.bcc = [];
   composeState.attachments = [];
+  composeState.editMode = null;
   $('compose-modal').classList.remove('show');
   $('to-suggestions').style.display = 'none';
   $('cc-suggestions').style.display = 'none';
   $('bcc-suggestions').style.display = 'none';
+  $('schedule-check').checked = false;
+  $('schedule-row').style.display = 'none';
   clearUploadStatus();
   savedRange = null;
+}
+
+async function saveDraftHandler() {
+  const subject = $('compose-subject').value.trim();
+  const editor = $('compose-body');
+  const html = editor.innerHTML.trim();
+  const plain = editor.textContent.trim();
+
+  if (!composeState.to.length) return toast('Voeg een ontvanger toe', 'error');
+  if (!plain && !subject) return toast('Voeg inhoud toe', 'error');
+
+  const btn = $('compose-save-draft');
+  btn.disabled = true;
+  btn.innerHTML = icon('loader') + ' Opslaan...';
+  refreshIcons();
+  try {
+    const payload = {
+      draft_id: composeState.editMode?.type === 'draft' ? composeState.editMode.msgId : '',
+      subject: subject || '(geen onderwerp)',
+      message_html: html || '<p></p>',
+      to: composeState.to,
+      cc: composeState.cc,
+      bcc: composeState.bcc,
+    };
+    await api.messages.saveDraft(payload);
+    toast('Concept opgeslagen', 'success');
+    closeCompose();
+    msgCache.invalidateList('draft');
+    if (currentBox === 'draft') {
+      _inflight.delete('msgs:draft');
+      loadMessages('draft', true);
+      renderEmptyView();
+    }
+  } catch (e) {
+    toast('Opslaan mislukt: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    if (composeState.editMode?.type === 'draft') {
+      btn.innerHTML = icon('save') + ' Concept opslaan';
+    } else {
+      btn.innerHTML = icon('save') + ' Opslaan als concept';
+    }
+    refreshIcons();
+  }
 }
 
 async function sendCompose() {
@@ -2230,32 +3284,70 @@ async function sendCompose() {
   if (!subject) return toast('Onderwerp is verplicht', 'error');
   if (!plain) return toast('Bericht is leeg', 'error');
 
+  let sendDate = '';
+  if ($('schedule-check').checked) {
+    const dtVal = $('schedule-datetime').value;
+    if (!dtVal) return toast('Kies een datum en tijd', 'error');
+    sendDate = dtVal;
+  }
+
   const btn = $('compose-send');
   btn.disabled = true;
   btn.innerHTML = icon('loader') + ' Versturen...';
   refreshIcons();
   try {
-    await api.messages.send({
-      subject,
-      message_html: html,
-      to: composeState.to,
-      cc: composeState.cc,
-      bcc: composeState.bcc,
-      attachments: composeState.attachments.map(a => ({
-        url: a.url, filename: a.filename,
-      })),
-    });
-    toast('Bericht verstuurd', 'success');
-    closeCompose();
-    if (currentBox === 'outbox') {
-      _inflight.delete('msgs:outbox');
-      loadMessages('outbox', true);
+    if (composeState.editMode?.type === 'scheduled') {
+      await api.messages.updateScheduled(composeState.editMode.msgId, {
+        subject,
+        message_html: html,
+        to: composeState.to,
+        cc: composeState.cc,
+        bcc: composeState.bcc,
+        send_date: sendDate || undefined,
+      });
+      toast('Gepland bericht bijgewerkt', 'success');
+      closeCompose();
+      msgCache.invalidateList('scheduled');
+      if (currentBox === 'scheduled') {
+        _inflight.delete('msgs:scheduled');
+        loadMessages('scheduled', true);
+        renderEmptyView();
+      }
+    } else {
+      await api.messages.send({
+        subject,
+        message_html: html,
+        to: composeState.to,
+        cc: composeState.cc,
+        bcc: composeState.bcc,
+        attachments: composeState.attachments.map(a => ({
+          url: a.url, filename: a.filename,
+        })),
+        send_date: sendDate,
+        draft_id: composeState.editMode?.type === 'draft' ? composeState.editMode.msgId : '',
+      });
+      toast(sendDate ? 'Bericht ingepland' : 'Bericht verstuurd', 'success');
+      closeCompose();
+      if (currentBox === 'outbox') {
+        _inflight.delete('msgs:outbox');
+        loadMessages('outbox', true);
+      } else if (currentBox === 'scheduled') {
+        _inflight.delete('msgs:scheduled');
+        loadMessages('scheduled', true);
+      } else if (currentBox === 'draft') {
+        _inflight.delete('msgs:draft');
+        loadMessages('draft', true);
+      }
     }
   } catch (e) {
-    toast('Versturen mislukt: ' + e.message, 'error');
+    toast('Mislukt: ' + e.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.innerHTML = icon('send') + ' Versturen';
+    if (composeState.editMode?.type === 'scheduled') {
+      btn.innerHTML = icon('send') + ' Bijwerken';
+    } else {
+      btn.innerHTML = icon('send') + ' Versturen';
+    }
     refreshIcons();
   }
 }
@@ -2295,9 +3387,8 @@ function fixRelativeImages(root) {
    RESIZE
    ============================================================ */
 window.addEventListener('resize', () => {
-  if (!isMobile()) {
-    closeMessageView();
-  }
+  if (!isMobile()) closeMessageView();
+  updateTabFades();
 });
 </script>
 </body>
