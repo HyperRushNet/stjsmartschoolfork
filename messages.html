@@ -235,21 +235,64 @@
     padding: 18px 24px 16px;
     border-bottom: 1px solid var(--border-soft);
     flex-shrink: 0;
+    max-height: 50vh;
+    overflow-y: auto;
   }
   .msg-view-head h3 {
     font-size: 18px; font-weight: 700; letter-spacing: -0.01em;
     margin-bottom: 10px; line-height: 1.35;
   }
+
+  /* --- Meta blok: geen bold, inkorten na 2, scroll intern --- */
   .msg-view-meta {
     font-size: 12.5px; color: var(--text-dim);
-    display: flex; gap: 16px; flex-wrap: wrap; align-items: center;
+    display: flex; flex-direction: column; gap: 4px;
+    max-height: 90px;
+    overflow-y: auto;
+    padding-right: 4px;
   }
-  .msg-view-meta svg.lucide { width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; }
-  .msg-view-meta strong { color: var(--text); font-weight: 600; }
+  .msg-view-meta::-webkit-scrollbar { width: 6px; }
+  .msg-view-meta::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .meta-line {
+    display: flex; align-items: flex-start; gap: 6px;
+    line-height: 1.4;
+    min-width: 0;
+  }
+  .meta-line svg.lucide {
+    width: 13px; height: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--text-faint);
+  }
+  .meta-line .meta-label {
+    color: var(--text-faint);
+    flex-shrink: 0;
+    margin-right: 2px;
+  }
+  .meta-line .meta-value {
+    color: var(--text-dim);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .meta-line .meta-value.expandable {
+    cursor: help;
+  }
+  /* Afzender blijft wel iets meer nadruk krijgen, maar geen bold */
+  .meta-line.sender .meta-value {
+    color: var(--text);
+    font-weight: 500;
+  }
 
   .msg-view-body {
     flex: 1; overflow-y: auto; padding: 24px;
     font-size: 13.5px; line-height: 1.7; color: var(--text);
+    font-family: var(--font) !important;
+  }
+  .msg-view-body * {
+    font-family: inherit !important;
   }
   .msg-view-body a { color: #b8b8bc; cursor: pointer; }
   .msg-view-body p { margin: 0 0 12px; }
@@ -370,6 +413,44 @@
     display: inline-flex; align-items: center; gap: 4px;
     font-family: var(--font);
   }
+  .meta-more-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin-left: 2px;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--text-faint);
+  text-underline-offset: 2px;
+  border-radius: 3px;
+  transition: color 0.12s, text-decoration-color 0.12s;
+}
+.meta-more-btn:hover {
+  color: #fff;
+  text-decoration-color: var(--text);
+}
+.meta-more-btn.open {
+  color: var(--text-dim);
+  text-decoration: none;
+}
+.meta-expanded {
+  margin-top: 3px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.meta-expanded::-webkit-scrollbar { width: 6px; }
+.meta-expanded::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   .cc-bcc-toggle:hover { background: var(--bg-3); color: var(--text); }
   .cc-bcc-toggle svg.lucide { width: 12px; height: 12px; }
   .cc-bcc-toggle.open svg.lucide { transform: rotate(180deg); }
@@ -472,10 +553,13 @@
     border: 1px solid var(--border);
     border-radius: 0 0 var(--radius-sm) var(--radius-sm);
     color: var(--text);
-    font-size: 14px; font-family: var(--font);
+    font-size: 14px; font-family: var(--font) !important;
     line-height: 1.6;
     overflow-y: auto;
     outline: none;
+  }
+  .editor-area * {
+    font-family: inherit !important;
   }
   .editor-area:focus { border-color: #444; }
   .editor-area:empty::before {
@@ -607,10 +691,11 @@
       display: flex; align-items: flex-start; gap: 12px;
       padding: 14px 16px;
       padding-top: calc(14px + env(safe-area-inset-top, 0px));
+      max-height: 45vh;
     }
     .msg-view-head-inner { flex: 1; min-width: 0; }
     .msg-view-head h3 { font-size: 16px; margin-bottom: 8px; }
-    .msg-view-meta { font-size: 12px; gap: 10px; }
+    .msg-view-meta { font-size: 12px; max-height: 80px; }
     .msg-view-body { padding: 16px; font-size: 13.5px; }
     .msg-view-actions {
       padding: 10px 12px;
@@ -844,6 +929,55 @@ function refreshIcons() {
 const isMobile = () => window.matchMedia('(max-width: 820px)').matches;
 
 /* ============================================================
+   META-LINE helper (ontvangers inkorten na 2, geen bold)
+   ============================================================ */
+function buildMetaValue(names, iconName, label, opts = {}) {
+  const {
+    maxVisible = 2,
+    isSender = false,
+    field = 'to',
+  } = opts;
+
+  if (!names || !names.length) return '';
+
+  const visible = names.slice(0, maxVisible).join(', ');
+  const remaining = names.length - maxVisible;
+  const fullTitle = names.join(', ');
+  const expandable = remaining > 0;
+
+  let displayHtml;
+  if (expandable) {
+    displayHtml =
+      esc(visible) +
+      ' <button type="button" class="meta-more-btn" data-meta-expand="' +
+        esc(field) +
+      '">+' + remaining + ' meer</button>';
+  } else {
+    displayHtml = esc(visible);
+  }
+
+  const cls = 'meta-line' + (isSender ? ' sender' : '');
+  const expandableCls = expandable ? ' expandable' : '';
+
+  const expandedBlock = expandable
+    ? '<div class="meta-expanded" data-meta-expanded="' + esc(field) + '" hidden>' +
+        esc(fullTitle) +
+      '</div>'
+    : '';
+
+  return (
+    '<div class="' + cls + '">' +
+      icon(iconName) +
+      (label ? '<span class="meta-label">' + esc(label) + '</span>' : '') +
+      '<span class="meta-value' + expandableCls + '" title="' + esc(fullTitle) + '">' +
+        displayHtml +
+      '</span>' +
+      expandedBlock +
+    '</div>'
+  );
+}
+
+/* ============================================================
    USER INDEX
    ============================================================ */
 const USER_INDEX_KEY = 'ss_user_index_v1';
@@ -1041,8 +1175,14 @@ const userIndex = {
 };
 
 /* ============================================================
-   ACHTERGROND-INDEXERING
+   ACHTERGROND-INDEXERING (met activity-pauze)
    ============================================================ */
+let _lastUserActivity = Date.now();
+function markUserActivity() { _lastUserActivity = Date.now(); }
+['click','keydown','input','touchstart','scroll','mousemove'].forEach(evt => {
+  document.addEventListener(evt, markUserActivity, { passive: true });
+});
+
 async function indexUsersInBackground({ force = false } = {}) {
   if (userIndex._indexing) return;
 
@@ -1064,6 +1204,15 @@ async function indexUsersInBackground({ force = false } = {}) {
 
   for (const q of queries) {
     if (!userIndex._indexing) break;
+
+    while (true) {
+      const composeOpen = $('compose-modal')?.classList.contains('show');
+      const idleFor = Date.now() - _lastUserActivity;
+      if (!composeOpen && idleFor > 4000) break;
+      updateIndexDot({ indexing: true });
+      await new Promise(r => setTimeout(r, 800));
+      if (!userIndex._indexing) break;
+    }
 
     try {
       const users = await api.messages.searchUsers(q, 'all');
@@ -1549,6 +1698,33 @@ document.addEventListener('click', (e) => {
 autoLogin();
 refreshIcons();
 
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.meta-more-btn');
+  if (!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const field = btn.getAttribute('data-meta-expand');
+  if (!field) return;
+
+  const parent = btn.closest('.meta-line');
+  if (!parent) return;
+  const expanded = parent.querySelector('.meta-expanded[data-meta-expanded="' + CSS.escape(field) + '"]');
+  if (!expanded) return;
+
+  const isHidden = expanded.hasAttribute('hidden');
+  if (isHidden) {
+    expanded.removeAttribute('hidden');
+    btn.textContent = '− minder';
+    btn.classList.add('open');
+  } else {
+    expanded.setAttribute('hidden', '');
+    // Herstel originele tekst
+    const count = expanded.textContent.split(',').length - 2;
+    btn.textContent = '+' + Math.max(count, 1) + ' meer';
+    btn.classList.remove('open');
+  }
+});
+
 async function autoLogin() {
   if (!auth.tryRestore()) { showNotLoggedIn(); return; }
   try {
@@ -1877,22 +2053,27 @@ async function openMessage(id) {
 }
 
 function renderScheduledView(id, data) {
-  const toList  = fmtReceivers(data.to);
-  const ccList  = fmtReceivers(data.cc);
-  const bccList = fmtReceivers(data.bcc);
+  const toNames  = receiverNames(data.to_full || data.to);
+  const ccNames  = receiverNames(data.cc_full || data.cc);
+  const bccNames = receiverNames(data.bcc_full || data.bcc);
   const body = data.body_html || '<p style="color:var(--text-dim)">Geen inhoud</p>';
+
+  const metaHtml =
+    buildMetaValue(toNames, 'users', 'Aan:') +
+    buildMetaValue(ccNames, 'users', 'CC:') +
+    buildMetaValue(bccNames, 'users', 'BCC:') +
+    buildMetaValue(
+      [data.send_date || ''],
+      'clock',
+      'Gepland:'
+    );
 
   $('msg-view').innerHTML =
     '<div class="msg-view-head">' +
       '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
       '<div class="msg-view-head-inner">' +
         '<h3>' + esc(data.subject || '(geen onderwerp)') + '</h3>' +
-        '<div class="msg-view-meta">' +
-          (toList ? '<span>' + icon('users') + 'Aan: <strong>' + esc(toList) + '</strong></span>' : '') +
-          (ccList ? '<span>' + icon('users') + 'CC: <strong>' + esc(ccList) + '</strong></span>' : '') +
-          (bccList ? '<span>' + icon('users') + 'BCC: <strong>' + esc(bccList) + '</strong></span>' : '') +
-          '<span>' + icon('clock') + 'Gepland: <strong>' + esc(data.send_date || '') + '</strong></span>' +
-        '</div>' +
+        '<div class="msg-view-meta">' + metaHtml + '</div>' +
       '</div>' +
     '</div>' +
     '<div class="msg-view-body">' + body + '</div>' +
@@ -1910,21 +2091,22 @@ function renderScheduledView(id, data) {
 }
 
 function renderDraftView(id, data) {
-  const toList  = fmtReceivers(data.to);
-  const ccList  = fmtReceivers(data.cc);
-  const bccList = fmtReceivers(data.bcc);
+  const toNames  = receiverNames(data.to_full || data.to);
+  const ccNames  = receiverNames(data.cc_full || data.cc);
+  const bccNames = receiverNames(data.bcc_full || data.bcc);
   const body = data.body_html || '<p style="color:var(--text-dim)">Geen inhoud</p>';
+
+  const metaHtml =
+    buildMetaValue(toNames, 'users', 'Aan:') +
+    buildMetaValue(ccNames, 'users', 'CC:') +
+    buildMetaValue(bccNames, 'users', 'BCC:');
 
   $('msg-view').innerHTML =
     '<div class="msg-view-head">' +
       '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
       '<div class="msg-view-head-inner">' +
         '<h3>' + esc(data.subject || '(geen onderwerp)') + '</h3>' +
-        '<div class="msg-view-meta">' +
-          (toList ? '<span>' + icon('users') + 'Aan: <strong>' + esc(toList) + '</strong></span>' : '') +
-          (ccList ? '<span>' + icon('users') + 'CC: <strong>' + esc(ccList) + '</strong></span>' : '') +
-          (bccList ? '<span>' + icon('users') + 'BCC: <strong>' + esc(bccList) + '</strong></span>' : '') +
-        '</div>' +
+        '<div class="msg-view-meta">' + metaHtml + '</div>' +
       '</div>' +
     '</div>' +
     '<div class="msg-view-body">' + body + '</div>' +
@@ -1942,6 +2124,24 @@ function renderDraftView(id, data) {
   refreshIcons();
 }
 
+/**
+ * Zet een receiver-array/lijst om naar platte namen.
+ */
+function receiverNames(list) {
+  if (!list) return [];
+  const arr = Array.isArray(list) ? list : [list];
+  const out = [];
+  for (const u of arr) {
+    if (typeof u === 'string') {
+      if (u.trim()) out.push(u.trim());
+    } else if (u && typeof u === 'object') {
+      const n = (u.name || u.user_id || '').trim();
+      if (n) out.push(n);
+    }
+  }
+  return out;
+}
+
 function renderMessageView(msg) {
   const attachments = msg.attachments || [];
   const body = msg.body_html || msg.bodyHtml || msg.body || msg.html || '<p style="color:var(--text-dim)">Geen inhoud</p>';
@@ -1952,16 +2152,24 @@ function renderMessageView(msg) {
 
   const bodyHasAttachList = /Bijlagen/i.test(body);
 
-  const toVal = (msg.to || '').trim();
-  const ccVal = (msg.cc || '').trim();
-  const bccVal = (msg.bcc || '').trim();
+  const toNames  = receiverNames(msg.to_full);
+  const ccNames  = receiverNames(msg.cc_full);
+  const bccNames = receiverNames(msg.bcc_full);
 
-  let metaParts = [];
-  metaParts.push('<span>' + icon('user') + 'Van: <strong>' + esc(msg.sender || msg.from || 'Onbekend') + '</strong></span>');
-  if (toVal) metaParts.push('<span>' + icon('users') + 'Aan: <strong>' + esc(toVal) + '</strong></span>');
-  if (ccVal) metaParts.push('<span>' + icon('users') + 'CC: <strong>' + esc(ccVal) + '</strong></span>');
-  if (bccVal) metaParts.push('<span>' + icon('users') + 'BCC: <strong>' + esc(bccVal) + '</strong></span>');
-  metaParts.push('<span>' + icon('calendar') + esc(msg.date || '') + '</span>');
+  // Fallback: als server geen arrays stuurde, gebruik strings
+  if (!toNames.length && msg.to) toNames.push(...receiverNames(msg.to.split(',')));
+  if (!ccNames.length && msg.cc) ccNames.push(...receiverNames(msg.cc.split(',')));
+  if (!bccNames.length && msg.bcc) bccNames.push(...receiverNames(msg.bcc.split(',')));
+
+  const senderName = (msg.sender || msg.from || 'Onbekend').trim();
+  const dateStr = (msg.date || '').trim();
+
+  const metaHtml =
+    buildMetaValue([senderName], 'user', 'Van:', { maxVisible: 1, isSender: true }) +
+    buildMetaValue(toNames, 'users', 'Aan:') +
+    buildMetaValue(ccNames, 'users', 'CC:') +
+    buildMetaValue(bccNames, 'users', 'BCC:') +
+    buildMetaValue([dateStr], 'calendar', '', { maxVisible: 1 });
 
   let attachHtml = '';
   if (attachments.length && !bodyHasAttachList) {
@@ -1988,7 +2196,7 @@ function renderMessageView(msg) {
       '<button class="msg-view-close" title="Sluiten">' + icon('x') + '</button>' +
       '<div class="msg-view-head-inner">' +
         '<h3>' + esc(msg.subject || '(geen onderwerp)') + '</h3>' +
-        '<div class="msg-view-meta">' + metaParts.join('') + '</div>' +
+        '<div class="msg-view-meta">' + metaHtml + '</div>' +
       '</div>' +
     '</div>' +
     '<div class="msg-view-body">' + body + attachHtml + '</div>' +
@@ -2242,6 +2450,7 @@ function buildQuotedBody(msg) {
   const dateStr = esc(msg.date || '');
 
   return (
+    '<p><br></p>' +
     '<p><br></p>' +
     '<p><br></p>' +
     '<div class="ss-quote" ' +
@@ -3106,17 +3315,17 @@ function openCompose(to, subject) {
 }
 
 function openComposeFromScheduled(msgId, data) {
-  composeState.to = (data.to || []).map(u => ({
+  composeState.to = (data.to_full || data.to || []).map(u => ({
     user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
     user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
     ss_id: u.ss_id,
   }));
-  composeState.cc = (data.cc || []).map(u => ({
+  composeState.cc = (data.cc_full || data.cc || []).map(u => ({
     user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
     user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
     ss_id: u.ss_id,
   }));
-  composeState.bcc = (data.bcc || []).map(u => ({
+  composeState.bcc = (data.bcc_full || data.bcc || []).map(u => ({
     user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
     user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
     ss_id: u.ss_id,
@@ -3167,17 +3376,17 @@ function openComposeFromScheduled(msgId, data) {
 }
 
 function openComposeFromDraft(draftId, data) {
-  composeState.to = (data.to || []).map(u => ({
+  composeState.to = (data.to_full || data.to || []).map(u => ({
     user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
     user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
     ss_id: u.ss_id,
   }));
-  composeState.cc = (data.cc || []).map(u => ({
+  composeState.cc = (data.cc_full || data.cc || []).map(u => ({
     user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
     user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
     ss_id: u.ss_id,
   }));
-  composeState.bcc = (data.bcc || []).map(u => ({
+  composeState.bcc = (data.bcc_full || data.bcc || []).map(u => ({
     user_id: u.user_id, name: u.name, is_co_account: u.is_co_account,
     user_lt: String(u.user_lt || (u.is_co_account ? '2' : '0')),
     ss_id: u.ss_id,
